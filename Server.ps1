@@ -110,6 +110,19 @@ try {
             continue
         }
 
+        if ($Path -eq "/api/sessions" -and $Req.HttpMethod -eq "GET") {
+            $SessionsFile = Join-Path $PSScriptRoot "logs\sessions.json"
+            $JsonOut = "[]"
+            if (Test-Path $SessionsFile) {
+                $JsonOut = Get-Content $SessionsFile -Raw
+            }
+            $RespBytes = [System.Text.Encoding]::UTF8.GetBytes($JsonOut)
+            $Res.ContentType = "application/json"
+            $Res.OutputStream.Write($RespBytes, 0, $RespBytes.Length)
+            $Res.Close()
+            continue
+        }
+
         if ($Path -eq "/" -or $Path -eq "") {
             $Path = "/index.html"
         }
