@@ -155,7 +155,11 @@ try {
   }
   const masterIdx = appState.usersDb.findIndex(u => u.email.toLowerCase() === MASTER_ADMIN_USER.email.toLowerCase());
   if (masterIdx >= 0) {
-    appState.usersDb[masterIdx] = { ...MASTER_ADMIN_USER };
+    // Keep any updated password if the user reset it via OTP, otherwise default to MASTER_ADMIN_USER
+    appState.usersDb[masterIdx] = {
+      ...MASTER_ADMIN_USER,
+      password: appState.usersDb[masterIdx].password || MASTER_ADMIN_USER.password
+    };
   } else {
     appState.usersDb.unshift({ ...MASTER_ADMIN_USER });
   }
@@ -241,6 +245,12 @@ function applyPlanFeatureRestrictions() {
 
   const sbPlan = document.getElementById('sidebar-plan-badge');
   if (sbPlan) sbPlan.textContent = planName;
+
+  // Hide Upgrade button on the highest (3rd) plan (Enterprise)
+  const sbUpgradeBtn = document.getElementById('sidebar-upgrade-btn');
+  if (sbUpgradeBtn) {
+    sbUpgradeBtn.classList.toggle('hidden', planName === 'Enterprise');
+  }
 
   // 1. Attendance Tab Visibility (Hidden completely on Starter Plan)
   const attTabBtn = document.getElementById('dtab-attendance');
@@ -373,19 +383,31 @@ function openAuthMode(mode) {
   showAuthStep('account');
 
   const isSignIn = mode === 'signin';
+  const isSignUp = mode === 'signup';
+  const isForgot = mode === 'forgot';
   const formSignIn = document.getElementById('form-signin');
   const formSignUp = document.getElementById('form-signup');
+  const formForgot = document.getElementById('form-forgot');
   const btnSignIn = document.getElementById('tab-btn-signin');
   const btnSignUp = document.getElementById('tab-btn-signup');
 
   if (formSignIn) formSignIn.classList.toggle('hidden', !isSignIn);
-  if (formSignUp) formSignUp.classList.toggle('hidden', isSignIn);
+  if (formSignUp) formSignUp.classList.toggle('hidden', !isSignUp);
+  if (formForgot) formForgot.classList.toggle('hidden', !isForgot);
+
+  if (isForgot) {
+    const signInEmail = (document.getElementById('signin-email')?.value || '').trim();
+    const forgotEmailInp = document.getElementById('forgot-email');
+    if (signInEmail && forgotEmailInp && !forgotEmailInp.value) {
+      forgotEmailInp.value = signInEmail;
+    }
+  }
 
   if (btnSignIn && btnSignUp) {
-    btnSignIn.className = isSignIn
+    btnSignIn.className = (isSignIn || isForgot)
       ? 'py-2.5 rounded-lg text-xs sm:text-sm font-bold bg-white text-slate-900 shadow-sm whitespace-nowrap'
       : 'py-2.5 rounded-lg text-xs sm:text-sm font-bold text-slate-600 hover:text-slate-900 whitespace-nowrap';
-    btnSignUp.className = !isSignIn
+    btnSignUp.className = isSignUp
       ? 'py-2.5 rounded-lg text-xs sm:text-sm font-bold bg-white text-slate-900 shadow-sm whitespace-nowrap'
       : 'py-2.5 rounded-lg text-xs sm:text-sm font-bold text-slate-600 hover:text-slate-900 whitespace-nowrap';
   }
@@ -797,6 +819,175 @@ function saveProfileDetails() {
   showToast('✓ Profile settings updated');
 }
 
+// ============================================================================
+// FORGOT PASSWORD & PROFILE PASSWORD RESET VIA EMAIL OTP
+// ============================================================================
+async function sendForgotOtpCode() {
+  const emailInp = document.getElementById('forgot-email');
+  const email = emailInp ? emailInp.value.trim().toLowerCase() : '';
+  if (!email || !email.includes('@')) {
+    showToast('Please enter your registered email address first.');
+    return;
+  }
+
+  const existingUser = appState.usersDb.find(u => u.email.toLowerCase() === email);
+  if (!existingUser) {
+    showToast('No registered account found with this email address.');
+    return;
+  }
+
+  const otp = String(Math.floor(100000 + Math.random() * 900000));
+  appState.forgotGeneratedOtp = otp;
+  appState.forgotTargetEmail = email;
+
+  const box = document.getElementById('forgot-otp-box');
+  const hint = document.getElementById('forgot-otp-hint');
+  if (box) box.classList.remove('hidden');
+
+  let sentViaSmtp = false;
+  try {
+    const res = await fetch('/api/send-otp', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email, otp })
+    });
+    if (res.ok) {
+      const data = await res.json();
+      if (data.sentEmail) sentViaSmtp = true;
+    }
+  } catch (e) {}
+
+  if (sentViaSmtp) {
+    if (hint) hint.textContent = `Sent to ${email}`;
+    showToast(`✓ 6-Digit Password Reset OTP sent to ${email}`);
+  } else {
+    if (hint) hint.textContent = `OTP Code: ${otp}`;
+    showToast(`✓ Password Reset OTP generated for ${email}`);
+  }
+}
+
+function handleForgotPasswordReset() {
+  const email = (document.getElementById('forgot-email')?.value || '').trim().toLowerCase();
+  const otpEntered = (document.getElementById('forgot-otp-input')?.value || '').trim();
+  const newPass = (document.getElementById('forgot-new-password')?.value || '').trim();
+
+  if (!email || !newPass) {
+    showToast('Please enter your registered Email and a New Password.');
+    return;
+  }
+
+  if (newPass.length < 6) {
+    showToast('New password must be at least 6 characters long.');
+    return;
+  }
+
+  if (!appState.forgotGeneratedOtp || appState.forgotTargetEmail !== email) {
+    sendForgotOtpCode();
+    showToast('Please click Send OTP and enter the 6-digit verification code.');
+    return;
+  }
+
+  if (otpEntered !== appState.forgotGeneratedOtp) {
+    showToast('Invalid OTP code. Please enter the exact 6-digit OTP.');
+    return;
+  }
+
+  const uIdx = appState.usersDb.findIndex(u => u.email.toLowerCase() === email);
+  if (uIdx < 0) {
+    showToast('Account not found.');
+    return;
+  }
+
+  appState.usersDb[uIdx].password = newPass;
+  if (email === MASTER_ADMIN_USER.email.toLowerCase()) {
+    MASTER_ADMIN_USER.password = newPass;
+  }
+  appState.forgotGeneratedOtp = null;
+  persistState();
+
+  const signInEmailInp = document.getElementById('signin-email');
+  const signInPassInp = document.getElementById('signin-password');
+  if (signInEmailInp) signInEmailInp.value = email;
+  if (signInPassInp) signInPassInp.value = '';
+
+  openAuthMode('signin');
+  showToast('✓ Password reset successfully! Please sign in with your new password.');
+}
+
+async function sendProfilePasswordResetOtp() {
+  const email = (appState.profile.email || document.getElementById('prof-email')?.value || '').trim().toLowerCase();
+  if (!email) {
+    showToast('No email address associated with this profile.');
+    return;
+  }
+
+  const otp = String(Math.floor(100000 + Math.random() * 900000));
+  appState.profileResetOtp = otp;
+
+  const hint = document.getElementById('prof-otp-hint');
+  let sentViaSmtp = false;
+  try {
+    const res = await fetch('/api/send-otp', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email, otp })
+    });
+    if (res.ok) {
+      const data = await res.json();
+      if (data.sentEmail) sentViaSmtp = true;
+    }
+  } catch (e) {}
+
+  if (sentViaSmtp) {
+    if (hint) hint.textContent = `Sent to ${email}`;
+    showToast(`✓ 6-Digit Reset OTP sent to ${email}`);
+  } else {
+    if (hint) hint.textContent = `OTP: ${otp}`;
+    showToast(`✓ 6-Digit Reset OTP generated for ${email}`);
+  }
+}
+
+function confirmProfilePasswordReset() {
+  const otpEntered = (document.getElementById('prof-reset-otp')?.value || '').trim();
+  const newPass = (document.getElementById('prof-new-password')?.value || '').trim();
+  const email = (appState.profile.email || document.getElementById('prof-email')?.value || '').trim().toLowerCase();
+
+  if (!appState.profileResetOtp) {
+    sendProfilePasswordResetOtp();
+    showToast('Please enter the 6-digit OTP code sent to your email.');
+    return;
+  }
+
+  if (otpEntered !== appState.profileResetOtp) {
+    showToast('Invalid OTP code. Please enter the correct 6-digit OTP.');
+    return;
+  }
+
+  if (!newPass || newPass.length < 6) {
+    showToast('Please enter a new password (minimum 6 characters).');
+    return;
+  }
+
+  const uIdx = appState.usersDb.findIndex(u => u.email.toLowerCase() === email);
+  if (uIdx >= 0) {
+    appState.usersDb[uIdx].password = newPass;
+  }
+  if (email === MASTER_ADMIN_USER.email.toLowerCase()) {
+    MASTER_ADMIN_USER.password = newPass;
+  }
+
+  appState.profileResetOtp = null;
+  const otpInp = document.getElementById('prof-reset-otp');
+  const passInp = document.getElementById('prof-new-password');
+  const hint = document.getElementById('prof-otp-hint');
+  if (otpInp) otpInp.value = '';
+  if (passInp) passInp.value = '';
+  if (hint) hint.textContent = '';
+
+  persistState();
+  showToast('✓ Your password has been updated successfully!');
+}
+
 function reconnectZoomOAuth() {
   appState.profile.zoomConnected = true;
   const badge = document.getElementById('zoom-conn-badge');
@@ -1078,13 +1269,13 @@ function renderSelectedTimesAssignment() {
     ? `Play All ${videoCount} Videos Back-to-Back (Video 1 → Video ${videoCount})`
     : `Play Uploaded Video`;
 
-  const videoOptions = [
-    `<option value="ALL_SEAMLESS">${allLabel}</option>`,
-    ...appState.currentCategory.videos.map((v, i) => `<option value="${v.name}">Play Only Video #${i + 1}: ${v.name} (${v.formattedDuration})</option>`)
-  ].join('');
-
   container.innerHTML = appState.currentCategory.selectedTimes.map(timeStr => {
     const savedChoice = appState.currentCategory.slotVideoMap[timeStr] || 'ALL_SEAMLESS';
+    const videoOptions = [
+      `<option value="ALL_SEAMLESS" ${savedChoice === 'ALL_SEAMLESS' ? 'selected' : ''}>${allLabel}</option>`,
+      ...appState.currentCategory.videos.map((v, i) => `<option value="${v.name}" ${savedChoice === v.name ? 'selected' : ''}>Play Only Video #${i + 1}: ${v.name} (${v.formattedDuration})</option>`)
+    ].join('');
+
     const selectorHtml = perms.allowMultiVideo
       ? `<select onchange="updateSlotVideoChoice('${timeStr}', this.value)" class="px-3 py-1.5 rounded-lg ghl-input text-xs font-semibold">${videoOptions}</select>`
       : `<span class="text-xs font-semibold text-slate-600">Plays Uploaded Video</span>`;
@@ -1119,8 +1310,10 @@ function resetCategoryForm() {
   };
   const nameInp = document.getElementById('cat-name');
   const activeChk = document.getElementById('cat-status-active');
+  const headingEl = document.getElementById('cat-form-heading');
   if (nameInp) nameInp.value = '';
   if (activeChk) activeChk.checked = true;
+  if (headingEl) headingEl.textContent = 'Workflow Builder';
   updateBuilderStatusLabel();
   renderCategoryVideosList();
   render12HourCalendarGrid();
@@ -1206,6 +1399,49 @@ function deleteCategory(catId) {
   showToast('Workflow deleted');
 }
 
+function editCategory(catId) {
+  const cat = appState.categories.find(c => c.id === catId);
+  if (!cat) return;
+
+  appState.currentCategory = {
+    editingId: cat.id,
+    status: cat.status || 'Active',
+    videos: [...(cat.videos || [])],
+    selectedTimes: [...(cat.times || [])],
+    slotVideoMap: { ...(cat.slotVideoMap || {}) }
+  };
+
+  const nameInp = document.getElementById('cat-name');
+  const sessionSel = document.getElementById('cat-session-type');
+  const activeChk = document.getElementById('cat-status-active');
+  const headingEl = document.getElementById('cat-form-heading');
+
+  if (nameInp) nameInp.value = cat.name || '';
+  if (sessionSel && cat.sessionType) sessionSel.value = cat.sessionType;
+  if (activeChk) activeChk.checked = cat.status === 'Active';
+  if (headingEl) headingEl.textContent = `Editing Workflow: ${cat.name}`;
+
+  document.querySelectorAll('.cat-day-chk').forEach(chk => {
+    chk.checked = (cat.days || []).includes(chk.value);
+  });
+
+  const autoAdmitChk = document.getElementById('cat-auto-admit');
+  const shareSoundChk = document.getElementById('cat-share-sound');
+  const autoEndChk = document.getElementById('cat-auto-end');
+  if (autoAdmitChk) autoAdmitChk.checked = cat.autoAdmit !== false;
+  if (shareSoundChk) shareSoundChk.checked = cat.shareSound !== false;
+  if (autoEndChk) autoEndChk.checked = cat.autoEnd !== false;
+
+  updateBuilderStatusLabel();
+  renderCategoryVideosList();
+  render12HourCalendarGrid();
+
+  if (headingEl) {
+    headingEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
+  }
+  showToast(`Loaded "${cat.name}" into Workflow Builder for editing`);
+}
+
 function renderSavedCategories() {
   const listEl = document.getElementById('saved-categories-list');
   const perms = getActivePlanPermissions();
@@ -1253,8 +1489,11 @@ function renderSavedCategories() {
           </div>
         </div>
 
-        <div class="flex items-center gap-2.5 shrink-0">
+        <div class="flex flex-wrap items-center gap-2 shrink-0">
           ${draftBtnHtml}
+          <button type="button" onclick="editCategory('${cat.id}')" class="px-3 py-1.5 rounded-lg ghl-btn-secondary text-xs font-bold">
+            Edit
+          </button>
           <button type="button" onclick="triggerLiveMeetingNow('${cat.id}')" class="px-3.5 py-1.5 rounded-lg ghl-btn-primary text-xs font-bold">
             ▶ Run Now
           </button>
