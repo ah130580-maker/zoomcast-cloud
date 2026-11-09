@@ -493,5 +493,19 @@ if (-not $DryRun) {
     Start-Sleep -Seconds 2
 }
 
+# 8. Parse Zoom Saved Chat Log (meeting_saved_chat.txt) if available for exact Q1/12 message logging
+try {
+    $ZoomDocs = Join-Path ([Environment]::GetFolderPath("MyDocuments")) "Zoom"
+    if (Test-Path $ZoomDocs) {
+        $LatestChat = Get-ChildItem -Path $ZoomDocs -Filter "meeting_saved_chat.txt" -Recurse -ErrorAction SilentlyContinue |
+            Sort-Object LastWriteTime -Descending | Select-Object -First 1
+        if ($LatestChat -and ((Get-Date) - $LatestChat.LastWriteTime).TotalMinutes -le 180) {
+            Write-AutomationLog "Captured in-meeting chat log from: $($LatestChat.FullName)"
+            $ChatArchive = Join-Path $LogDir ("chat_" + (Get-Date -Format "yyyyMMdd_HHmmss") + ".txt")
+            Copy-Item $LatestChat.FullName $ChatArchive -Force
+        }
+    }
+} catch {}
+
 Write-AutomationLog "Zoom Meeting ended successfully. Session complete!"
 Write-AutomationLog "=========================================================="
