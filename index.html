@@ -203,11 +203,56 @@
             <input id="signin-email" type="email" placeholder="Enter your registered email" class="mt-1 w-full px-3.5 py-2.5 rounded-xl ghl-input text-sm" />
           </div>
           <div>
-            <label class="text-xs font-bold text-slate-700">Password</label>
+            <div class="flex items-center justify-between">
+              <label class="text-xs font-bold text-slate-700">Password</label>
+              <button type="button" onclick="openAuthMode('forgot')" class="text-xs font-bold text-blue-600 hover:underline">
+                Forgot Password?
+              </button>
+            </div>
             <input id="signin-password" type="password" placeholder="Enter your password" class="mt-1 w-full px-3.5 py-2.5 rounded-xl ghl-input text-sm" onkeydown="if(event.key==='Enter') handleEmailSignIn()" />
           </div>
           <button type="button" onclick="handleEmailSignIn()" class="w-full py-3 rounded-xl ghl-btn-primary font-bold text-sm">
             Sign In to Workspace
+          </button>
+        </div>
+
+        <!-- FORGOT PASSWORD FORM (RESET VIA EMAIL OTP) -->
+        <div id="form-forgot" class="hidden space-y-4">
+          <div class="p-3.5 rounded-xl bg-slate-50 border border-slate-200 flex items-center justify-between">
+            <div>
+              <h4 class="text-xs font-extrabold text-slate-900">Reset Password via Email OTP</h4>
+              <p class="text-[11px] text-slate-500 mt-0.5">Verify your email with a 6-digit OTP to set a new password.</p>
+            </div>
+            <button type="button" onclick="openAuthMode('signin')" class="text-xs font-bold text-blue-600 hover:underline whitespace-nowrap">
+              ← Back to Sign In
+            </button>
+          </div>
+
+          <div>
+            <label class="text-xs font-bold text-slate-700">Registered Email Address</label>
+            <div class="mt-1 flex gap-2">
+              <input id="forgot-email" type="email" placeholder="Enter your registered email" class="flex-1 px-3.5 py-2.5 rounded-xl ghl-input text-sm" />
+              <button type="button" onclick="sendForgotOtpCode()" class="px-3.5 py-2.5 rounded-xl ghl-btn-secondary text-xs font-bold">
+                Send OTP
+              </button>
+            </div>
+          </div>
+
+          <div id="forgot-otp-box" class="hidden p-3.5 rounded-xl bg-blue-50/70 border border-blue-200 space-y-2">
+            <div class="flex items-center justify-between">
+              <label class="text-xs font-bold text-blue-900">Enter 6-Digit Reset OTP Code</label>
+              <span id="forgot-otp-hint" class="text-[11px] font-mono font-bold text-blue-700"></span>
+            </div>
+            <input id="forgot-otp-input" type="text" maxlength="6" placeholder="Enter 6-digit OTP" class="w-full px-3.5 py-2 rounded-lg ghl-input text-sm font-mono tracking-widest text-center" />
+          </div>
+
+          <div>
+            <label class="text-xs font-bold text-slate-700">New Password</label>
+            <input id="forgot-new-password" type="password" placeholder="Enter new password" class="mt-1 w-full px-3.5 py-2.5 rounded-xl ghl-input text-sm" />
+          </div>
+
+          <button type="button" onclick="handleForgotPasswordReset()" class="w-full py-3 rounded-xl ghl-btn-primary font-bold text-sm">
+            Verify OTP & Reset Password
           </button>
         </div>
 
@@ -354,7 +399,7 @@
           <span class="text-[10px] uppercase tracking-wider text-slate-400 font-bold block">Active Plan</span>
           <div class="flex items-center justify-between mt-0.5">
             <span id="sidebar-plan-badge" class="text-xs font-extrabold text-blue-400">Enterprise</span>
-            <button onclick="switchView('auth'); showAuthStep('plan');" class="text-[11px] font-bold text-emerald-400 hover:underline">Upgrade</button>
+            <button id="sidebar-upgrade-btn" onclick="switchView('auth'); showAuthStep('plan');" class="text-[11px] font-bold text-emerald-400 hover:underline">Upgrade</button>
           </div>
         </div>
         <div class="flex items-center justify-between gap-2">
@@ -701,6 +746,38 @@
               <button onclick="saveProfileDetails()" class="px-5 py-2.5 rounded-xl ghl-btn-primary text-xs font-bold">
                 Save Profile Changes
               </button>
+            </div>
+
+            <!-- Forgot / Reset Password via OTP inside Profile -->
+            <div class="mt-6 pt-5 border-t border-slate-200">
+              <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-3">
+                <div>
+                  <h3 class="text-sm font-extrabold text-slate-900">Password & Security (Forgot / Reset Password via OTP)</h3>
+                  <p class="text-xs text-slate-500">Request a 6-digit OTP on your email to reset or update your account password.</p>
+                </div>
+                <button type="button" onclick="sendProfilePasswordResetOtp()" class="px-4 py-2 rounded-xl ghl-btn-secondary text-xs font-bold self-start sm:self-auto">
+                  Send Reset OTP to Email
+                </button>
+              </div>
+
+              <div id="profile-otp-reset-box" class="grid grid-cols-1 md:grid-cols-3 gap-3 items-end">
+                <div>
+                  <div class="flex items-center justify-between">
+                    <label class="text-xs font-bold text-slate-700">6-Digit OTP Code</label>
+                    <span id="prof-otp-hint" class="text-[11px] font-mono font-bold text-blue-600"></span>
+                  </div>
+                  <input id="prof-reset-otp" type="text" maxlength="6" placeholder="Enter 6-digit OTP" class="mt-1 w-full px-3.5 py-2.5 rounded-xl ghl-input text-sm font-mono tracking-widest text-center" />
+                </div>
+                <div>
+                  <label class="text-xs font-bold text-slate-700">New Password</label>
+                  <input id="prof-new-password" type="password" placeholder="Enter new password" class="mt-1 w-full px-3.5 py-2.5 rounded-xl ghl-input text-sm" />
+                </div>
+                <div>
+                  <button type="button" onclick="confirmProfilePasswordReset()" class="w-full py-2.5 px-4 rounded-xl ghl-btn-primary text-xs sm:text-sm font-bold">
+                    Verify OTP & Update Password
+                  </button>
+                </div>
+              </div>
             </div>
           </div>
 
