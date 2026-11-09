@@ -5,6 +5,7 @@ param(
 
 $WebRoot = Join-Path $PSScriptRoot "web-portal"
 $ConfigPath = Join-Path $PSScriptRoot "config.json"
+$SmtpConfigPath = Join-Path $PSScriptRoot "smtp-config.json"
 $RunnerScript = Join-Path $PSScriptRoot "Run-ZoomMeeting.ps1"
 $SchedScript = Join-Path $PSScriptRoot "Register-ZoomSchedule.ps1"
 
@@ -14,7 +15,7 @@ $Listener.Prefixes.Add($Prefix)
 $Listener.Start()
 
 Write-Host "==========================================================" -ForegroundColor Cyan
-Write-Host " ZoomCast Cloud VIP - SaaS Web Portal Server Running" -ForegroundColor Green
+Write-Host " ZoomCast CRM - SaaS Web Portal Server Running" -ForegroundColor Green
 Write-Host " URL: $Prefix" -ForegroundColor Yellow
 Write-Host "==========================================================" -ForegroundColor Cyan
 
@@ -37,6 +38,62 @@ try {
             & powershell.exe -NoProfile -ExecutionPolicy Bypass -File $SchedScript -ConfigPath $ConfigPath | Out-Null
 
             $RespBytes = [System.Text.Encoding]::UTF8.GetBytes('{"status":"ok"}')
+            $Res.ContentType = "application/json"
+            $Res.OutputStream.Write($RespBytes, 0, $RespBytes.Length)
+            $Res.Close()
+            continue
+        }
+
+        if ($Path -eq "/api/save-smtp" -and $Req.HttpMethod -eq "POST") {
+            $Reader = New-Object System.IO.StreamReader($Req.InputStream, $Req.ContentEncoding)
+            $Body = $Reader.ReadToEnd()
+            $Reader.Close()
+            Set-Content -Path $SmtpConfigPath -Value $Body -Encoding UTF8
+
+            $RespBytes = [System.Text.Encoding]::UTF8.GetBytes('{"status":"ok"}')
+            $Res.ContentType = "application/json"
+            $Res.OutputStream.Write($RespBytes, 0, $RespBytes.Length)
+            $Res.Close()
+            continue
+        }
+
+        if ($Path -eq "/api/send-otp" -and $Req.HttpMethod -eq "POST") {
+            $Reader = New-Object System.IO.StreamReader($Req.InputStream, $Req.ContentEncoding)
+            $Body = $Reader.ReadToEnd()
+            $Reader.Close()
+            $ReqData = $Body | ConvertFrom-Json
+            $ToEmail = $ReqData.email
+            $OtpCode = $ReqData.otp
+
+            $SentRealEmail = $false
+            $ErrorMessage = ""
+
+            if (Test-Path $SmtpConfigPath) {
+                try {
+                    $SmtpCfg = Get-Content $SmtpConfigPath -Raw | ConvertFrom-Json
+                    if (-not [string]::IsNullOrWhiteSpace($SmtpCfg.gmailUser) -and -not [string]::IsNullOrWhiteSpace($SmtpCfg.gmailAppPassword)) {
+                        $SmtpClient = New-Object System.Net.Mail.SmtpClient("smtp.gmail.com", 587)
+                        $SmtpClient.EnableSsl = $true
+                        $SmtpClient.Credentials = New-Object System.Net.NetworkCredential($SmtpCfg.gmailUser, $SmtpCfg.gmailAppPassword)
+                        $MailMsg = New-Object System.Net.Mail.MailMessage
+                        $MailMsg.From = New-Object System.Net.Mail.MailAddress($SmtpCfg.gmailUser, "ZoomCast CRM Verification")
+                        $MailMsg.To.Add($ToEmail)
+                        $MailMsg.Subject = "Your ZoomCast CRM Verification Code: $OtpCode"
+                        $MailMsg.Body = "Hello,`n`nYour 6-digit verification OTP code for ZoomCast CRM is: $OtpCode`n`nThis code is valid for 10 minutes."
+                        $SmtpClient.Send($MailMsg)
+                        $SentRealEmail = $true
+                    }
+                } catch {
+                    $ErrorMessage = $_.Exception.Message
+                }
+            }
+
+            $ResultJson = @{
+                status    = "ok"
+                sentEmail = $SentRealEmail
+                error     = $ErrorMessage
+            } | ConvertTo-Json
+            $RespBytes = [System.Text.Encoding]::UTF8.GetBytes($ResultJson)
             $Res.ContentType = "application/json"
             $Res.OutputStream.Write($RespBytes, 0, $RespBytes.Length)
             $Res.Close()
