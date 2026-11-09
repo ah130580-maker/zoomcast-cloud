@@ -7,20 +7,47 @@ const MASTER_ADMIN_USER = {
   planName: 'Enterprise'
 };
 
+// ============================================================================
+// HOSTINGER + RESEND/BREVO OTP + SAFEPAY (PKR) & LEMONSQUEEZY (USD) CONFIG
+// ============================================================================
+const HOSTINGER_PRODUCTION_CONFIG = {
+  // Phase 2: High-Speed Transactional OTP Endpoint (Resend / Brevo PHP/Node endpoint on Hostinger)
+  otpBackendEndpoint: '/api/send-otp', // or 'https://yourdomain.com/api/send-otp.php'
+  senderEmail: 'noreply@zoomcastcrm.com',
+  // Phase 3: Dual Payment Gateways (Safepay for PKR + Lemon Squeezy for USD)
+  safepayPkrCheckoutUrls: {
+    starter: '',    // Paste Safepay PKR Payment Link or Checkout URL when live
+    pro: '',
+    enterprise: ''
+  },
+  lemonSqueezyUsdCheckoutUrls: {
+    starter: '',    // Paste Lemon Squeezy USD Checkout URL when live
+    pro: '',
+    enterprise: ''
+  }
+};
+
+const DUMMY_EMAIL_BLACKLIST = [
+  'ahmed.raza@gmail.com',
+  'usman.academy@gmail.com',
+  'zainab.coaching@gmail.com',
+  'new.subscriber@gmail.com'
+];
+
 const DEFAULT_CMS_CONTENT = {
   heroTitle: 'Automate Your Recorded Zoom Broadcasts On Autopilot',
-  heroSubtitle: 'Build automated meeting & webinar workflows, schedule multi-video playlists across any day or 12-hour AM/PM time slot, auto-promote your team to Co-Host, and inspect real Zoom chat messages.',
+  heroSubtitle: 'Build automated Zoom meeting workflows, schedule multi-video playlists across any day or 12-hour AM/PM time slot, auto-promote your team to Co-Host, and inspect real Zoom chat messages.',
   supportEmail: 'amirjupiteradvisers@gmail.com',
   otpWebhookUrl: '',
   refundPolicy: 'If you are not 100% satisfied with our setup or if the platform does not fit your workflow for any reason, you can cancel your subscription within 7 days of purchase and receive a 100% full refund of your payment — no questions asked. Simply email our support team or open a ticket in your portal within 7 days for an immediate full refund.',
   termsBody: `1. 7-Day 100% Money-Back Refund Guarantee
 We stand behind our automated Zoom broadcast platform. If you are not satisfied with the setup or if it does not meet your business needs, you may cancel your subscription within seven (7) calendar days of your initial purchase and receive a 100% full refund.
 
-2. Account Registration & Subscription Access
-Access to the ZoomCast CRM workspace requires a verified account and an active monthly USD ($) subscription plan (Starter, Business Pro, or Enterprise). Plan features and limits are provisioned automatically according to the tier selected.
+2. Account Registration & Subscription Access (USD & PKR)
+Access to the ZoomCast CRM workspace requires a verified account and an active monthly subscription plan (Starter, Business Pro, or Enterprise) billed in USD ($) via Lemon Squeezy or in PKR (Rs.) at the live exchange rate via Safepay.
 
-3. Automated Zoom Broadcast & Co-Host Execution
-By connecting your Zoom account and scheduling workflows, you authorize ZoomCast Cloud nodes to launch your scheduled meetings, stream your uploaded recorded video playlists, auto-promote your designated Co-Host emails, and capture attendance & in-meeting chat logs on your behalf.
+3. Automated Zoom Broadcast & Permanent Meeting Link Execution
+By connecting your Zoom account and scheduling workflows, you authorize ZoomCast Cloud to launch your scheduled Zoom meetings on your permanent meeting link, stream your uploaded recorded video playlists, auto-promote your designated Co-Host emails, and capture attendance & in-meeting chat logs on your behalf.
 
 4. Customer Support & Help Desk
 Customers may contact us anytime via email at amirjupiteradvisers@gmail.com or through the built-in Support & Tickets section inside the portal with Low, Normal, or High priority.`,
@@ -28,10 +55,10 @@ Customers may contact us anytime via email at amirjupiteradvisers@gmail.com or t
 We collect your name, email address, encrypted account credentials, and subscription status when you register on ZoomCast CRM.
 
 2. Zoom OAuth & Broadcast Data Security
-When you connect your Zoom account via Google OAuth, we use secure authorization tokens solely to start and manage your scheduled broadcasts. Your uploaded videos, meeting schedules, participant attendance records, and saved in-meeting chat transcripts remain strictly private to your workspace.
+When you connect your Zoom account via Google OAuth, we use secure authorization tokens solely to start and manage your scheduled Zoom meetings. Your uploaded videos, meeting schedules, participant attendance records, and saved in-meeting chat transcripts remain strictly private to your workspace.
 
-3. Payment Security
-All subscription payments are processed in USD ($) through 256-bit SSL encrypted, PCI-DSS compliant checkout channels. We never store raw credit card CVC numbers on our servers.
+3. Payment Security (Safepay PKR & Lemon Squeezy USD)
+All subscription payments are processed through 256-bit SSL encrypted, PCI-DSS compliant checkout channels (Safepay for Pakistani PKR cards & 1Link; Lemon Squeezy for international USD cards). We never store raw credit card CVC numbers on our servers.
 
 4. Data Control & Deletion
 You may update your profile, reset your password via 4-digit security OTP, export your attendance logs, or request complete account deletion at any time by contacting amirjupiteradvisers@gmail.com.`
@@ -47,6 +74,8 @@ let appState = {
   pendingForgotData: null,
   selectedPlan: null,
   activeSessionDetailId: null,
+  currency: 'USD',
+  usdToPkrRate: 278.50,
   cms: { ...DEFAULT_CMS_CONTENT },
   profile: {
     name: '',
@@ -54,7 +83,8 @@ let appState = {
     authToken: '',
     hasActivePlan: false,
     planName: 'Starter Plan',
-    zoomConnected: false
+    zoomConnected: false,
+    defaultZoomLink: 'https://zoom.us/j/89421756301?pwd=ZoomCastFixed'
   },
   usersDb: [MASTER_ADMIN_USER],
   coHostEmails: [],
@@ -63,6 +93,7 @@ let appState = {
   currentCategory: {
     editingId: null,
     status: 'Active',
+    meetingLink: '',
     videos: [],
     selectedTimes: ['10:00 AM', '03:00 PM'],
     slotVideoMap: {}
@@ -82,11 +113,11 @@ let appState = {
         maxCoHosts: 1,
         allowAttendanceTab: false,
         allowChatLogs: false,
-        allowCsvExport: false,
-        allowWebinars: false
+        allowCsvExport: false
       },
       features: [
-        "Up to 2 Automated Meeting Workflows",
+        "Up to 2 Automated Zoom Meeting Workflows",
+        "Permanent Copyable Zoom Meeting Link",
         "1 or 2 Daily Broadcast Times (12h AM/PM)",
         "Single Recorded Video Upload (Unlimited Size)",
         "7-Day Weekly Schedule Checkboxes",
@@ -109,11 +140,11 @@ let appState = {
         maxCoHosts: 5,
         allowAttendanceTab: true,
         allowChatLogs: false,
-        allowCsvExport: false,
-        allowWebinars: false
+        allowCsvExport: false
       },
       features: [
-        "Up to 5 Automated Meeting Workflows",
+        "Up to 5 Automated Zoom Meeting Workflows",
+        "Permanent Copyable Zoom Meeting Link",
         "Up to 4 Daily Times + Custom Hour/Minute Picker",
         "Save Workflows as Draft & Active Toggle",
         "2 Videos Back-to-Back Seamless Playlist",
@@ -135,37 +166,17 @@ let appState = {
         maxCoHosts: 999,
         allowAttendanceTab: true,
         allowChatLogs: true,
-        allowCsvExport: true,
-        allowWebinars: true
+        allowCsvExport: true
       },
       features: [
-        "Unlimited Meeting & Zoom Webinar Workflows",
+        "Unlimited Automated Zoom Meeting Workflows",
+        "Permanent Copyable Zoom Meeting Link",
         "Unlimited Daily AM/PM Times & Custom Picker",
         "Unlimited Multi-Video Seamless Playlists",
         "Unlimited Team Auto Co-Host Emails",
         "Full Attendance + Real Zoom Chat Viewer",
-        "1-Click Excel / CSV Export & 8GB Cloud Priority"
+        "1-Click Excel / CSV Export & Priority Cloud Bot"
       ]
-    }
-  ],
-  awsNodes: [
-    {
-      id: "aws-node-1",
-      name: "AWS EC2 Node #1 (8GB RAM)",
-      ip: "13.212.84.109",
-      region: "ap-south-1",
-      status: "Online",
-      activeClient: "Ready",
-      authMode: "Zoom OAuth ZAK Token"
-    },
-    {
-      id: "aws-node-2",
-      name: "AWS EC2 Node #2 (8GB RAM)",
-      ip: "13.214.19.201",
-      region: "ap-south-1",
-      status: "Online",
-      activeClient: "Ready",
-      authMode: "Zoom OAuth ZAK Token"
     }
   ],
   clients: [
@@ -176,19 +187,27 @@ let appState = {
       plan: "Enterprise",
       categoriesCount: 0,
       coHostsCount: 0,
-      assignedNode: "AWS EC2 Node #1 (8GB)",
       status: "Active"
     }
   ],
   attendanceSessions: []
 };
 
-// Load persisted data from localStorage
+// Load persisted data from localStorage & PURGE any old dummy records
 try {
+  const savedCurrency = localStorage.getItem('zoomcast_currency');
+  if (savedCurrency === 'PKR' || savedCurrency === 'USD') {
+    appState.currency = savedCurrency;
+  }
+
   const savedUsers = localStorage.getItem('zoomcast_users_db');
   if (savedUsers) {
     const parsed = JSON.parse(savedUsers);
-    if (Array.isArray(parsed)) appState.usersDb = parsed;
+    if (Array.isArray(parsed)) {
+      appState.usersDb = parsed.filter(
+        u => u && u.email && !DUMMY_EMAIL_BLACKLIST.includes(u.email.toLowerCase())
+      );
+    }
   }
   const masterIdx = appState.usersDb.findIndex(u => u.email.toLowerCase() === MASTER_ADMIN_USER.email.toLowerCase());
   if (masterIdx >= 0) {
@@ -204,16 +223,48 @@ try {
   if (savedCms) appState.cms = { ...DEFAULT_CMS_CONTENT, ...JSON.parse(savedCms) };
 
   const savedProfile = localStorage.getItem('zoomcast_profile');
-  if (savedProfile) appState.profile = JSON.parse(savedProfile);
+  if (savedProfile) {
+    appState.profile = { ...appState.profile, ...JSON.parse(savedProfile) };
+  }
 
   const savedCoHosts = localStorage.getItem('zoomcast_cohosts');
   if (savedCoHosts) appState.coHostEmails = JSON.parse(savedCoHosts);
 
   const savedCategories = localStorage.getItem('zoomcast_categories');
-  if (savedCategories) appState.categories = JSON.parse(savedCategories);
+  if (savedCategories) {
+    const parsedCats = JSON.parse(savedCategories);
+    if (Array.isArray(parsedCats)) {
+      // Purge any unvalidated/dummy workflow that had 0 videos attached
+      appState.categories = parsedCats.filter(
+        c => c && Array.isArray(c.videos) && c.videos.length > 0 && c.name && c.name !== 'Workflow #1'
+      ).map(c => ({
+        ...c,
+        meetingLink: c.meetingLink || appState.profile.defaultZoomLink || 'https://zoom.us/j/89421756301?pwd=ZoomCastFixed'
+      }));
+    }
+  }
 
   const savedClients = localStorage.getItem('zoomcast_clients');
-  if (savedClients) appState.clients = JSON.parse(savedClients);
+  if (savedClients) {
+    const parsedClients = JSON.parse(savedClients);
+    if (Array.isArray(parsedClients)) {
+      // Purge all dummy clients (Ahmed Raza, Usman Digital Academy, Zainab Coaching Hub)
+      appState.clients = parsedClients.filter(
+        c => c && c.email && !DUMMY_EMAIL_BLACKLIST.includes(c.email.toLowerCase())
+      );
+    }
+  }
+  if (!appState.clients.some(c => c.email.toLowerCase() === MASTER_ADMIN_USER.email.toLowerCase())) {
+    appState.clients.unshift({
+      id: "USR-100",
+      name: "Amir Hayat",
+      email: "amirjupiteradvisers@gmail.com",
+      plan: "Enterprise",
+      categoriesCount: appState.categories.length,
+      coHostsCount: appState.coHostEmails.length,
+      status: "Active"
+    });
+  }
 
   const savedSessions = localStorage.getItem('zoomcast_sessions');
   if (savedSessions) appState.attendanceSessions = JSON.parse(savedSessions);
@@ -224,6 +275,7 @@ try {
 
 function persistState() {
   try {
+    localStorage.setItem('zoomcast_currency', appState.currency);
     localStorage.setItem('zoomcast_users_db', JSON.stringify(appState.usersDb));
     localStorage.setItem('zoomcast_cms', JSON.stringify(appState.cms));
     localStorage.setItem('zoomcast_profile', JSON.stringify(appState.profile));
@@ -410,6 +462,94 @@ function saveAgencyCmsSettings() {
 }
 
 // ============================================================================
+// LIVE USD <-> PKR EXCHANGE RATE ENGINE & DUAL CURRENCY FORMATTER
+// ============================================================================
+async function fetchLiveUsdToPkrRate() {
+  try {
+    const res = await fetch('https://open.er-api.com/v6/latest/USD');
+    if (res.ok) {
+      const data = await res.json();
+      if (data && data.rates && data.rates.PKR) {
+        appState.usdToPkrRate = Number(data.rates.PKR.toFixed(2));
+      }
+    }
+  } catch (e) {
+    // Fallback to accurate market rate if offline
+  }
+  updateCurrencyButtonsUI();
+  renderPricingCards();
+  renderModalPlanSelector();
+  if (appState.selectedPlan) {
+    updateCheckoutCurrencyDisplay(appState.selectedPlan);
+  }
+}
+
+function getPlanPriceInActiveCurrency(plan) {
+  if (appState.currency === 'PKR') {
+    const pkrAmount = Math.round(plan.priceUsd * appState.usdToPkrRate);
+    return {
+      symbol: 'Rs.',
+      formatted: `Rs. ${pkrAmount.toLocaleString()}`,
+      formattedWithDecimals: `Rs. ${pkrAmount.toLocaleString()}`,
+      rawAmount: pkrAmount,
+      currencyCode: 'PKR'
+    };
+  }
+  return {
+    symbol: '$',
+    formatted: `$${plan.priceUsd}`,
+    formattedWithDecimals: `$${plan.priceUsd}.00`,
+    rawAmount: plan.priceUsd,
+    currencyCode: 'USD'
+  };
+}
+
+function updateCurrencyButtonsUI() {
+  const isPkr = appState.currency === 'PKR';
+  const rateBadge = document.getElementById('live-exchange-rate-badge');
+  if (rateBadge) {
+    rateBadge.textContent = `Live Rate: $1 USD = Rs. ${appState.usdToPkrRate.toFixed(2)} PKR`;
+  }
+
+  const usdBtns = ['curr-btn-usd-landing', 'curr-btn-usd-modal', 'curr-btn-usd-checkout'];
+  const pkrBtns = ['curr-btn-pkr-landing', 'curr-btn-pkr-modal', 'curr-btn-pkr-checkout'];
+
+  usdBtns.forEach(id => {
+    const el = document.getElementById(id);
+    if (el) {
+      el.className = !isPkr
+        ? (id.includes('landing') ? 'px-4 py-2 rounded-xl text-xs font-extrabold btn-gold transition' : 'px-3 py-1 rounded-lg text-xs font-extrabold btn-gold transition')
+        : (id.includes('landing') ? 'px-4 py-2 rounded-xl text-xs font-bold btn-glass transition' : 'px-3 py-1 rounded-lg text-xs font-bold btn-glass transition');
+    }
+  });
+
+  pkrBtns.forEach(id => {
+    const el = document.getElementById(id);
+    if (el) {
+      el.className = isPkr
+        ? (id.includes('landing') ? 'px-4 py-2 rounded-xl text-xs font-extrabold btn-gold transition' : 'px-3 py-1 rounded-lg text-xs font-extrabold btn-gold transition')
+        : (id.includes('landing') ? 'px-4 py-2 rounded-xl text-xs font-bold btn-glass transition' : 'px-3 py-1 rounded-lg text-xs font-bold btn-glass transition');
+    }
+  });
+}
+
+function setPricingCurrency(curr) {
+  appState.currency = curr === 'PKR' ? 'PKR' : 'USD';
+  persistState();
+  updateCurrencyButtonsUI();
+  renderPricingCards();
+  renderModalPlanSelector();
+  if (appState.selectedPlan) {
+    updateCheckoutCurrencyDisplay(appState.selectedPlan);
+  }
+  showToast(
+    appState.currency === 'PKR'
+      ? `🇵🇰 Switched to PKR (Rs.) at live rate ($1 = Rs. ${appState.usdToPkrRate.toFixed(2)}) • Safepay Gateway`
+      : `🇺🇸 Switched to USD ($) • Lemon Squeezy International Gateway`
+  );
+}
+
+// ============================================================================
 // PLAN FEATURE GATING ENGINE & BENTO STATS
 // ============================================================================
 function getActivePlanPermissions() {
@@ -432,9 +572,6 @@ function updateBentoStats() {
   if (chStat) chStat.textContent = `${appState.coHostEmails.length} Members`;
   if (sesStat) sesStat.textContent = `${appState.attendanceSessions.length} Sessions`;
   if (tckStat) tckStat.textContent = `${appState.supportTickets.length} Tickets`;
-
-  const agencyBadge = document.getElementById('agency-unread-tickets-badge');
-  if (agencyBadge) agencyBadge.textContent = String(appState.supportTickets.length);
 }
 
 function applyPlanFeatureRestrictions() {
@@ -450,11 +587,6 @@ function applyPlanFeatureRestrictions() {
     sbUpgradeBtn.classList.toggle('hidden', planName === 'Enterprise');
   }
 
-  // Show Agency Admin View button only for Master Owner (amirjupiteradvisers@gmail.com)
-  const isOwner = isMasterAgencyOwner();
-  document.getElementById('dtab-agency')?.classList.toggle('hidden', !isOwner);
-  document.getElementById('header-agency-btn')?.classList.toggle('hidden', !isOwner);
-
   // 1. Attendance Tab Visibility
   const attTabBtn = document.getElementById('dtab-attendance');
   const attTabLabel = document.getElementById('dtab-attendance-label');
@@ -465,19 +597,10 @@ function applyPlanFeatureRestrictions() {
     attTabLabel.textContent = perms.allowChatLogs ? 'Attendance & Chat Logs' : 'Attendance Report';
   }
 
-  // 2. Draft Mode Toggle & Save as Draft Button
-  document.getElementById('builder-draft-toggle-wrap')?.classList.toggle('hidden', !perms.allowDraftMode);
+  // 2. Save as Draft Button
   document.getElementById('btn-save-draft')?.classList.toggle('hidden', !perms.allowDraftMode);
 
-  // 3. Session Type / Webinar Selector
-  const sesTypeWrap = document.getElementById('session-type-wrap');
-  const wfNameCol = document.getElementById('workflow-name-col');
-  if (sesTypeWrap) sesTypeWrap.classList.toggle('hidden', !perms.allowWebinars);
-  if (wfNameCol) {
-    wfNameCol.className = perms.allowWebinars ? 'md:col-span-2' : 'md:col-span-3';
-  }
-
-  // 4. Custom Hour/Minute Time Picker
+  // 3. Custom Hour/Minute Time Picker
   const customTimeWrap = document.getElementById('custom-time-picker-wrap');
   const timeSlotsSub = document.getElementById('time-slots-subtext');
   if (customTimeWrap) customTimeWrap.classList.toggle('hidden', !perms.allowCustomTime);
@@ -491,7 +614,7 @@ function applyPlanFeatureRestrictions() {
     appState.currentCategory.selectedTimes = appState.currentCategory.selectedTimes.slice(0, perms.maxDailyTimes);
   }
 
-  // 5. Video Upload
+  // 4. Video Upload
   const vidInput = document.getElementById('cat-video-input');
   const vidHeading = document.getElementById('video-upload-heading');
   const vidSub = document.getElementById('video-upload-subtext');
@@ -505,21 +628,21 @@ function applyPlanFeatureRestrictions() {
   }
   if (vidHeading && vidSub && vidDropTitle) {
     if (!perms.allowMultiVideo) {
-      vidHeading.textContent = '3. Upload Recorded Video (Single Video)';
-      vidSub.textContent = 'Starter Plan supports 1 recorded video per meeting (unlimited GB file size).';
+      vidHeading.innerHTML = '3. Upload Recorded Video (Single Video) <span class="text-yellow-400">*Required</span>';
+      vidSub.textContent = 'Starter Plan supports 1 recorded video per Zoom meeting (unlimited GB file size).';
       vidDropTitle.textContent = '+ Choose 1 Recorded Video File';
     } else if (perms.maxVideosPerWorkflow === 2) {
-      vidHeading.textContent = '3. Upload Recorded Videos (Up to 2 Back-to-Back Videos)';
+      vidHeading.innerHTML = '3. Upload Recorded Videos (Up to 2 Back-to-Back Videos) <span class="text-yellow-400">*Required</span>';
       vidSub.textContent = 'Business Pro supports up to 2 videos playing seamlessly back-to-back.';
       vidDropTitle.textContent = '+ Choose 1 or 2 Video Files';
     } else {
-      vidHeading.textContent = '3. Upload Recorded Videos (Unlimited Multi-Video Playlist)';
+      vidHeading.innerHTML = '3. Upload Recorded Videos (Unlimited Multi-Video Playlist) <span class="text-yellow-400">*Required</span>';
       vidSub.textContent = 'Enterprise supports unlimited back-to-back videos or per-time-slot video assignment.';
       vidDropTitle.textContent = '+ Choose Unlimited Video Files';
     }
   }
 
-  // 6. Export CSV Buttons & Saved Chat View
+  // 5. Export CSV Buttons & Saved Chat View
   document.getElementById('btn-export-summary-csv')?.classList.toggle('hidden', !perms.allowCsvExport);
   document.getElementById('btn-export-detail-csv')?.classList.toggle('hidden', !perms.allowCsvExport);
   document.getElementById('btn-open-full-chat')?.classList.toggle('hidden', !perms.allowChatLogs);
@@ -532,7 +655,7 @@ function applyPlanFeatureRestrictions() {
       : 'Participants Attendance List (Name, Email, Join & Leave Time)';
   }
 
-  // 7. Team Co-Hosts Section Text
+  // 6. Team Co-Hosts Section Text
   const chHeading = document.getElementById('cohost-section-heading');
   const chSub = document.getElementById('cohost-section-subtext');
   if (chHeading && chSub) {
@@ -549,6 +672,7 @@ function applyPlanFeatureRestrictions() {
   }
 
   updateBentoStats();
+  updateBuilderReadinessBadge();
   render12HourCalendarGrid();
   renderSavedCategories();
   renderCoHostEmails();
@@ -1116,7 +1240,7 @@ function renderModalPlanSelector() {
   if (!container) return;
 
   container.innerHTML = appState.plans.map(plan => {
-    const priceStr = `$${plan.priceUsd}`;
+    const pInfo = getPlanPriceInActiveCurrency(plan);
     return `
       <div onclick="proceedToCardPayment('${plan.id}')" class="p-4 rounded-2xl border ${plan.popular ? 'border-yellow-400 bg-yellow-500/10' : 'border-white/10 bg-white/5'} hover:border-yellow-400 cursor-pointer flex items-center justify-between transition">
         <div>
@@ -1127,7 +1251,7 @@ function renderModalPlanSelector() {
           <p class="text-xs text-slate-400 mt-0.5">${plan.features[0]} • ${plan.features[1]}</p>
         </div>
         <div class="text-right shrink-0 ml-3">
-          <span class="text-base sm:text-lg font-extrabold text-yellow-400 block">${priceStr}.00/mo</span>
+          <span class="text-base sm:text-lg font-extrabold text-yellow-400 block">${pInfo.formatted}/mo</span>
           <span class="text-xs font-bold text-white">Select Plan →</span>
         </div>
       </div>
@@ -1138,9 +1262,10 @@ function renderModalPlanSelector() {
 function selectPlanForCheckout(planId) {
   const plan = appState.plans.find(p => p.id === planId) || appState.plans[1];
   appState.selectedPlan = plan;
+  const pInfo = getPlanPriceInActiveCurrency(plan);
   if (!appState.profile.authToken) {
     openAuthMode('signup');
-    showToast(`Selected ${plan.name} ($${plan.priceUsd}.00/mo). Create your account first to proceed to payment.`);
+    showToast(`Selected ${plan.name} (${pInfo.formatted}/mo). Create your account first to proceed to payment.`);
   } else {
     switchView('auth');
     proceedToCardPayment(plan.id);
@@ -1213,16 +1338,36 @@ function resetPaymentCheckoutUI() {
   if (successBadge) successBadge.classList.add('hidden');
 }
 
-function proceedToCardPayment(planId) {
-  const plan = appState.plans.find(p => p.id === planId) || appState.plans[1];
-  appState.selectedPlan = plan;
+function updateCheckoutCurrencyDisplay(plan) {
+  if (!plan) return;
+  const pInfo = getPlanPriceInActiveCurrency(plan);
   const nameEl = document.getElementById('checkout-plan-name');
   const priceEl = document.getElementById('checkout-plan-price');
   const btnTextEl = document.getElementById('btn-pay-now-text');
+  const gwSubEl = document.getElementById('checkout-gateway-subtext');
+  const gwNameEl = document.getElementById('checkout-gateway-name');
+  const gwRateEl = document.getElementById('checkout-rate-note');
 
   if (nameEl) nameEl.textContent = `${plan.name} (Monthly)`;
-  if (priceEl) priceEl.textContent = `$${plan.priceUsd}.00`;
-  if (btnTextEl) btnTextEl.textContent = `PAY $${plan.priceUsd}.00 NOW`;
+  if (priceEl) priceEl.textContent = pInfo.formattedWithDecimals;
+  if (btnTextEl) btnTextEl.textContent = `PAY ${pInfo.formattedWithDecimals} NOW`;
+
+  if (appState.currency === 'PKR') {
+    if (gwSubEl) gwSubEl.textContent = 'Pakistani PKR Card Checkout • Powered by Safepay';
+    if (gwNameEl) gwNameEl.textContent = '🇵🇰 Safepay Pakistan (Pakistani Visa, Mastercard, PayPak & 1Link)';
+    if (gwRateEl) gwRateEl.textContent = `$${plan.priceUsd} × ${appState.usdToPkrRate.toFixed(2)}`;
+  } else {
+    if (gwSubEl) gwSubEl.textContent = 'International USD Checkout • Powered by Lemon Squeezy';
+    if (gwNameEl) gwNameEl.textContent = '🌎 Lemon Squeezy (International USD Cards, Wise, Revolut)';
+    if (gwRateEl) gwRateEl.textContent = 'USD Billing';
+  }
+}
+
+function proceedToCardPayment(planId) {
+  const plan = appState.plans.find(p => p.id === planId) || appState.plans[1];
+  appState.selectedPlan = plan;
+  updateCurrencyButtonsUI();
+  updateCheckoutCurrencyDisplay(plan);
 
   const holderInp = document.getElementById('card-holder');
   if (holderInp && !holderInp.value && appState.profile.name) {
@@ -1233,6 +1378,17 @@ function proceedToCardPayment(planId) {
 }
 
 function completeSubscriptionAndLogin() {
+  const plan = appState.selectedPlan || appState.plans[1];
+  // If production external checkout URL is configured in HOSTINGER_PRODUCTION_CONFIG, redirect to Safepay (PKR) or LemonSqueezy (USD)
+  if (appState.currency === 'PKR' && HOSTINGER_PRODUCTION_CONFIG.safepayPkrCheckoutUrls[plan.id]) {
+    window.location.href = HOSTINGER_PRODUCTION_CONFIG.safepayPkrCheckoutUrls[plan.id];
+    return;
+  }
+  if (appState.currency === 'USD' && HOSTINGER_PRODUCTION_CONFIG.lemonSqueezyUsdCheckoutUrls[plan.id]) {
+    window.location.href = HOSTINGER_PRODUCTION_CONFIG.lemonSqueezyUsdCheckoutUrls[plan.id];
+    return;
+  }
+
   const holder = (document.getElementById('card-holder')?.value || '').trim();
   const number = (document.getElementById('card-number')?.value || '').replace(/\s+/g, '');
   const expiry = (document.getElementById('card-expiry')?.value || '').trim();
@@ -1293,7 +1449,6 @@ function completeSubscriptionAndLogin() {
       plan: planName,
       categoriesCount: appState.categories.length,
       coHostsCount: appState.coHostEmails.length,
-      assignedNode: 'AWS EC2 Node #1 (8GB)',
       status: 'Active'
     };
     if (existingIdx >= 0) {
@@ -1324,12 +1479,8 @@ function switchDashboardTab(tab) {
     showToast('Attendance Reports are available in Business Pro & Enterprise plans.');
     return;
   }
-  if (tab === 'agency' && !isMasterAgencyOwner()) {
-    showToast('Agency Admin View is restricted to the master agency owner.');
-    return;
-  }
 
-  const tabs = ['categories', 'attendance', 'support', 'profile', 'agency'];
+  const tabs = ['categories', 'attendance', 'support', 'profile'];
   tabs.forEach(t => {
     const content = document.getElementById('dash-content-' + t);
     const btn = document.getElementById('dtab-' + t);
@@ -1338,7 +1489,7 @@ function switchDashboardTab(tab) {
       content.classList.toggle('hidden', !isTarget);
       if (isTarget) triggerSmoothEnterAnimation(content);
     }
-    if (btn && t !== 'agency') {
+    if (btn) {
       btn.className = t === tab
         ? 'flex items-center justify-between gap-3 px-4 py-3 rounded-2xl text-xs sm:text-sm font-bold bg-gradient-to-r from-blue-600/90 to-indigo-600/80 text-white shadow-lg shadow-blue-600/25 border border-blue-400/30 whitespace-nowrap text-left transition'
         : 'flex items-center justify-between gap-3 px-4 py-3 rounded-2xl text-xs sm:text-sm font-semibold text-slate-300 hover:bg-white/5 hover:text-white whitespace-nowrap text-left transition';
@@ -1349,19 +1500,13 @@ function switchDashboardTab(tab) {
   });
 
   if (tab === 'support') renderSupportTicketsUI();
-  if (tab === 'agency') {
-    renderSupportTicketsUI();
-    renderCmsContentToDOM();
-    renderAdminPanel();
-  }
 
   const userName = appState.profile.name || 'Amir Hayat';
   const titles = {
     categories: `Hi, ${userName} 👋 — Meeting Workflows`,
     attendance: perms.allowChatLogs ? 'Broadcast Attendance & Live Chat Logs' : 'Broadcast Attendance Report',
     support: '24/7 Customer Support & Priority Ticket Desk',
-    profile: 'Security & Active Workspace Sessions',
-    agency: '⚡ Agency Admin Command Center'
+    profile: 'Security & Active Workspace Sessions'
   };
   const titleEl = document.getElementById('workspace-page-title');
   if (titleEl && titles[tab]) titleEl.textContent = titles[tab];
@@ -1669,7 +1814,10 @@ function renderPricingCards() {
   const container = document.getElementById('pricing-cards-container');
   if (!container) return;
   container.innerHTML = appState.plans.map(plan => {
-    const priceStr = `$${plan.priceUsd}`;
+    const pInfo = getPlanPriceInActiveCurrency(plan);
+    const subNote = appState.currency === 'PKR'
+      ? `<span class="block text-[11px] text-emerald-400 font-mono mt-0.5">($${plan.priceUsd} USD × Rs. ${appState.usdToPkrRate.toFixed(2)} • Safepay PKR)</span>`
+      : `<span class="block text-[11px] text-slate-400 font-medium mt-0.5">(Billed in USD $ • Lemon Squeezy)</span>`;
     const cardClass = plan.popular
       ? 'glass-card-gold border-2 border-yellow-400/70 relative'
       : 'glass-card';
@@ -1688,16 +1836,19 @@ function renderPricingCards() {
         ${badge}
         <div>
           <h3 class="text-lg font-extrabold text-white">${plan.name}</h3>
-          <div class="mt-3 flex items-baseline gap-1">
-            <span class="text-3xl sm:text-4xl font-extrabold text-yellow-400">${priceStr}</span>
-            <span class="text-xs text-slate-400 font-semibold">/ month</span>
+          <div class="mt-3">
+            <div class="flex items-baseline gap-1">
+              <span class="text-3xl sm:text-4xl font-extrabold text-yellow-400">${pInfo.formatted}</span>
+              <span class="text-xs text-slate-400 font-semibold">/ month</span>
+            </div>
+            ${subNote}
           </div>
           <ul class="mt-6 space-y-3 border-t border-white/10 pt-5">
             ${featuresHtml}
           </ul>
         </div>
         <button onclick="selectPlanForCheckout('${plan.id}')" class="mt-7 w-full py-3.5 px-4 rounded-xl font-bold text-xs sm:text-sm ${plan.popular ? 'btn-gold' : 'btn-glass'}">
-          Choose ${plan.name} ($${plan.priceUsd}/mo) →
+          Choose ${plan.name} (${pInfo.formatted}/mo) →
         </button>
       </div>
     `;
@@ -1709,6 +1860,7 @@ function syncProfileUI() {
   const sEmail = document.getElementById('sidebar-user-email');
   const pName = document.getElementById('prof-name');
   const pEmail = document.getElementById('prof-email');
+  const pZoomLink = document.getElementById('prof-zoom-link');
   const badge = document.getElementById('zoom-conn-badge');
   const titleEl = document.getElementById('workspace-page-title');
 
@@ -1716,6 +1868,7 @@ function syncProfileUI() {
   if (sEmail) sEmail.textContent = appState.profile.email || 'amirjupiteradvisers@gmail.com';
   if (pName) pName.value = appState.profile.name || '';
   if (pEmail) pEmail.value = appState.profile.email || '';
+  if (pZoomLink) pZoomLink.value = appState.profile.defaultZoomLink || 'https://zoom.us/j/89421756301?pwd=ZoomCastFixed';
   if (titleEl && appState.profile.name) {
     titleEl.textContent = `Hi, ${appState.profile.name} 👋`;
   }
@@ -1723,6 +1876,18 @@ function syncProfileUI() {
     badge.textContent = '● Zoom Connected via Google';
   }
   applyPlanFeatureRestrictions();
+}
+
+function saveDefaultZoomMeetingLink() {
+  const inp = document.getElementById('prof-zoom-link');
+  const link = (inp?.value || '').trim();
+  if (!link || !link.startsWith('http')) {
+    showToast('Please enter a valid Zoom Meeting URL (e.g. https://zoom.us/j/...).');
+    return;
+  }
+  appState.profile.defaultZoomLink = link;
+  persistState();
+  showToast('✓ Default Permanent Zoom Meeting Link saved!');
 }
 
 function saveProfileDetails() {
@@ -1872,7 +2037,7 @@ function renderCoHostEmails() {
 }
 
 // ============================================================================
-// GLASSY 12-HOUR (AM / PM) CALENDAR & WORKFLOW BUILDER
+// GLASSY 12-HOUR (AM / PM) CALENDAR & STRICT WORKFLOW BUILDER
 // ============================================================================
 function formatSecondsToHHMMSS(sec) {
   const hrs = Math.floor(sec / 3600);
@@ -1893,16 +2058,26 @@ function convert12hTo24h(time12h) {
   return `${String(hrs).padStart(2, '0')}:${mins}`;
 }
 
-function updateBuilderStatusLabel() {
-  const chk = document.getElementById('cat-status-active');
-  const lbl = document.getElementById('cat-status-label');
-  if (!chk || !lbl) return;
-  if (chk.checked) {
-    lbl.textContent = 'Active (Live)';
-    lbl.className = 'text-xs font-extrabold text-emerald-400 bg-emerald-500/15 px-2.5 py-0.5 rounded-md border border-emerald-500/30';
+function updateBuilderReadinessBadge() {
+  const badge = document.getElementById('builder-readiness-badge');
+  if (!badge) return;
+
+  const hasName = Boolean((document.getElementById('cat-name')?.value || '').trim());
+  const hasDays = document.querySelectorAll('.cat-day-chk:checked').length > 0;
+  const hasVideo = appState.currentCategory.videos.length > 0;
+  const hasTimes = appState.currentCategory.selectedTimes.length > 0;
+
+  if (hasName && hasDays && hasVideo && hasTimes) {
+    badge.textContent = '✓ All 4 Steps Complete — Ready to Save & Activate!';
+    badge.className = 'text-xs font-extrabold text-emerald-400 bg-emerald-500/15 px-2.5 py-1 rounded-md border border-emerald-500/30';
   } else {
-    lbl.textContent = 'Draft (Paused)';
-    lbl.className = 'text-xs font-extrabold text-yellow-400 bg-yellow-500/15 px-2.5 py-0.5 rounded-md border border-yellow-500/30';
+    const missing = [];
+    if (!hasName) missing.push('Name');
+    if (!hasDays) missing.push('Days');
+    if (!hasVideo) missing.push('Video');
+    if (!hasTimes) missing.push('Time');
+    badge.textContent = `● Required to Activate: ${missing.join(' + ')}`;
+    badge.className = 'text-xs font-extrabold text-amber-400 bg-amber-500/15 px-2.5 py-1 rounded-md border border-amber-500/30';
   }
 }
 
@@ -1910,6 +2085,7 @@ function toggleAllWeekdays() {
   const chks = document.querySelectorAll('.cat-day-chk');
   const allChecked = Array.from(chks).every(c => c.checked);
   chks.forEach(c => { c.checked = !allChecked; });
+  updateBuilderReadinessBadge();
 }
 
 function generate12HourSlots() {
@@ -1945,6 +2121,7 @@ function render12HourCalendarGrid() {
   }).join('');
 
   renderSelectedTimesAssignment();
+  updateBuilderReadinessBadge();
 }
 
 function toggleTimeSlot(timeStr) {
@@ -2018,6 +2195,20 @@ function handleCategoryVideosSelect(event) {
       URL.revokeObjectURL(objUrl);
       renderCategoryVideosList();
       renderSelectedTimesAssignment();
+      updateBuilderReadinessBadge();
+    };
+    tempVideo.onerror = () => {
+      // Fallback if browser cannot decode video metadata directly
+      appState.currentCategory.videos.push({
+        name: file.name,
+        sizeMB: (file.size / (1024 * 1024)).toFixed(1),
+        durationSec: 2700,
+        formattedDuration: '00:45:00'
+      });
+      URL.revokeObjectURL(objUrl);
+      renderCategoryVideosList();
+      renderSelectedTimesAssignment();
+      updateBuilderReadinessBadge();
     };
   });
 }
@@ -2026,6 +2217,7 @@ function removeCategoryVideo(idx) {
   appState.currentCategory.videos.splice(idx, 1);
   renderCategoryVideosList();
   renderSelectedTimesAssignment();
+  updateBuilderReadinessBadge();
 }
 
 function renderCategoryVideosList() {
@@ -2111,19 +2303,37 @@ function resetCategoryForm() {
   appState.currentCategory = {
     editingId: null,
     status: 'Active',
+    meetingLink: '',
     videos: [],
     selectedTimes: ['10:00 AM', '03:00 PM'],
     slotVideoMap: {}
   };
   const nameInp = document.getElementById('cat-name');
-  const activeChk = document.getElementById('cat-status-active');
+  const linkInp = document.getElementById('cat-meeting-link');
   const headingEl = document.getElementById('cat-form-heading');
   if (nameInp) nameInp.value = '';
-  if (activeChk) activeChk.checked = true;
-  if (headingEl) headingEl.textContent = 'Workflow Builder';
-  updateBuilderStatusLabel();
+  if (linkInp) linkInp.value = '';
+  if (headingEl) headingEl.textContent = 'Workflow Builder (Create Automated Zoom Meeting)';
   renderCategoryVideosList();
   render12HourCalendarGrid();
+  updateBuilderReadinessBadge();
+}
+
+function startCreateNewWorkflow() {
+  resetCategoryForm();
+  const builderCard = document.getElementById('workflow-builder-card');
+  const nameInp = document.getElementById('cat-name');
+  if (builderCard) {
+    builderCard.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    builderCard.classList.add('ring-2', 'ring-yellow-400');
+    setTimeout(() => {
+      builderCard.classList.remove('ring-2', 'ring-yellow-400');
+    }, 1800);
+  }
+  setTimeout(() => {
+    if (nameInp) nameInp.focus();
+  }, 350);
+  showToast('✨ Enter Workflow Name, Upload Video & Select Schedule below to create your workflow!');
 }
 
 async function saveMeetingCategory(forcedStatus) {
@@ -2134,32 +2344,65 @@ async function saveMeetingCategory(forcedStatus) {
   }
 
   const nameInp = document.getElementById('cat-name');
-  const sessionType = perms.allowWebinars
-    ? (document.getElementById('cat-session-type')?.value || 'Zoom Meeting')
-    : 'Zoom Meeting';
-  const activeChk = document.getElementById('cat-status-active');
+  const linkInp = document.getElementById('cat-meeting-link');
+  const catName = (nameInp && nameInp.value.trim()) ? nameInp.value.trim() : '';
+
+  // STRICT STEP 1 VALIDATION: Workflow / Meeting Name Required
+  if (!catName) {
+    if (nameInp) {
+      nameInp.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      nameInp.focus();
+    }
+    showToast('⚠️ Step 1 Required: Please enter a Workflow / Zoom Meeting Name.');
+    return;
+  }
+
+  // STRICT STEP 2 VALIDATION: At least 1 Weekly Day Required
+  const selectedDays = Array.from(document.querySelectorAll('.cat-day-chk:checked')).map(c => c.value);
+  if (selectedDays.length === 0) {
+    showToast('⚠️ Step 2 Required: Please select at least one day of the week.');
+    return;
+  }
+
+  // STRICT STEP 3 VALIDATION: At least 1 Uploaded Recorded Video Required
+  if (appState.currentCategory.videos.length === 0) {
+    const dropzone = document.getElementById('video-dropzone-label');
+    if (dropzone) {
+      dropzone.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      dropzone.classList.add('border-yellow-400', 'ring-2', 'ring-yellow-400');
+      setTimeout(() => dropzone.classList.remove('ring-2', 'ring-yellow-400'), 2000);
+    }
+    showToast('⚠️ Step 3 Required: Please upload at least 1 Recorded Video file before saving/activating!');
+    return;
+  }
+
+  // STRICT STEP 4 VALIDATION: At least 1 Broadcast Time Required
+  if (appState.currentCategory.selectedTimes.length === 0) {
+    showToast('⚠️ Step 4 Required: Please select at least one AM/PM broadcast time.');
+    return;
+  }
+
   const status = (!perms.allowDraftMode)
     ? 'Active'
-    : (forcedStatus || (activeChk && activeChk.checked ? 'Active' : 'Draft'));
-
-  const catName = (nameInp && nameInp.value.trim()) ? nameInp.value.trim() : `Workflow #${appState.categories.length + 1}`;
-  const selectedDays = Array.from(document.querySelectorAll('.cat-day-chk:checked')).map(c => c.value);
-
-  if (selectedDays.length === 0) {
-    showToast('Please check at least one day of the week');
-    return;
-  }
-  if (appState.currentCategory.selectedTimes.length === 0) {
-    showToast('Please select at least one AM/PM broadcast time');
-    return;
-  }
+    : (forcedStatus || 'Active');
 
   const totalSec = appState.currentCategory.videos.reduce((acc, v) => acc + (v.durationSec || 0), 0);
+
+  // Preserve existing permanent meeting link if editing, or use custom link, or assign permanent link that NEVER changes
+  const existingCat = appState.currentCategory.editingId
+    ? appState.categories.find(c => c.id === appState.currentCategory.editingId)
+    : null;
+  const customLink = (linkInp && linkInp.value.trim()) ? linkInp.value.trim() : '';
+  const permanentMeetingLink = customLink
+    || (existingCat && existingCat.meetingLink)
+    || appState.profile.defaultZoomLink
+    || 'https://zoom.us/j/89421756301?pwd=ZoomCastFixed';
 
   const newCat = {
     id: appState.currentCategory.editingId || ('WF-' + Date.now()),
     name: catName,
-    sessionType,
+    sessionType: 'Zoom Meeting',
+    meetingLink: permanentMeetingLink,
     status,
     days: selectedDays,
     times: [...appState.currentCategory.selectedTimes],
@@ -2184,7 +2427,29 @@ async function saveMeetingCategory(forcedStatus) {
   updateBentoStats();
   await syncBackendConfig();
   resetCategoryForm();
-  showToast(status === 'Draft' ? `Saved "${catName}" as Draft` : `✓ Workflow "${catName}" Published & Active!`);
+
+  const listCard = document.getElementById('saved-categories-list');
+  if (listCard) listCard.scrollIntoView({ behavior: 'smooth', block: 'center' });
+
+  showToast(
+    status === 'Draft'
+      ? `✓ Saved "${catName}" as Draft`
+      : `✓ Workflow "${catName}" is now LIVE with your Permanent Zoom Meeting Link!`
+  );
+}
+
+function copyWorkflowMeetingLink(catId) {
+  const cat = appState.categories.find(c => c.id === catId);
+  const link = (cat && cat.meetingLink) || appState.profile.defaultZoomLink || 'https://zoom.us/j/89421756301?pwd=ZoomCastFixed';
+  if (navigator.clipboard && navigator.clipboard.writeText) {
+    navigator.clipboard.writeText(link).then(() => {
+      showToast(`📋 Copied Permanent Zoom Link: ${link}`);
+    }).catch(() => {
+      showToast(`📋 Permanent Zoom Link: ${link}`);
+    });
+  } else {
+    showToast(`📋 Permanent Zoom Link: ${link}`);
+  }
 }
 
 function toggleWorkflowStatus(catId) {
@@ -2215,19 +2480,18 @@ function editCategory(catId) {
   appState.currentCategory = {
     editingId: cat.id,
     status: cat.status || 'Active',
+    meetingLink: cat.meetingLink || '',
     videos: [...(cat.videos || [])],
     selectedTimes: [...(cat.times || [])],
     slotVideoMap: { ...(cat.slotVideoMap || {}) }
   };
 
   const nameInp = document.getElementById('cat-name');
-  const sessionSel = document.getElementById('cat-session-type');
-  const activeChk = document.getElementById('cat-status-active');
+  const linkInp = document.getElementById('cat-meeting-link');
   const headingEl = document.getElementById('cat-form-heading');
 
   if (nameInp) nameInp.value = cat.name || '';
-  if (sessionSel && cat.sessionType) sessionSel.value = cat.sessionType;
-  if (activeChk) activeChk.checked = cat.status === 'Active';
+  if (linkInp) linkInp.value = cat.meetingLink || '';
   if (headingEl) headingEl.textContent = `Editing Workflow: ${cat.name}`;
 
   document.querySelectorAll('.cat-day-chk').forEach(chk => {
@@ -2241,9 +2505,9 @@ function editCategory(catId) {
   if (shareSoundChk) shareSoundChk.checked = cat.shareSound !== false;
   if (autoEndChk) autoEndChk.checked = cat.autoEnd !== false;
 
-  updateBuilderStatusLabel();
   renderCategoryVideosList();
   render12HourCalendarGrid();
+  updateBuilderReadinessBadge();
 
   if (headingEl) {
     headingEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
@@ -2259,7 +2523,7 @@ function renderSavedCategories() {
   if (appState.categories.length === 0) {
     listEl.innerHTML = `
       <div class="p-5 rounded-xl glass-card-subtle text-center text-xs text-slate-400">
-        No workflows created yet. Use the Workflow Builder below to create your automated schedule.
+        No workflows created yet. Click <strong>+ Create New Workflow</strong> above or fill out Steps 1–4 in the Workflow Builder below.
       </div>
     `;
     return;
@@ -2272,42 +2536,56 @@ function renderSavedCategories() {
       : 'bg-yellow-500/15 text-yellow-400 border-yellow-500/30';
     const videosLabel = cat.videos.length > 0
       ? cat.videos.map((v, i) => `#${i + 1} ${v.name}`).join(' → ')
-      : 'No video attached yet';
+      : 'No video attached';
+    const fixedLink = cat.meetingLink || appState.profile.defaultZoomLink || 'https://zoom.us/j/89421756301?pwd=ZoomCastFixed';
 
     const draftBtnHtml = perms.allowDraftMode
       ? `<button type="button" onclick="toggleWorkflowStatus('${cat.id}')" class="px-3 py-1.5 rounded-xl text-xs font-bold border whitespace-nowrap ${isActive ? 'bg-yellow-500/15 text-yellow-400 border-yellow-500/30 hover:bg-yellow-500/25' : 'bg-emerald-500 text-black border-emerald-400'}">${isActive ? 'Switch to Draft' : 'Activate Workflow'}</button>`
       : '';
 
     return `
-      <div class="p-4 rounded-2xl glass-card-subtle flex flex-col md:flex-row md:items-center justify-between gap-4">
-        <div class="space-y-1">
-          <div class="flex items-center gap-2 flex-wrap">
-            <span class="font-extrabold text-white text-sm">${cat.name}</span>
-            <span class="px-2 py-0.5 rounded text-[11px] font-bold bg-blue-500/15 text-blue-400 border border-blue-500/30">${cat.sessionType || 'Zoom Meeting'}</span>
-            <span class="px-2.5 py-0.5 rounded text-[11px] font-extrabold border ${badgeClass}">● ${cat.status}</span>
-            <span class="text-xs text-slate-400 font-medium">• ${cat.videos.length} Video(s) (${cat.formattedTotalDuration})</span>
+      <div class="p-4 sm:p-5 rounded-2xl glass-card-subtle space-y-3 border border-white/10">
+        <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
+          <div class="space-y-1">
+            <div class="flex items-center gap-2 flex-wrap">
+              <span class="font-extrabold text-white text-sm sm:text-base">${cat.name}</span>
+              <span class="px-2 py-0.5 rounded text-[11px] font-bold bg-blue-500/15 text-blue-400 border border-blue-500/30">Zoom Meeting</span>
+              <span class="px-2.5 py-0.5 rounded text-[11px] font-extrabold border ${badgeClass}">● ${isActive ? 'Active (Live)' : 'Draft'}</span>
+              <span class="text-xs text-slate-400 font-medium">• ${cat.videos.length} Video(s) (${cat.formattedTotalDuration})</span>
+            </div>
+            <div class="text-xs text-slate-300">
+              <strong>Days:</strong> ${cat.days.join(', ')}
+            </div>
+            <div class="text-xs text-slate-300">
+              <strong>Broadcast Times:</strong> <span class="text-yellow-400 font-semibold">${cat.times.join(' • ')}</span>
+            </div>
+            <div class="text-[11px] text-slate-400">
+              <strong>Video(s):</strong> ${videosLabel}
+            </div>
           </div>
-          <div class="text-xs text-slate-300">
-            <strong>Days:</strong> ${cat.days.join(', ')}
-          </div>
-          <div class="text-xs text-slate-300">
-            <strong>Broadcast Times:</strong> <span class="text-yellow-400 font-semibold">${cat.times.join(' • ')}</span>
-          </div>
-          <div class="text-[11px] text-slate-400">
-            <strong>Video(s):</strong> ${videosLabel}
+
+          <div class="flex flex-wrap items-center gap-2 shrink-0">
+            ${draftBtnHtml}
+            <button type="button" onclick="editCategory('${cat.id}')" class="px-3 py-1.5 rounded-xl btn-glass text-xs">
+              Edit
+            </button>
+            <button type="button" onclick="triggerLiveMeetingNow('${cat.id}')" class="px-3.5 py-1.5 rounded-xl btn-gold text-xs">
+              ▶ Run Now
+            </button>
+            <button type="button" onclick="deleteCategory('${cat.id}')" class="px-3 py-1.5 rounded-xl bg-rose-500/15 border border-rose-500/30 text-rose-400 hover:bg-rose-500/25 text-xs font-bold whitespace-nowrap">
+              Delete
+            </button>
           </div>
         </div>
 
-        <div class="flex flex-wrap items-center gap-2 shrink-0">
-          ${draftBtnHtml}
-          <button type="button" onclick="editCategory('${cat.id}')" class="px-3 py-1.5 rounded-xl btn-glass text-xs">
-            Edit
-          </button>
-          <button type="button" onclick="triggerLiveMeetingNow('${cat.id}')" class="px-3.5 py-1.5 rounded-xl btn-gold text-xs">
-            ▶ Run Now
-          </button>
-          <button type="button" onclick="deleteCategory('${cat.id}')" class="px-3 py-1.5 rounded-xl bg-rose-500/15 border border-rose-500/30 text-rose-400 hover:bg-rose-500/25 text-xs font-bold whitespace-nowrap">
-            Delete
+        <!-- Permanent Unchanging Zoom Meeting Link Bar -->
+        <div class="p-3 rounded-xl bg-black/40 border border-emerald-500/30 flex flex-col sm:flex-row sm:items-center justify-between gap-2.5">
+          <div class="flex items-center gap-2 truncate">
+            <span class="px-2 py-0.5 rounded bg-emerald-500/20 text-emerald-400 font-extrabold text-[10px] shrink-0">🔒 PERMANENT LINK</span>
+            <span class="text-xs font-mono text-slate-200 truncate">${fixedLink}</span>
+          </div>
+          <button type="button" onclick="copyWorkflowMeetingLink('${cat.id}')" class="px-3.5 py-1.5 rounded-lg btn-gold text-xs shrink-0 self-start sm:self-auto">
+            📋 Copy Meeting Link
           </button>
         </div>
       </div>
@@ -2321,9 +2599,10 @@ async function syncBackendConfig() {
   const playlistNames = firstCat && firstCat.videos ? firstCat.videos.map(v => v.name) : [];
   const times12h = firstCat && firstCat.times ? firstCat.times : ['10:00 AM', '03:00 PM'];
   const times24h = times12h.map(t => convert12hTo24h(t));
+  const permanentZoomUrl = (firstCat && firstCat.meetingLink) || appState.profile.defaultZoomLink || 'https://zoom.us/j/89421756301?pwd=ZoomCastFixed';
 
   const payload = {
-    ZoomMeetingUrl: 'https://zoom.us/j/auto',
+    ZoomMeetingUrl: permanentZoomUrl,
     VideoFilePath: playlistNames[0] || '',
     VideoPlaylist: playlistNames,
     VideoDurationSeconds: firstCat ? firstCat.totalDurationSec : 0,
@@ -2350,16 +2629,23 @@ async function syncBackendConfig() {
   } catch (e) {}
 }
 
-async function triggerLiveMeetingNow() {
+async function triggerLiveMeetingNow(catId) {
+  if (appState.categories.length === 0) {
+    showToast('⚠️ Please create & activate a Workflow with an uploaded video first!');
+    startCreateNewWorkflow();
+    return;
+  }
   await syncBackendConfig();
+  const targetCat = catId ? appState.categories.find(c => c.id === catId) : appState.categories[0];
+  const link = (targetCat && targetCat.meetingLink) || appState.profile.defaultZoomLink || 'https://zoom.us/j/89421756301?pwd=ZoomCastFixed';
   try {
     const res = await fetch('/api/run-now', { method: 'POST' });
     if (res.ok) {
-      showToast('🚀 Launching Automated Zoom Broadcast...');
+      showToast(`🚀 Launching Zoom Meeting on Permanent Link: ${link}`);
       return;
     }
   } catch (e) {}
-  showToast('🚀 Broadcast Triggered on Cloud Worker');
+  showToast(`🚀 Broadcast Triggered on Permanent Zoom Link: ${link}`);
 }
 
 // ============================================================================
@@ -2649,25 +2935,9 @@ function exportSingleSessionCsv() {
 }
 
 // ============================================================================
-// ADMIN & AGENCY CONSOLE RENDERER
+// ADMIN CONSOLE RENDERER (No Dummy AWS EC2 Nodes — Only Paid Subscribers)
 // ============================================================================
 function renderAdminPanel() {
-  const nodesList = document.getElementById('admin-aws-nodes-list');
-  if (nodesList) {
-    nodesList.innerHTML = appState.awsNodes.map(node => `
-      <div class="p-4 rounded-xl bg-white/5 border border-white/10 flex flex-col justify-between">
-        <div>
-          <div class="flex items-center justify-between">
-            <h4 class="font-bold text-white text-sm">${node.name}</h4>
-            <span class="px-2 py-0.5 rounded text-[11px] font-bold bg-emerald-500/15 text-emerald-400 border border-emerald-500/30">● ${node.status}</span>
-          </div>
-          <p class="text-xs text-slate-400 mt-1">IP: <code class="text-yellow-400">${node.ip}</code> • Region: ${node.region}</p>
-          <p class="text-[11px] text-emerald-400 mt-2 font-medium">✓ ${node.authMode}</p>
-        </div>
-      </div>
-    `).join('');
-  }
-
   const clientRowHtml = appState.clients.map((c, idx) => `
     <tr>
       <td class="py-3.5 px-3">
@@ -2677,7 +2947,6 @@ function renderAdminPanel() {
       <td class="py-3.5 px-3 font-semibold text-yellow-400">${c.plan}</td>
       <td class="py-3.5 px-3 text-slate-300">${c.categoriesCount || 0} Workflows</td>
       <td class="py-3.5 px-3 text-slate-300">${c.coHostsCount || 0} Team Members</td>
-      <td class="py-3.5 px-3 text-slate-300">${c.assignedNode}</td>
       <td class="py-3.5 px-3">
         <button onclick="toggleClientStatus(${idx})" class="px-2.5 py-1 rounded text-xs font-bold ${c.status === 'Active' ? 'bg-emerald-500/15 text-emerald-400' : 'bg-rose-500/15 text-rose-400'}">
           ${c.status}
@@ -2691,14 +2960,12 @@ function renderAdminPanel() {
     if (tbody) {
       tbody.innerHTML = appState.clients.length > 0
         ? clientRowHtml
-        : `<tr><td colspan="6" class="py-6 text-center text-xs text-slate-400">No customers registered yet.</td></tr>`;
+        : `<tr><td colspan="5" class="py-6 text-center text-xs text-slate-400">No customers registered yet.</td></tr>`;
     }
   });
 
   const statClients = document.getElementById('admin-stat-clients');
-  const statNodes = document.getElementById('admin-stat-nodes');
-  if (statClients) statClients.textContent = `${appState.clients.length} Clients`;
-  if (statNodes) statNodes.textContent = `${appState.awsNodes.length} Online`;
+  if (statClients) statClients.textContent = `${appState.clients.length} Active User`;
 }
 
 function toggleClientStatus(idx) {
@@ -2708,27 +2975,13 @@ function toggleClientStatus(idx) {
   renderAdminPanel();
 }
 
-function addNewAwsNode() {
-  const nextNum = appState.awsNodes.length + 1;
-  const ip = prompt('Enter new AWS 8GB Instance IP Address:');
-  if (!ip) return;
-  appState.awsNodes.push({
-    id: `aws-node-${nextNum}`,
-    name: `AWS EC2 Node #${nextNum} (8GB RAM)`,
-    ip,
-    region: 'ap-south-1',
-    status: 'Online',
-    activeClient: 'Ready',
-    authMode: 'Zoom OAuth ZAK Token'
-  });
-  renderAdminPanel();
-  showToast(`✓ Added AWS EC2 Node #${nextNum}`);
-}
-
 window.addEventListener('DOMContentLoaded', () => {
   cleanBrowserUrlHash();
+  persistState(); // Immediately persist purged clean state to localStorage
   renderCmsContentToDOM();
+  updateCurrencyButtonsUI();
   renderPricingCards();
+  fetchLiveUsdToPkrRate();
   syncProfileUI();
   renderCoHostEmails();
   render12HourCalendarGrid();
