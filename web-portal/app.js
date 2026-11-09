@@ -28,12 +28,22 @@ let appState = {
       name: "Starter Plan",
       pricePkr: 4500,
       priceUsd: 19,
+      permissions: {
+        maxWorkflows: 2,
+        allowWebinars: false,
+        allowDraftMode: true,
+        allowMultiVideo: false,
+        maxCoHosts: 3,
+        allowAttendanceTab: true,
+        allowChatLogs: false,
+        allowCsvExport: false
+      },
       features: [
         "Up to 2 Active Meeting Workflows",
-        "Unlimited Video File Size",
+        "Single Recorded Video per Meeting",
         "7-Day Weekly & 12-Hour AM/PM Scheduler",
-        "Unlimited Team Co-Host Emails",
-        "Attendance & Chat Messages Log"
+        "Up to 3 Team Co-Host Emails",
+        "Basic Participant Attendance Report"
       ]
     },
     {
@@ -42,13 +52,22 @@ let appState = {
       popular: true,
       pricePkr: 8500,
       priceUsd: 35,
+      permissions: {
+        maxWorkflows: 10,
+        allowWebinars: true,
+        allowDraftMode: true,
+        allowMultiVideo: true,
+        maxCoHosts: 15,
+        allowAttendanceTab: true,
+        allowChatLogs: true,
+        allowCsvExport: true
+      },
       features: [
-        "Unlimited Meeting & Webinar Workflows",
-        "Multi-Video Seamless Playlists",
+        "Up to 10 Meeting & Webinar Workflows",
+        "Multi-Video Seamless Back-to-Back Playlists",
         "Draft & Active Workflow Toggle",
-        "Unlimited Team Co-Host Emails",
-        "Full Attendance & Chat CSV Export",
-        "Auto-End Meeting on Completion"
+        "Up to 15 Team Co-Host Emails",
+        "Attendance + In-Meeting Chat Logs & CSV Export"
       ]
     },
     {
@@ -56,12 +75,22 @@ let appState = {
       name: "Enterprise",
       pricePkr: 16500,
       priceUsd: 65,
+      permissions: {
+        maxWorkflows: 999,
+        allowWebinars: true,
+        allowDraftMode: true,
+        allowMultiVideo: true,
+        maxCoHosts: 999,
+        allowAttendanceTab: true,
+        allowChatLogs: true,
+        allowCsvExport: true
+      },
       features: [
-        "Unlimited Workflows & Zoom Accounts",
-        "Dedicated 8GB Cloud Worker Node",
-        "Multi-Video Back-to-Back Streaming",
-        "Unlimited Team Co-Host Promotion",
-        "Priority Account Support"
+        "Unlimited Workflows & Zoom Webinars",
+        "Unlimited Multi-Video Back-to-Back Streaming",
+        "Unlimited Team Co-Host Emails",
+        "Full Attendance, Saved Chat Messages & CSV Export",
+        "Dedicated 8GB Cloud Worker Priority"
       ]
     }
   ],
@@ -198,7 +227,7 @@ function openGetStartedModal() {
   }
 }
 
-function sendEmailOtpCode() {
+async function sendEmailOtpCode() {
   const emailInp = document.getElementById('signup-email');
   const email = emailInp ? emailInp.value.trim() : '';
   if (!email || !email.includes('@')) {
@@ -212,9 +241,91 @@ function sendEmailOtpCode() {
   const box = document.getElementById('otp-verification-box');
   const hint = document.getElementById('otp-hint-badge');
   if (box) box.classList.remove('hidden');
-  if (hint) hint.textContent = `Demo OTP: ${otp}`;
 
-  showToast(`Verification OTP sent to ${email} (Code: ${otp})`);
+  let sentViaSmtp = false;
+  try {
+    const res = await fetch('/api/send-otp', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email, otp })
+    });
+    if (res.ok) {
+      const data = await res.json();
+      if (data.sentEmail) {
+        sentViaSmtp = true;
+      }
+    }
+  } catch (e) {}
+
+  if (sentViaSmtp) {
+    if (hint) hint.textContent = `Sent to ${email}`;
+    showToast(`✓ 6-Digit OTP sent to your email (${email})!`);
+  } else {
+    if (hint) hint.textContent = `OTP Code: ${otp}`;
+    showToast(`Verification OTP generated for ${email}: ${otp}`);
+  }
+}
+
+async function saveFreeSmtpConfig() {
+  const gmailUser = (document.getElementById('smtp-gmail-user')?.value || '').trim();
+  const gmailAppPassword = (document.getElementById('smtp-gmail-pass')?.value || '').trim();
+  if (!gmailUser || !gmailAppPassword) {
+    showToast('Please enter both Gmail Address and 16-Digit App Password');
+    return;
+  }
+  try {
+    await fetch('/api/save-smtp', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ gmailUser, gmailAppPassword })
+    });
+  } catch (e) {}
+  showToast('✓ Free Gmail SMTP OTP Sender Activated!');
+}
+
+function getActivePlanPermissions() {
+  const planName = appState.profile.planName || 'Business Pro';
+  const plan = appState.plans.find(p => p.name === planName) || appState.plans[1];
+  return plan.permissions || {
+    maxWorkflows: 999,
+    allowWebinars: true,
+    allowDraftMode: true,
+    allowMultiVideo: true,
+    maxCoHosts: 999,
+    allowAttendanceTab: true,
+    allowChatLogs: true,
+    allowCsvExport: true
+  };
+}
+
+function applyPlanFeatureRestrictions() {
+  const perms = getActivePlanPermissions();
+
+  // 1. Attendance Tab visibility
+  const attTabBtn = document.getElementById('dtab-attendance');
+  if (attTabBtn) {
+    attTabBtn.classList.toggle('hidden', !perms.allowAttendanceTab);
+  }
+
+  // 2. Multi-video upload attribute (single vs multiple)
+  const vidInput = document.getElementById('cat-video-input');
+  if (vidInput) {
+    if (perms.allowMultiVideo) {
+      vidInput.setAttribute('multiple', 'multiple');
+    } else {
+      vidInput.removeAttribute('multiple');
+    }
+  }
+
+  // 3. Webinar option visibility
+  const sesTypeSelect = document.getElementById('cat-session-type');
+  if (sesTypeSelect) {
+    const webinarOpt = sesTypeSelect.querySelector('option[value="Zoom Webinar"]');
+    if (webinarOpt) {
+      webinarOpt.disabled = !perms.allowWebinars;
+      webinarOpt.hidden = !perms.allowWebinars;
+    }
+  }
 }
 
 function handleEmailSignUp() {
@@ -540,6 +651,7 @@ function syncProfileUI() {
   if (badge && appState.profile.zoomConnected) {
     badge.textContent = '● Zoom Connected via Google';
   }
+  applyPlanFeatureRestrictions();
 }
 
 function saveProfileDetails() {
@@ -566,6 +678,11 @@ function reconnectZoomOAuth() {
 // UNLIMITED TEAM CO-HOST EMAILS MANAGER
 // ============================================================================
 function addCoHostEmail() {
+  const perms = getActivePlanPermissions();
+  if (appState.coHostEmails.length >= perms.maxCoHosts) {
+    showToast(`Your current plan allows up to ${perms.maxCoHosts} Team Co-Host emails.`);
+    return;
+  }
   const input = document.getElementById('new-cohost-email');
   if (!input) return;
   const email = input.value.trim().toLowerCase();
