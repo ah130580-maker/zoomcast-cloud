@@ -3,249 +3,324 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>ZoomCast CRM — Cloud Broadcast Automation</title>
+  <title>ZoomCast CRM — Automated Webinar & Broadcast Platform</title>
   <script src="https://cdn.tailwindcss.com"></script>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
   <style>
-    body {
-      font-family: 'Inter', sans-serif;
-      background-color: #f4f6f8;
-      color: #101828;
+    * {
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
+      text-rendering: optimizeLegibility;
     }
-    /* GoHighLevel CRM Dark Sidebar & Header Palette */
+    body {
+      font-family: 'Plus Jakarta Sans', sans-serif;
+      background-color: #f8fafc;
+      color: #0f172a;
+      letter-spacing: -0.01em;
+    }
     .ghl-nav {
-      background-color: #101828;
-      border-bottom: 1px solid #1d2939;
+      background: linear-gradient(180deg, #0f172a 0%, #111827 100%);
+      border-bottom: 1px solid #1e293b;
     }
     .ghl-sidebar {
-      background-color: #101828;
-      color: #d0d5dd;
+      background: linear-gradient(180deg, #0f172a 0%, #111827 100%);
+      color: #cbd5e1;
     }
     .ghl-card {
       background-color: #ffffff;
-      border: 1px solid #e4e7ec;
-      box-shadow: 0 1px 3px rgba(16, 24, 40, 0.06);
+      border: 1px solid #e2e8f0;
+      box-shadow: 0 4px 20px -2px rgba(15, 23, 42, 0.05), 0 1px 3px 0 rgba(15, 23, 42, 0.03);
     }
     .ghl-btn-primary {
-      background-color: #155eef;
+      background: linear-gradient(180deg, #2563eb 0%, #1d4ed8 100%);
       color: #ffffff;
       white-space: nowrap;
-      transition: background-color 0.15s ease;
+      box-shadow: 0 1px 2px rgba(15, 23, 42, 0.15), inset 0 1px 0 rgba(255, 255, 255, 0.15);
+      transition: all 0.15s ease;
     }
     .ghl-btn-primary:hover {
-      background-color: #004eeb;
+      background: linear-gradient(180deg, #1d4ed8 0%, #1e40af 100%);
+      transform: translateY(-0.5px);
     }
     .ghl-btn-secondary {
       background-color: #ffffff;
-      color: #344054;
-      border: 1px solid #d0d5dd;
+      color: #1e293b;
+      border: 1px solid #cbd5e1;
       white-space: nowrap;
+      box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04);
       transition: all 0.15s ease;
     }
     .ghl-btn-secondary:hover {
-      background-color: #f9fafb;
+      background-color: #f8fafc;
+      border-color: #94a3b8;
     }
     .ghl-input {
       background-color: #ffffff;
-      border: 1px solid #d0d5dd;
-      color: #101828;
+      border: 1px solid #cbd5e1;
+      color: #0f172a;
+      font-weight: 500;
+      transition: all 0.15s ease;
     }
     .ghl-input:focus {
       outline: none;
-      border-color: #155eef;
-      box-shadow: 0 0 0 3px rgba(21, 94, 239, 0.14);
+      border-color: #2563eb;
+      box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.15);
+    }
+    /* Toggle Switch */
+    .toggle-checkbox:checked {
+      right: 0;
+      border-color: #10b981;
+    }
+    .toggle-checkbox:checked + .toggle-label {
+      background-color: #10b981;
     }
   </style>
 </head>
 <body class="min-h-screen flex flex-col">
 
   <!-- ===================================================================== -->
-  <!-- PUBLIC TOP NAVBAR (GHL CRM STYLE - MOBILE & DESKTOP FRIENDLY)         -->
+  <!-- PUBLIC TOP NAVBAR                                                     -->
   <!-- ===================================================================== -->
   <header id="public-header" class="sticky top-0 z-50 ghl-nav text-white">
-    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between gap-2">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between gap-3">
       <div class="flex items-center gap-2.5 cursor-pointer shrink-0" onclick="switchView('landing')">
-        <div class="w-9 h-9 rounded-lg bg-[#155eef] flex items-center justify-center font-bold text-white text-base shrink-0">
+        <div class="w-9 h-9 rounded-lg bg-blue-600 flex items-center justify-center font-extrabold text-white text-base shadow-inner shrink-0">
           Z
         </div>
-        <span class="font-bold text-base sm:text-lg tracking-tight text-white whitespace-nowrap">ZoomCast CRM</span>
+        <span class="font-extrabold text-base sm:text-lg tracking-tight text-white whitespace-nowrap">ZoomCast CRM</span>
       </div>
 
-      <nav class="hidden md:flex items-center gap-7 text-sm font-medium text-slate-300">
-        <a href="#features" onclick="switchView('landing')" class="hover:text-white whitespace-nowrap">Features</a>
-        <a href="#pricing-section" onclick="switchView('landing')" class="hover:text-white whitespace-nowrap">Pricing</a>
+      <nav class="hidden md:flex items-center gap-8 text-sm font-semibold text-slate-300">
+        <a href="#features" onclick="switchView('landing')" class="hover:text-white whitespace-nowrap transition">Features</a>
+        <a href="#pricing-section" onclick="scrollToPricingSection()" class="hover:text-white whitespace-nowrap transition">Pricing Plans</a>
       </nav>
 
-      <div class="flex items-center gap-2 sm:gap-3 shrink-0">
-        <button onclick="switchView('auth')" class="px-3.5 py-2 rounded-lg bg-slate-800 hover:bg-slate-700 text-xs sm:text-sm font-semibold text-white border border-slate-700 whitespace-nowrap transition">
+      <div class="flex items-center gap-2.5 shrink-0">
+        <button onclick="openAuthMode('signin')" class="px-4 py-2 rounded-lg bg-slate-800/90 hover:bg-slate-700 text-xs sm:text-sm font-semibold text-white border border-slate-700 whitespace-nowrap transition">
           Sign In
         </button>
-        <button onclick="switchView('auth')" class="px-3.5 sm:px-4 py-2 rounded-lg ghl-btn-primary text-xs sm:text-sm font-semibold shadow-sm whitespace-nowrap">
-          Get Started
+        <button onclick="openAuthMode('signup')" class="px-4 py-2 rounded-lg ghl-btn-primary text-xs sm:text-sm font-semibold whitespace-nowrap">
+          Sign Up
         </button>
       </div>
     </div>
   </header>
 
   <!-- ===================================================================== -->
-  <!-- VIEW 1: PUBLIC LANDING PAGE                                           -->
+  <!-- VIEW 1: ULTRA-CRISP 4K LANDING PAGE                                   -->
   <!-- ===================================================================== -->
   <main id="view-landing" class="flex-1">
-    <section class="bg-[#0c111d] text-white py-16 sm:py-24 border-b border-slate-800">
-      <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
-        <div class="inline-flex items-center gap-2 px-3.5 py-1 rounded-full bg-blue-500/10 border border-blue-500/30 text-blue-400 text-xs font-semibold uppercase tracking-wide mb-6">
-          Cloud Zoom Broadcast CRM
+    <section class="bg-[#090d16] text-white py-20 sm:py-28 border-b border-slate-800/80 relative overflow-hidden">
+      <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 text-center relative z-10">
+        <div class="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-blue-500/15 border border-blue-500/30 text-blue-400 text-xs font-bold uppercase tracking-wider mb-6">
+          <span class="w-2 h-2 rounded-full bg-emerald-400 animate-ping"></span>
+          Cloud Zoom Broadcast & Webinar CRM
         </div>
-        <h1 class="text-3xl sm:text-5xl lg:text-6xl font-extrabold tracking-tight leading-tight max-w-4xl mx-auto">
+        <h1 class="text-3xl sm:text-5xl lg:text-6xl font-extrabold tracking-tight leading-[1.12] max-w-4xl mx-auto text-white">
           Automate Your Recorded Zoom Broadcasts On Autopilot
         </h1>
-        <p class="mt-5 text-base sm:text-lg text-slate-300 max-w-2xl mx-auto leading-relaxed">
-          Create meeting categories, schedule multi-video playlists across any day or time of the week, auto-promote your team to Co-Host, and end meetings automatically.
+        <p class="mt-6 text-base sm:text-lg text-slate-300 max-w-2xl mx-auto leading-relaxed font-medium">
+          Build automated meeting & webinar workflows, schedule multi-video playlists across any day or 12-hour AM/PM time slot, auto-promote your team to Co-Host, and track every attendee & chat message.
         </p>
 
-        <div class="mt-8 flex flex-col sm:flex-row items-center justify-center gap-3 sm:gap-4">
-          <button onclick="switchView('auth')" class="w-full sm:w-auto px-7 py-3.5 rounded-lg ghl-btn-primary font-semibold text-sm sm:text-base shadow-md">
-            Start Free Setup
+        <div class="mt-9 flex flex-col sm:flex-row items-center justify-center gap-3.5">
+          <button onclick="openGetStartedModal()" class="w-full sm:w-auto px-8 py-3.5 rounded-xl ghl-btn-primary font-bold text-sm sm:text-base shadow-lg">
+            Get Started — Choose Plan
           </button>
-          <a href="#pricing-section" class="w-full sm:w-auto px-7 py-3.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-white font-semibold text-sm sm:text-base border border-slate-700 whitespace-nowrap text-center transition">
-            View Pricing Plans
-          </a>
+          <button onclick="scrollToPricingSection()" class="w-full sm:w-auto px-8 py-3.5 rounded-xl bg-slate-800/90 hover:bg-slate-700 text-white font-bold text-sm sm:text-base border border-slate-700 whitespace-nowrap transition">
+            View Plans
+          </button>
         </div>
 
-        <div id="features" class="mt-16 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5 text-left">
-          <div class="p-5 rounded-xl bg-slate-900/90 border border-slate-800">
-            <div class="w-8 h-8 rounded-lg bg-blue-600/20 text-blue-400 font-bold text-sm flex items-center justify-center mb-3">01</div>
-            <h3 class="font-bold text-white text-sm">Meeting Categories</h3>
-            <p class="text-xs text-slate-400 mt-1 leading-relaxed">Organize multiple meeting categories with custom weekly days and full-day time slots.</p>
+        <div id="features" class="mt-20 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5 text-left">
+          <div class="p-6 rounded-2xl bg-slate-900/90 border border-slate-800/90 shadow-xl">
+            <div class="w-9 h-9 rounded-lg bg-blue-600/20 text-blue-400 font-extrabold text-sm flex items-center justify-center mb-4">01</div>
+            <h3 class="font-bold text-white text-base">Workflows & Draft Mode</h3>
+            <p class="text-xs text-slate-300 mt-1.5 leading-relaxed">Create meeting or webinar workflows, save them as drafts, or toggle them Active anytime.</p>
           </div>
-          <div class="p-5 rounded-xl bg-slate-900/90 border border-slate-800">
-            <div class="w-8 h-8 rounded-lg bg-blue-600/20 text-blue-400 font-bold text-sm flex items-center justify-center mb-3">02</div>
-            <h3 class="font-bold text-white text-sm">Seamless Multi-Video</h3>
-            <p class="text-xs text-slate-400 mt-1 leading-relaxed">Upload unlimited size videos and play multiple videos back-to-back or on separate schedules.</p>
+          <div class="p-6 rounded-2xl bg-slate-900/90 border border-slate-800/90 shadow-xl">
+            <div class="w-9 h-9 rounded-lg bg-blue-600/20 text-blue-400 font-extrabold text-sm flex items-center justify-center mb-4">02</div>
+            <h3 class="font-bold text-white text-base">12-Hour AM/PM Scheduler</h3>
+            <p class="text-xs text-slate-300 mt-1.5 leading-relaxed">Select any days of the week and multiple AM/PM broadcast times with custom hour & minute controls.</p>
           </div>
-          <div class="p-5 rounded-xl bg-slate-900/90 border border-slate-800">
-            <div class="w-8 h-8 rounded-lg bg-blue-600/20 text-blue-400 font-bold text-sm flex items-center justify-center mb-3">03</div>
-            <h3 class="font-bold text-white text-sm">Unlimited Team Co-Hosts</h3>
-            <p class="text-xs text-slate-400 mt-1 leading-relaxed">Add your entire team's emails. Anyone who joins is automatically promoted to Co-Host.</p>
+          <div class="p-6 rounded-2xl bg-slate-900/90 border border-slate-800/90 shadow-xl">
+            <div class="w-9 h-9 rounded-lg bg-blue-600/20 text-blue-400 font-extrabold text-sm flex items-center justify-center mb-4">03</div>
+            <h3 class="font-bold text-white text-base">Unlimited Team Co-Hosts</h3>
+            <p class="text-xs text-slate-300 mt-1.5 leading-relaxed">Add all your team members' emails. Anyone from your list who joins is promoted to Co-Host.</p>
           </div>
-          <div class="p-5 rounded-xl bg-slate-900/90 border border-slate-800">
-            <div class="w-8 h-8 rounded-lg bg-blue-600/20 text-blue-400 font-bold text-sm flex items-center justify-center mb-3">04</div>
-            <h3 class="font-bold text-white text-sm">Auto-End & Attendance</h3>
-            <p class="text-xs text-slate-400 mt-1 leading-relaxed">Meetings end automatically when playback finishes with full participant attendance reports.</p>
+          <div class="p-6 rounded-2xl bg-slate-900/90 border border-slate-800/90 shadow-xl">
+            <div class="w-9 h-9 rounded-lg bg-blue-600/20 text-blue-400 font-extrabold text-sm flex items-center justify-center mb-4">04</div>
+            <h3 class="font-bold text-white text-base">Attendance & Chat Logs</h3>
+            <p class="text-xs text-slate-300 mt-1.5 leading-relaxed">Click any completed meeting to inspect every participant, join/leave times, and their exact in-meeting chat messages.</p>
           </div>
         </div>
       </div>
     </section>
 
     <!-- PRICING SECTION -->
-    <section id="pricing-section" class="py-16 sm:py-20 bg-[#f4f6f8]">
+    <section id="pricing-section" class="py-20 bg-[#f8fafc]">
       <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div class="text-center max-w-2xl mx-auto mb-10">
-          <span class="text-xs uppercase tracking-widest text-[#155eef] font-bold">Subscription Plans</span>
-          <h2 class="text-2xl sm:text-4xl font-extrabold text-slate-900 mt-1">Choose Your Plan</h2>
-          <div class="mt-5 inline-flex items-center gap-1.5 bg-white p-1 rounded-lg border border-slate-200 shadow-sm">
-            <button onclick="setCurrency('PKR')" id="cur-pkr" class="px-4 py-1.5 rounded-md text-xs font-bold ghl-btn-primary">PKR (Rs.)</button>
-            <button onclick="setCurrency('USD')" id="cur-usd" class="px-4 py-1.5 rounded-md text-xs font-bold text-slate-600 hover:text-slate-900 whitespace-nowrap">USD ($)</button>
+        <div class="text-center max-w-2xl mx-auto mb-12">
+          <span class="text-xs uppercase tracking-widest text-blue-600 font-extrabold">Subscription Plans</span>
+          <h2 class="text-3xl sm:text-4xl font-extrabold text-slate-900 mt-1">Select Your Plan to Get Started</h2>
+          <p class="text-sm text-slate-600 mt-2">Choose a plan below. You will create your account or sign in before completing payment.</p>
+          <div class="mt-5 inline-flex items-center gap-1.5 bg-white p-1.5 rounded-xl border border-slate-200 shadow-sm">
+            <button onclick="setCurrency('PKR')" id="cur-pkr" class="px-4 py-1.5 rounded-lg text-xs font-bold ghl-btn-primary">PKR (Rs.)</button>
+            <button onclick="setCurrency('USD')" id="cur-usd" class="px-4 py-1.5 rounded-lg text-xs font-bold text-slate-600 hover:text-slate-900 whitespace-nowrap">USD ($)</button>
           </div>
         </div>
 
-        <div id="pricing-cards-container" class="grid grid-cols-1 md:grid-cols-3 gap-6"></div>
+        <div id="pricing-cards-container" class="grid grid-cols-1 md:grid-cols-3 gap-7"></div>
       </div>
     </section>
   </main>
 
   <!-- ===================================================================== -->
-  <!-- VIEW 2: SIGN UP + CLEAN CARD CHECKOUT (NO DUMMY INFO)                 -->
+  <!-- VIEW 2: AUTHENTICATION (SIGN IN vs SIGN UP + OTP) -> PLAN -> PAYMENT  -->
   <!-- ===================================================================== -->
-  <section id="view-auth" class="hidden flex-1 py-10 sm:py-14 bg-[#f4f6f8]">
-    <div class="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 grid grid-cols-1 lg:grid-cols-2 gap-6">
-      
-      <!-- Step 1: Account Sign Up -->
-      <div class="ghl-card p-6 sm:p-8 rounded-xl">
-        <span class="px-2.5 py-1 rounded-md text-xs font-bold bg-blue-50 text-[#155eef]">STEP 1</span>
-        <h2 class="text-xl sm:text-2xl font-bold text-slate-900 mt-3">Create Your Account</h2>
-        <p class="text-xs sm:text-sm text-slate-500 mt-1">Sign up with Google or enter your details below.</p>
+  <section id="view-auth" class="hidden flex-1 py-12 bg-[#f8fafc]">
+    <div class="max-w-xl mx-auto px-4 sm:px-6">
 
-        <button onclick="simulateGoogleLogin()" class="mt-5 w-full py-2.5 px-4 rounded-lg ghl-btn-secondary font-semibold text-sm flex items-center justify-center gap-2.5 shadow-sm">
+      <!-- STEP A: SIGN IN OR SIGN UP CARD -->
+      <div id="auth-step-account" class="ghl-card p-6 sm:p-8 rounded-2xl">
+        <!-- Mode Switcher Tabs -->
+        <div class="grid grid-cols-2 gap-2 p-1 bg-slate-100 rounded-xl mb-6">
+          <button type="button" onclick="openAuthMode('signin')" id="tab-btn-signin" class="py-2.5 rounded-lg text-xs sm:text-sm font-bold bg-white text-slate-900 shadow-sm whitespace-nowrap">
+            Sign In (Existing User)
+          </button>
+          <button type="button" onclick="openAuthMode('signup')" id="tab-btn-signup" class="py-2.5 rounded-lg text-xs sm:text-sm font-bold text-slate-600 hover:text-slate-900 whitespace-nowrap">
+            Create Account (Sign Up)
+          </button>
+        </div>
+
+        <!-- Google OAuth Button -->
+        <button type="button" onclick="handleGoogleAuthContinue()" class="w-full py-3 px-4 rounded-xl ghl-btn-secondary font-bold text-sm flex items-center justify-center gap-3">
           <svg class="w-4 h-4 shrink-0" viewBox="0 0 24 24">
             <path fill="#EA4335" d="M12 5c1.6 0 3 .6 4.1 1.7l3.1-3.1C17.3 1.8 14.8 1 12 1 7.4 1 3.5 3.6 1.6 7.4l3.7 2.8C6.2 7.2 8.9 5 12 5z"/>
             <path fill="#4285F4" d="M23.5 12.3c0-.8-.1-1.6-.2-2.3H12v4.5h6.5c-.3 1.5-1.1 2.8-2.4 3.6l3.7 2.9c2.2-2 3.7-5 3.7-8.7z"/>
             <path fill="#FBBC05" d="M5.3 14.8c-.2-.8-.4-1.6-.4-2.5s.2-1.7.4-2.5L1.6 7C.6 9 0 11.2 0 13.5s.6 4.5 1.6 6.5l3.7-2.9z"/>
             <path fill="#34A853" d="M12 24c3.2 0 6-1.1 8-3l-3.7-2.9c-1.1.7-2.5 1.2-4.3 1.2-3.1 0-5.8-2.1-6.7-5l-3.7 2.8C3.5 21.4 7.4 24 12 24z"/>
           </svg>
-          <span>Continue with Google</span>
+          <span id="google-btn-label">Continue with Google</span>
         </button>
 
         <div class="my-5 flex items-center gap-3">
           <div class="h-px bg-slate-200 flex-1"></div>
-          <span class="text-[11px] text-slate-400 font-medium uppercase">OR WITH EMAIL</span>
+          <span class="text-[11px] text-slate-400 font-bold uppercase">OR USE EMAIL</span>
           <div class="h-px bg-slate-200 flex-1"></div>
         </div>
 
-        <div class="space-y-4">
+        <!-- SIGN IN FORM -->
+        <div id="form-signin" class="space-y-4">
           <div>
-            <label class="text-xs font-semibold text-slate-700">Full Name</label>
-            <input id="signup-name" type="text" placeholder="Enter your full name" class="mt-1 w-full px-3.5 py-2.5 rounded-lg ghl-input text-sm" />
-          </div>
-          <div>
-            <label class="text-xs font-semibold text-slate-700">Email Address</label>
-            <input id="signup-email" type="email" placeholder="you@example.com" class="mt-1 w-full px-3.5 py-2.5 rounded-lg ghl-input text-sm" />
+            <label class="text-xs font-bold text-slate-700">Email Address</label>
+            <input id="signin-email" type="email" placeholder="Enter your registered email" class="mt-1 w-full px-3.5 py-2.5 rounded-xl ghl-input text-sm" />
           </div>
           <div>
-            <label class="text-xs font-semibold text-slate-700">Password</label>
-            <input id="signup-password" type="password" placeholder="Create a password" class="mt-1 w-full px-3.5 py-2.5 rounded-lg ghl-input text-sm" />
+            <label class="text-xs font-bold text-slate-700">Password</label>
+            <input id="signin-password" type="password" placeholder="Enter your password" class="mt-1 w-full px-3.5 py-2.5 rounded-xl ghl-input text-sm" />
           </div>
-          <div id="google-auth-badge" class="hidden p-3 rounded-lg bg-emerald-50 border border-emerald-200 text-emerald-700 text-xs font-semibold">
-            ✓ Google Account Connected
+          <button type="button" onclick="handleEmailSignIn()" class="w-full py-3 rounded-xl ghl-btn-primary font-bold text-sm">
+            Sign In to Workspace
+          </button>
+        </div>
+
+        <!-- SIGN UP FORM (WITH EMAIL OTP VERIFICATION) -->
+        <div id="form-signup" class="hidden space-y-4">
+          <div>
+            <label class="text-xs font-bold text-slate-700">Full Name</label>
+            <input id="signup-name" type="text" placeholder="Enter your full name" class="mt-1 w-full px-3.5 py-2.5 rounded-xl ghl-input text-sm" />
           </div>
+          <div>
+            <label class="text-xs font-bold text-slate-700">Email Address</label>
+            <div class="mt-1 flex gap-2">
+              <input id="signup-email" type="email" placeholder="you@example.com" class="flex-1 px-3.5 py-2.5 rounded-xl ghl-input text-sm" />
+              <button type="button" onclick="sendEmailOtpCode()" class="px-3.5 py-2.5 rounded-xl ghl-btn-secondary text-xs font-bold">
+                Send OTP
+              </button>
+            </div>
+          </div>
+
+          <!-- OTP Verification Box -->
+          <div id="otp-verification-box" class="hidden p-3.5 rounded-xl bg-blue-50/70 border border-blue-200 space-y-2">
+            <div class="flex items-center justify-between">
+              <label class="text-xs font-bold text-blue-900">Enter 6-Digit Email OTP Code</label>
+              <span id="otp-hint-badge" class="text-[11px] font-mono font-bold text-blue-700"></span>
+            </div>
+            <input id="signup-otp-input" type="text" maxlength="6" placeholder="Enter 6-digit OTP" class="w-full px-3.5 py-2 rounded-lg ghl-input text-sm font-mono tracking-widest text-center" />
+          </div>
+
+          <div>
+            <label class="text-xs font-bold text-slate-700">Create Password</label>
+            <input id="signup-password" type="password" placeholder="Minimum 6 characters" class="mt-1 w-full px-3.5 py-2.5 rounded-xl ghl-input text-sm" />
+          </div>
+          <button type="button" onclick="handleEmailSignUp()" class="w-full py-3 rounded-xl ghl-btn-primary font-bold text-sm">
+            Verify & Create Account →
+          </button>
         </div>
       </div>
 
-      <!-- Step 2: Card Checkout (Clean, Zero Dummy Data) -->
-      <div class="ghl-card p-6 sm:p-8 rounded-xl">
+      <!-- STEP B: PLAN SELECTION (AFTER SIGN UP / GET STARTED) -->
+      <div id="auth-step-plan" class="hidden ghl-card p-6 sm:p-8 rounded-2xl space-y-5">
         <div class="flex items-center justify-between">
-          <span class="px-2.5 py-1 rounded-md text-xs font-bold bg-emerald-50 text-emerald-700">STEP 2 • PAYMENT</span>
-          <span class="text-xs text-slate-400">256-Bit SSL</span>
+          <span class="px-2.5 py-1 rounded-md text-xs font-bold bg-blue-50 text-blue-700">STEP 2 OF 3 • SELECT PLAN</span>
+          <button type="button" onclick="scrollToPricingSection()" class="text-xs font-bold text-blue-600 hover:underline">
+            Compare Full Plans ↗
+          </button>
         </div>
-        <h2 class="text-xl sm:text-2xl font-bold text-slate-900 mt-3">Card Details</h2>
-        <p class="text-xs sm:text-sm text-slate-500 mt-1">Complete your subscription with any Debit or Credit Card.</p>
+        <h2 class="text-xl sm:text-2xl font-extrabold text-slate-900">Choose Your Subscription Plan</h2>
+        <p class="text-xs sm:text-sm text-slate-600">Select the plan you want to activate for your account.</p>
 
-        <div class="mt-4 p-4 rounded-lg bg-slate-50 border border-slate-200 flex items-center justify-between">
+        <div id="modal-plan-selector-list" class="space-y-3"></div>
+      </div>
+
+      <!-- STEP C: CARD PAYMENT CHECKOUT (AFTER SELECTING PLAN) -->
+      <div id="auth-step-payment" class="hidden ghl-card p-6 sm:p-8 rounded-2xl">
+        <div class="flex items-center justify-between">
+          <span class="px-2.5 py-1 rounded-md text-xs font-bold bg-emerald-50 text-emerald-700">STEP 3 OF 3 • CARD CHECKOUT</span>
+          <button type="button" onclick="showAuthStep('plan')" class="text-xs font-bold text-blue-600 hover:underline">
+            ← Change Plan
+          </button>
+        </div>
+        <h2 class="text-xl sm:text-2xl font-extrabold text-slate-900 mt-3">Complete Payment</h2>
+        <p class="text-xs sm:text-sm text-slate-600 mt-1">Enter your Debit or Credit Card details to activate your workspace.</p>
+
+        <div class="mt-4 p-4 rounded-xl bg-slate-50 border border-slate-200 flex items-center justify-between">
           <div>
-            <span class="text-xs text-slate-500">Selected Plan</span>
-            <h4 id="checkout-plan-name" class="font-bold text-slate-900 text-sm sm:text-base">Business Pro</h4>
+            <span class="text-xs text-slate-500 font-medium">Selected Plan</span>
+            <h4 id="checkout-plan-name" class="font-extrabold text-slate-900 text-base">Business Pro</h4>
           </div>
           <div class="text-right">
-            <span id="checkout-plan-price" class="text-lg sm:text-xl font-extrabold text-[#155eef]">Rs. 8,500</span>
+            <span id="checkout-plan-price" class="text-xl font-extrabold text-blue-600">Rs. 8,500</span>
             <span class="block text-[11px] text-slate-500">/ month</span>
           </div>
         </div>
 
         <div class="mt-5 space-y-4">
           <div>
-            <label class="text-xs font-semibold text-slate-700">Cardholder Name</label>
-            <input id="card-holder" type="text" placeholder="Name on card" class="mt-1 w-full px-3.5 py-2.5 rounded-lg ghl-input text-sm" />
+            <label class="text-xs font-bold text-slate-700">Cardholder Name</label>
+            <input id="card-holder" type="text" placeholder="Name on card" class="mt-1 w-full px-3.5 py-2.5 rounded-xl ghl-input text-sm" />
           </div>
           <div>
-            <label class="text-xs font-semibold text-slate-700 flex justify-between">
+            <label class="text-xs font-bold text-slate-700 flex justify-between">
               <span>Card Number</span>
-              <span class="text-[#155eef] font-medium">Visa • Mastercard</span>
+              <span class="text-blue-600 font-semibold">Visa • Mastercard</span>
             </label>
-            <input id="card-number" type="text" placeholder="0000 0000 0000 0000" class="mt-1 w-full px-3.5 py-2.5 rounded-lg ghl-input text-sm font-mono" />
+            <input id="card-number" type="text" placeholder="0000 0000 0000 0000" class="mt-1 w-full px-3.5 py-2.5 rounded-xl ghl-input text-sm font-mono" />
           </div>
           <div class="grid grid-cols-2 gap-4">
             <div>
-              <label class="text-xs font-semibold text-slate-700">Expiry Date</label>
-              <input id="card-expiry" type="text" placeholder="MM / YY" class="mt-1 w-full px-3.5 py-2.5 rounded-lg ghl-input text-sm font-mono" />
+              <label class="text-xs font-bold text-slate-700">Expiry Date</label>
+              <input id="card-expiry" type="text" placeholder="MM / YY" class="mt-1 w-full px-3.5 py-2.5 rounded-xl ghl-input text-sm font-mono" />
             </div>
             <div>
-              <label class="text-xs font-semibold text-slate-700">CVC</label>
-              <input id="card-cvc" type="password" placeholder="CVC" class="mt-1 w-full px-3.5 py-2.5 rounded-lg ghl-input text-sm font-mono" />
+              <label class="text-xs font-bold text-slate-700">CVC</label>
+              <input id="card-cvc" type="password" placeholder="CVC" class="mt-1 w-full px-3.5 py-2.5 rounded-xl ghl-input text-sm font-mono" />
             </div>
           </div>
 
-          <button onclick="completeSubscriptionAndLogin()" class="mt-3 w-full py-3 px-4 rounded-lg ghl-btn-primary font-semibold text-sm shadow-sm">
-            Subscribe & Open Dashboard
+          <button type="button" onclick="completeSubscriptionAndLogin()" class="mt-3 w-full py-3.5 px-4 rounded-xl ghl-btn-primary font-bold text-sm shadow-md">
+            Pay & Activate Workspace →
           </button>
         </div>
       </div>
@@ -254,72 +329,66 @@
   </section>
 
   <!-- ===================================================================== -->
-  <!-- VIEW 3: GOHIGHLEVEL CRM STYLE CLIENT WORKSPACE                        -->
+  <!-- VIEW 3: GOHIGHLEVEL CRM CLIENT WORKSPACE                              -->
   <!-- ===================================================================== -->
-  <div id="view-dashboard" class="hidden flex-1 flex flex-col lg:flex-row min-h-screen bg-[#f4f6f8]">
+  <div id="view-dashboard" class="hidden flex-1 flex flex-col lg:flex-row min-h-screen bg-[#f8fafc]">
 
-    <!-- GHL LEFT SIDEBAR (Desktop) + TOP BAR (Mobile) -->
+    <!-- GHL LEFT SIDEBAR -->
     <aside class="ghl-sidebar w-full lg:w-64 shrink-0 flex flex-col justify-between border-b lg:border-b-0 lg:border-r border-slate-800">
       <div>
-        <!-- Brand Header -->
-        <div class="h-16 px-4 flex items-center justify-between border-b border-slate-800">
+        <div class="h-16 px-5 flex items-center justify-between border-b border-slate-800">
           <div class="flex items-center gap-2.5">
-            <div class="w-8 h-8 rounded-lg bg-[#155eef] flex items-center justify-center font-bold text-white text-sm shrink-0">
+            <div class="w-8 h-8 rounded-lg bg-blue-600 flex items-center justify-center font-extrabold text-white text-sm shrink-0">
               Z
             </div>
-            <span class="font-bold text-white text-base whitespace-nowrap">ZoomCast CRM</span>
+            <span class="font-extrabold text-white text-base whitespace-nowrap">ZoomCast CRM</span>
           </div>
-
-          <!-- Mobile Profile Button -->
           <button onclick="switchDashboardTab('profile')" class="lg:hidden px-3 py-1.5 rounded-lg bg-slate-800 text-xs font-semibold text-white whitespace-nowrap">
             Profile & Settings
           </button>
         </div>
 
-        <!-- Navigation Links -->
         <nav class="p-3 flex lg:flex-col gap-1.5 overflow-x-auto">
-          <button onclick="switchDashboardTab('categories')" id="dtab-categories" class="flex items-center gap-2.5 px-3.5 py-2.5 rounded-lg text-xs sm:text-sm font-semibold bg-[#155eef] text-white whitespace-nowrap text-left">
+          <button onclick="switchDashboardTab('categories')" id="dtab-categories" class="flex items-center gap-2.5 px-3.5 py-2.5 rounded-xl text-xs sm:text-sm font-bold bg-blue-600 text-white whitespace-nowrap text-left">
             <span>📅</span>
-            <span>Meeting Categories</span>
+            <span>Meeting Workflows</span>
           </button>
-          <button onclick="switchDashboardTab('attendance')" id="dtab-attendance" class="flex items-center gap-2.5 px-3.5 py-2.5 rounded-lg text-xs sm:text-sm font-semibold text-slate-300 hover:bg-slate-800/80 hover:text-white whitespace-nowrap text-left">
-            <span>👥</span>
-            <span>Attendance Report</span>
+          <button onclick="switchDashboardTab('attendance')" id="dtab-attendance" class="flex items-center gap-2.5 px-3.5 py-2.5 rounded-xl text-xs sm:text-sm font-semibold text-slate-300 hover:bg-slate-800 hover:text-white whitespace-nowrap text-left">
+            <span>📊</span>
+            <span>Attendance & Chat Logs</span>
           </button>
-          <button onclick="switchDashboardTab('profile')" id="dtab-profile" class="flex items-center gap-2.5 px-3.5 py-2.5 rounded-lg text-xs sm:text-sm font-semibold text-slate-300 hover:bg-slate-800/80 hover:text-white whitespace-nowrap text-left">
+          <button onclick="switchDashboardTab('profile')" id="dtab-profile" class="flex items-center gap-2.5 px-3.5 py-2.5 rounded-xl text-xs sm:text-sm font-semibold text-slate-300 hover:bg-slate-800 hover:text-white whitespace-nowrap text-left">
             <span>⚙️</span>
             <span>Profile & Integrations</span>
           </button>
         </nav>
       </div>
 
-      <!-- Bottom Profile Card (Desktop) -->
       <div class="hidden lg:block p-4 border-t border-slate-800">
         <div class="flex items-center justify-between gap-2">
           <div class="truncate">
-            <div id="sidebar-user-name" class="text-xs font-bold text-white truncate">My Workspace</div>
-            <div id="sidebar-user-email" class="text-[11px] text-slate-400 truncate">Not signed in</div>
+            <div id="sidebar-user-name" class="text-xs font-bold text-white truncate">Workspace User</div>
+            <div id="sidebar-user-email" class="text-[11px] text-slate-400 truncate">Active Session</div>
           </div>
-          <button onclick="logoutClient()" class="px-2.5 py-1.5 rounded-md bg-slate-800 hover:bg-slate-700 text-[11px] font-semibold text-slate-300 whitespace-nowrap">
+          <button onclick="logoutClient()" class="px-2.5 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-[11px] font-semibold text-slate-300 whitespace-nowrap">
             Sign Out
           </button>
         </div>
       </div>
     </aside>
 
-    <!-- MAIN CRM CONTENT AREA -->
+    <!-- MAIN CRM CONTENT -->
     <div class="flex-1 flex flex-col min-w-0">
       
-      <!-- Top Workspace Header -->
       <header class="bg-white border-b border-slate-200 h-16 px-4 sm:px-8 flex items-center justify-between gap-3">
         <div class="truncate">
-          <h1 id="workspace-page-title" class="text-base sm:text-lg font-bold text-slate-900 truncate">Meeting Categories & Scheduler</h1>
+          <h1 id="workspace-page-title" class="text-base sm:text-lg font-extrabold text-slate-900 truncate">Meeting & Webinar Workflows</h1>
         </div>
         <div class="flex items-center gap-2.5 shrink-0">
-          <button onclick="triggerLiveMeetingNow()" class="px-3.5 sm:px-4 py-2 rounded-lg ghl-btn-primary text-xs sm:text-sm font-semibold shadow-sm">
+          <button onclick="triggerLiveMeetingNow()" class="px-4 py-2 rounded-xl ghl-btn-primary text-xs sm:text-sm font-bold">
             ▶ Run Broadcast Now
           </button>
-          <button onclick="switchDashboardTab('profile')" class="hidden sm:inline-flex px-3.5 py-2 rounded-lg ghl-btn-secondary text-xs sm:text-sm font-semibold">
+          <button onclick="switchDashboardTab('profile')" class="hidden sm:inline-flex px-3.5 py-2 rounded-xl ghl-btn-secondary text-xs sm:text-sm font-bold">
             Profile & Settings
           </button>
         </div>
@@ -328,205 +397,284 @@
       <div class="p-4 sm:p-8 max-w-6xl w-full mx-auto space-y-6">
 
         <!-- =============================================================== -->
-        <!-- TAB 1: MEETING CATEGORIES + WEEKLY DAYS + 24H CALENDAR + VIDEOS -->
+        <!-- TAB 1: WORKFLOWS (ACTIVE / DRAFT TOGGLE + 12H AM/PM SCHEDULER)  -->
         <!-- =============================================================== -->
         <div id="dash-content-categories" class="space-y-6">
 
-          <!-- Saved Categories List -->
-          <div class="ghl-card p-5 sm:p-6 rounded-xl">
+          <!-- Saved Workflows List -->
+          <div class="ghl-card p-5 sm:p-6 rounded-2xl">
             <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-4 border-b border-slate-200">
               <div>
-                <h2 class="text-base font-bold text-slate-900">Your Meeting Categories</h2>
-                <p class="text-xs text-slate-500 mt-0.5">Each category has its own weekly days, multiple daily times, and video playlist.</p>
+                <h2 class="text-base font-extrabold text-slate-900">Your Scheduled Workflows (Meetings & Webinars)</h2>
+                <p class="text-xs text-slate-500 mt-0.5">Toggle any workflow between <strong>Active</strong> and <strong>Draft</strong> at any time.</p>
               </div>
-              <button onclick="resetCategoryForm()" class="px-3.5 py-2 rounded-lg ghl-btn-primary text-xs font-semibold self-start sm:self-auto">
-                + New Category
+              <button onclick="resetCategoryForm()" class="px-4 py-2 rounded-xl ghl-btn-primary text-xs font-bold self-start sm:self-auto">
+                + Create New Workflow
               </button>
             </div>
 
-            <div id="saved-categories-list" class="mt-4 space-y-3">
-              <!-- Populated dynamically via app.js -->
-            </div>
+            <div id="saved-categories-list" class="mt-4 space-y-3"></div>
           </div>
 
-          <!-- Create / Edit Meeting Category Builder -->
-          <div class="ghl-card p-5 sm:p-6 rounded-xl space-y-6">
-            <div class="border-b border-slate-200 pb-4">
-              <h3 id="cat-form-heading" class="text-base font-bold text-slate-900">Create / Configure Meeting Category</h3>
-              <p class="text-xs text-slate-500 mt-0.5">Set the category name, select weekly days, pick multiple broadcast times, and upload one or more videos.</p>
-            </div>
-
-            <!-- Step 1: Category Name & Optional Zoom Link -->
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <!-- Workflow / Webinar Builder -->
+          <div class="ghl-card p-5 sm:p-6 rounded-2xl space-y-6">
+            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-200 pb-4">
               <div>
-                <label class="text-xs font-semibold text-slate-700">1. Category Name</label>
-                <input id="cat-name" type="text" placeholder="e.g. Morning Batch / Daily Webinar" class="mt-1 w-full px-3.5 py-2.5 rounded-lg ghl-input text-sm" />
+                <h3 id="cat-form-heading" class="text-base font-extrabold text-slate-900">Workflow / Meeting Builder</h3>
+                <p class="text-xs text-slate-500 mt-0.5">Name your meeting or webinar workflow, choose weekly days, add 12-hour AM/PM times, and upload videos.</p>
+              </div>
+
+              <!-- Top Active / Draft Toggle Switch -->
+              <div class="flex items-center gap-3 bg-slate-50 px-3.5 py-2 rounded-xl border border-slate-200 self-start sm:self-auto">
+                <span class="text-xs font-bold text-slate-700">Workflow Status:</span>
+                <label class="inline-flex items-center cursor-pointer gap-2">
+                  <input id="cat-status-active" type="checkbox" checked class="w-4 h-4 rounded text-emerald-600" onchange="updateBuilderStatusLabel()" />
+                  <span id="cat-status-label" class="text-xs font-extrabold text-emerald-700 bg-emerald-50 px-2.5 py-0.5 rounded-md border border-emerald-200">Active (Live)</span>
+                </label>
+              </div>
+            </div>
+
+            <!-- Step 1: Workflow / Meeting / Webinar Name & Type -->
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <div class="md:col-span-2">
+                <label class="text-xs font-bold text-slate-700">1. Workflow / Meeting / Webinar Name</label>
+                <input id="cat-name" type="text" placeholder="e.g. Daily Sales Webinar / Morning Training Batch" class="mt-1 w-full px-3.5 py-2.5 rounded-xl ghl-input text-sm" />
               </div>
               <div>
-                <label class="text-xs font-semibold text-slate-700">Zoom Meeting Link (Optional Override)</label>
-                <input id="cat-zoom-link" type="text" placeholder="Leave blank to use default Zoom Integration link" class="mt-1 w-full px-3.5 py-2.5 rounded-lg ghl-input text-sm" />
-              </div>
-            </div>
-
-            <!-- Step 2: Weekly Days (Full 7 Days with Checkboxes) -->
-            <div>
-              <div class="flex items-center justify-between mb-2">
-                <label class="text-xs font-semibold text-slate-700">2. Select Weekly Days (Multiple Selection)</label>
-                <button type="button" onclick="toggleAllWeekdays()" class="text-xs font-semibold text-[#155eef] hover:underline whitespace-nowrap">
-                  Select All 7 Days
-                </button>
-              </div>
-              <div class="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-7 gap-2.5">
-                <label class="flex items-center justify-between p-3 rounded-lg border border-slate-200 bg-slate-50/60 hover:bg-white cursor-pointer">
-                  <span class="text-xs font-semibold text-slate-800">Monday</span>
-                  <input type="checkbox" value="Monday" class="cat-day-chk w-4 h-4 rounded text-[#155eef]" checked />
-                </label>
-                <label class="flex items-center justify-between p-3 rounded-lg border border-slate-200 bg-slate-50/60 hover:bg-white cursor-pointer">
-                  <span class="text-xs font-semibold text-slate-800">Tuesday</span>
-                  <input type="checkbox" value="Tuesday" class="cat-day-chk w-4 h-4 rounded text-[#155eef]" checked />
-                </label>
-                <label class="flex items-center justify-between p-3 rounded-lg border border-slate-200 bg-slate-50/60 hover:bg-white cursor-pointer">
-                  <span class="text-xs font-semibold text-slate-800">Wednesday</span>
-                  <input type="checkbox" value="Wednesday" class="cat-day-chk w-4 h-4 rounded text-[#155eef]" checked />
-                </label>
-                <label class="flex items-center justify-between p-3 rounded-lg border border-slate-200 bg-slate-50/60 hover:bg-white cursor-pointer">
-                  <span class="text-xs font-semibold text-slate-800">Thursday</span>
-                  <input type="checkbox" value="Thursday" class="cat-day-chk w-4 h-4 rounded text-[#155eef]" checked />
-                </label>
-                <label class="flex items-center justify-between p-3 rounded-lg border border-slate-200 bg-slate-50/60 hover:bg-white cursor-pointer">
-                  <span class="text-xs font-semibold text-slate-800">Friday</span>
-                  <input type="checkbox" value="Friday" class="cat-day-chk w-4 h-4 rounded text-[#155eef]" checked />
-                </label>
-                <label class="flex items-center justify-between p-3 rounded-lg border border-slate-200 bg-slate-50/60 hover:bg-white cursor-pointer">
-                  <span class="text-xs font-semibold text-slate-800">Saturday</span>
-                  <input type="checkbox" value="Saturday" class="cat-day-chk w-4 h-4 rounded text-[#155eef]" />
-                </label>
-                <label class="flex items-center justify-between p-3 rounded-lg border border-slate-200 bg-slate-50/60 hover:bg-white cursor-pointer">
-                  <span class="text-xs font-semibold text-slate-800">Sunday</span>
-                  <input type="checkbox" value="Sunday" class="cat-day-chk w-4 h-4 rounded text-[#155eef]" />
-                </label>
-              </div>
-            </div>
-
-            <!-- Step 3: Multiple Video Upload (No Size Limit) & Seamless Playlist Builder -->
-            <div>
-              <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-2">
-                <div>
-                  <label class="text-xs font-semibold text-slate-700">3. Upload Videos (Unlimited File Size • Multiple Videos Supported)</label>
-                  <p class="text-[11px] text-slate-500">Select one or multiple videos. If 2+ videos are selected for a session, they play seamlessly back-to-back.</p>
-                </div>
-                <span id="cat-total-duration" class="text-xs font-bold text-emerald-700 bg-emerald-50 border border-emerald-200 px-2.5 py-1 rounded-md whitespace-nowrap self-start sm:self-auto">
-                  Total Duration: 00:00:00
-                </span>
-              </div>
-
-              <label class="mt-2 border-2 border-dashed border-slate-300 hover:border-[#155eef] rounded-xl p-5 flex flex-col items-center justify-center text-center cursor-pointer bg-slate-50/60 transition">
-                <span class="text-sm font-bold text-slate-800">+ Select One or Multiple Video Files (No Size Limit)</span>
-                <span class="text-xs text-slate-500 mt-1">Supports MP4, MKV, MOV, AVI, WEBM of any size</span>
-                <input id="cat-video-input" type="file" accept="video/*" multiple class="hidden" onchange="handleCategoryVideosSelect(event)" />
-              </label>
-
-              <!-- Uploaded Videos List for this Category -->
-              <div id="cat-videos-list" class="mt-3 space-y-2"></div>
-
-              <!-- Video Transition Mode -->
-              <div class="mt-3 p-3.5 rounded-lg bg-slate-50 border border-slate-200 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-                <div>
-                  <span class="text-xs font-semibold text-slate-800 block">Multi-Video Playback Behaviour</span>
-                  <span class="text-[11px] text-slate-500">Choose how multiple videos behave when assigned to the same meeting या different times.</span>
-                </div>
-                <select id="cat-playback-mode" class="px-3 py-2 rounded-lg ghl-input text-xs font-semibold">
-                  <option value="seamless">Play Selected Videos Back-to-Back (Seamless 1s Black Switch)</option>
-                  <option value="per_slot">Assign Specific Video to Each Time Slot Below</option>
+                <label class="text-xs font-bold text-slate-700">Session Type</label>
+                <select id="cat-session-type" class="mt-1 w-full px-3.5 py-2.5 rounded-xl ghl-input text-sm">
+                  <option value="Zoom Meeting">Automated Zoom Meeting</option>
+                  <option value="Zoom Webinar">Automated Zoom Webinar</option>
                 </select>
               </div>
             </div>
 
-            <!-- Step 4: Full-Day Time Calendar (Multiple Time Selection Across 24 Hours) -->
+            <!-- Step 2: Weekly Days (Full 7 Days Checkboxes) -->
+            <div>
+              <div class="flex items-center justify-between mb-2">
+                <label class="text-xs font-bold text-slate-700">2. Select Weekly Days (Check Multiple Days)</label>
+                <button type="button" onclick="toggleAllWeekdays()" class="text-xs font-bold text-blue-600 hover:underline whitespace-nowrap">
+                  Select / Deselect All 7 Days
+                </button>
+              </div>
+              <div class="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-7 gap-2.5">
+                <label class="flex items-center justify-between p-3 rounded-xl border border-slate-200 bg-slate-50/70 hover:bg-white cursor-pointer">
+                  <span class="text-xs font-bold text-slate-800">Monday</span>
+                  <input type="checkbox" value="Monday" class="cat-day-chk w-4 h-4 rounded text-blue-600" checked />
+                </label>
+                <label class="flex items-center justify-between p-3 rounded-xl border border-slate-200 bg-slate-50/70 hover:bg-white cursor-pointer">
+                  <span class="text-xs font-bold text-slate-800">Tuesday</span>
+                  <input type="checkbox" value="Tuesday" class="cat-day-chk w-4 h-4 rounded text-blue-600" checked />
+                </label>
+                <label class="flex items-center justify-between p-3 rounded-xl border border-slate-200 bg-slate-50/70 hover:bg-white cursor-pointer">
+                  <span class="text-xs font-bold text-slate-800">Wednesday</span>
+                  <input type="checkbox" value="Wednesday" class="cat-day-chk w-4 h-4 rounded text-blue-600" checked />
+                </label>
+                <label class="flex items-center justify-between p-3 rounded-xl border border-slate-200 bg-slate-50/70 hover:bg-white cursor-pointer">
+                  <span class="text-xs font-bold text-slate-800">Thursday</span>
+                  <input type="checkbox" value="Thursday" class="cat-day-chk w-4 h-4 rounded text-blue-600" checked />
+                </label>
+                <label class="flex items-center justify-between p-3 rounded-xl border border-slate-200 bg-slate-50/70 hover:bg-white cursor-pointer">
+                  <span class="text-xs font-bold text-slate-800">Friday</span>
+                  <input type="checkbox" value="Friday" class="cat-day-chk w-4 h-4 rounded text-blue-600" checked />
+                </label>
+                <label class="flex items-center justify-between p-3 rounded-xl border border-slate-200 bg-slate-50/70 hover:bg-white cursor-pointer">
+                  <span class="text-xs font-bold text-slate-800">Saturday</span>
+                  <input type="checkbox" value="Saturday" class="cat-day-chk w-4 h-4 rounded text-blue-600" />
+                </label>
+                <label class="flex items-center justify-between p-3 rounded-xl border border-slate-200 bg-slate-50/70 hover:bg-white cursor-pointer">
+                  <span class="text-xs font-bold text-slate-800">Sunday</span>
+                  <input type="checkbox" value="Sunday" class="cat-day-chk w-4 h-4 rounded text-blue-600" />
+                </label>
+              </div>
+            </div>
+
+            <!-- Step 3: Upload Videos (Unlimited File Size, Multi-Video Support) -->
             <div>
               <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-2">
                 <div>
-                  <label class="text-xs font-semibold text-slate-700">4. Full-Day Time Calendar (Select Multiple Broadcast Times)</label>
-                  <p class="text-[11px] text-slate-500">Click any times across the 24-hour calendar or add a custom time below.</p>
+                  <label class="text-xs font-bold text-slate-700">3. Upload Recorded Video(s) (No Size Limit • Single or Multiple Videos)</label>
+                  <p class="text-[11px] text-slate-500">Upload one or more videos. If multiple videos are played together, Video 2 starts automatically right after Video 1 finishes.</p>
                 </div>
-                <div class="flex items-center gap-2">
-                  <input id="custom-time-input" type="time" class="px-2.5 py-1.5 rounded-lg ghl-input text-xs" />
-                  <button type="button" onclick="addCustomTimeSlot()" class="px-3 py-1.5 rounded-lg ghl-btn-secondary text-xs font-semibold">
+                <span id="cat-total-duration" class="text-xs font-extrabold text-emerald-700 bg-emerald-50 border border-emerald-200 px-3 py-1 rounded-lg whitespace-nowrap self-start sm:self-auto">
+                  Total Duration: 00:00:00
+                </span>
+              </div>
+
+              <label class="mt-2 border-2 border-dashed border-slate-300 hover:border-blue-600 rounded-xl p-5 flex flex-col items-center justify-center text-center cursor-pointer bg-slate-50/60 transition">
+                <span class="text-sm font-extrabold text-slate-800">+ Choose Video File(s) From Computer</span>
+                <span class="text-xs text-slate-500 mt-1">Supports MP4, MKV, MOV, AVI, WEBM (Unlimited GB Size)</span>
+                <input id="cat-video-input" type="file" accept="video/*" multiple class="hidden" onchange="handleCategoryVideosSelect(event)" />
+              </label>
+
+              <div id="cat-videos-list" class="mt-3 space-y-2"></div>
+            </div>
+
+            <!-- Step 4: 12-Hour (AM / PM) Time Calendar + Working Hour/Minute/AM-PM Custom Selector -->
+            <div>
+              <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-3 mb-3">
+                <div>
+                  <label class="text-xs font-bold text-slate-700">4. Select Broadcast Times (12-Hour AM / PM Format)</label>
+                  <p class="text-[11px] text-slate-500">Click any time slots on the 12-hour calendar below, or pick exact Hours, Minutes & AM/PM to add a custom time.</p>
+                </div>
+
+                <!-- Explicit Hour + Minute + AM/PM Selector (Always Works!) -->
+                <div class="flex flex-wrap items-center gap-1.5 bg-slate-100 p-1.5 rounded-xl border border-slate-200">
+                  <select id="custom-hour-select" class="px-2.5 py-1.5 rounded-lg ghl-input text-xs font-bold">
+                    <option value="01">01</option>
+                    <option value="02">02</option>
+                    <option value="03">03</option>
+                    <option value="04">04</option>
+                    <option value="05">05</option>
+                    <option value="06">06</option>
+                    <option value="07">07</option>
+                    <option value="08">08</option>
+                    <option value="09" selected>09</option>
+                    <option value="10">10</option>
+                    <option value="11">11</option>
+                    <option value="12">12</option>
+                  </select>
+                  <span class="font-bold text-slate-600">:</span>
+                  <select id="custom-minute-select" class="px-2.5 py-1.5 rounded-lg ghl-input text-xs font-bold">
+                    <option value="00">00</option>
+                    <option value="05">05</option>
+                    <option value="10">10</option>
+                    <option value="15" selected>15</option>
+                    <option value="20">20</option>
+                    <option value="25">25</option>
+                    <option value="30">30</option>
+                    <option value="35">35</option>
+                    <option value="40">40</option>
+                    <option value="45">45</option>
+                    <option value="50">50</option>
+                    <option value="55">55</option>
+                  </select>
+                  <select id="custom-ampm-select" class="px-2.5 py-1.5 rounded-lg ghl-input text-xs font-bold">
+                    <option value="AM">AM</option>
+                    <option value="PM" selected>PM</option>
+                  </select>
+                  <button type="button" onclick="addCustomTimeSlot()" class="px-3.5 py-1.5 rounded-lg ghl-btn-primary text-xs font-bold">
                     + Add Custom Time
                   </button>
                 </div>
               </div>
 
-              <!-- 24-Hour Quick Select Calendar Grid -->
-              <div id="time-calendar-grid" class="grid grid-cols-3 sm:grid-cols-6 md:grid-cols-8 gap-2 p-3 rounded-xl bg-slate-50 border border-slate-200 max-h-48 overflow-y-auto">
-                <!-- Populated by app.js with 24-hour slots -->
-              </div>
+              <!-- 12-Hour AM/PM Quick Select Grid -->
+              <div id="time-calendar-grid" class="grid grid-cols-3 sm:grid-cols-6 md:grid-cols-8 gap-2 p-3.5 rounded-xl bg-slate-50 border border-slate-200 max-h-52 overflow-y-auto"></div>
 
-              <!-- Selected Time Slots & Per-Slot Video Assignment -->
+              <!-- Selected Times & Video Choice Per Time -->
               <div class="mt-4">
-                <label class="text-xs font-semibold text-slate-700 block mb-2">Selected Broadcast Times & Video Assignment:</label>
-                <div id="selected-times-container" class="space-y-2">
-                  <!-- Populated dynamically via app.js -->
-                </div>
+                <label class="text-xs font-bold text-slate-700 block mb-2">Selected Broadcast Times (Choose Which Video Plays at Each Time):</label>
+                <div id="selected-times-container" class="space-y-2"></div>
               </div>
             </div>
 
-            <!-- Meeting Controls & Save Category Button -->
+            <!-- Footer Controls: Save as Draft OR Save & Activate -->
             <div class="pt-4 border-t border-slate-200 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-              <div class="flex flex-wrap items-center gap-4 text-xs text-slate-700">
+              <div class="flex flex-wrap items-center gap-4 text-xs font-semibold text-slate-700">
                 <label class="flex items-center gap-2 cursor-pointer">
-                  <input id="cat-auto-admit" type="checkbox" checked class="w-4 h-4 rounded text-[#155eef]" />
-                  <span>Auto-Admit All</span>
+                  <input id="cat-auto-admit" type="checkbox" checked class="w-4 h-4 rounded text-blue-600" />
+                  <span>Auto-Admit Participants</span>
                 </label>
                 <label class="flex items-center gap-2 cursor-pointer">
-                  <input id="cat-share-sound" type="checkbox" checked class="w-4 h-4 rounded text-[#155eef]" />
-                  <span>Share HD Audio</span>
+                  <input id="cat-share-sound" type="checkbox" checked class="w-4 h-4 rounded text-blue-600" />
+                  <span>Share Original Video Sound</span>
                 </label>
                 <label class="flex items-center gap-2 cursor-pointer">
-                  <input id="cat-auto-end" type="checkbox" checked class="w-4 h-4 rounded text-[#155eef]" />
-                  <span>Auto-End After Video(s)</span>
+                  <input id="cat-auto-end" type="checkbox" checked class="w-4 h-4 rounded text-blue-600" />
+                  <span>Auto-End When Video Finishes</span>
                 </label>
               </div>
 
-              <button type="button" onclick="saveMeetingCategory()" class="px-6 py-3 rounded-lg ghl-btn-primary text-xs sm:text-sm font-semibold shadow-sm">
-                Save Meeting Category
-              </button>
+              <div class="flex items-center gap-2.5 self-end sm:self-auto">
+                <button type="button" onclick="saveMeetingCategory('Draft')" class="px-5 py-2.5 rounded-xl ghl-btn-secondary text-xs sm:text-sm font-bold">
+                  Save as Draft
+                </button>
+                <button type="button" onclick="saveMeetingCategory('Active')" class="px-6 py-2.5 rounded-xl ghl-btn-primary text-xs sm:text-sm font-bold shadow-md">
+                  Save & Activate Workflow
+                </button>
+              </div>
             </div>
           </div>
 
         </div>
 
         <!-- =============================================================== -->
-        <!-- TAB 2: PARTICIPANT ATTENDANCE REPORT                            -->
+        <!-- TAB 2: ATTENDANCE & CHAT MESSAGES REPORT (MEETING -> DETAILS)   -->
         <!-- =============================================================== -->
         <div id="dash-content-attendance" class="hidden space-y-6">
-          <div class="ghl-card p-5 sm:p-6 rounded-xl">
+          
+          <!-- LEVEL 1: COMPLETED / LIVE MEETINGS SUMMARY TABLE -->
+          <div id="attendance-meetings-list-card" class="ghl-card p-5 sm:p-6 rounded-2xl">
             <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-4 border-b border-slate-200">
               <div>
-                <h2 class="text-base font-bold text-slate-900">Participant Attendance Report</h2>
-                <p class="text-xs text-slate-500 mt-0.5">Real-time log of participants who joined your automated broadcasts.</p>
+                <h2 class="text-base font-extrabold text-slate-900">Broadcast Sessions & Attendance History</h2>
+                <p class="text-xs text-slate-500 mt-0.5">Click on any meeting row below to view its full participant list, join/leave times, and in-meeting chat messages.</p>
               </div>
-              <button onclick="exportAttendanceCsv()" class="px-4 py-2 rounded-lg ghl-btn-primary text-xs font-semibold self-start sm:self-auto">
-                ⬇ Export CSV
-              </button>
+              <div class="flex items-center gap-2">
+                <button onclick="recordAccurateDemoSession()" class="px-3.5 py-2 rounded-xl ghl-btn-secondary text-xs font-bold">
+                  + Log Sample Live Session
+                </button>
+                <button onclick="exportAllSessionsSummaryCsv()" class="px-4 py-2 rounded-xl ghl-btn-primary text-xs font-bold">
+                  ⬇ Export All Summary CSV
+                </button>
+              </div>
             </div>
 
             <div class="overflow-x-auto mt-4">
               <table class="w-full text-left border-collapse">
                 <thead>
-                  <tr class="border-b border-slate-200 text-[11px] uppercase tracking-wider text-slate-500">
-                    <th class="py-3 px-3">Participant Name</th>
-                    <th class="py-3 px-3">Email</th>
-                    <th class="py-3 px-3">Role</th>
-                    <th class="py-3 px-3">Join Time</th>
-                    <th class="py-3 px-3">Leave Time</th>
-                    <th class="py-3 px-3">Duration</th>
+                  <tr class="border-b border-slate-200 text-[11px] uppercase tracking-wider text-slate-500 font-bold">
+                    <th class="py-3 px-4">Meeting / Workflow Name</th>
+                    <th class="py-3 px-4">Date</th>
+                    <th class="py-3 px-4">Scheduled Time</th>
+                    <th class="py-3 px-4">Total Attendance</th>
+                    <th class="py-3 px-4">Duration</th>
+                    <th class="py-3 px-4 text-right">Action</th>
                   </tr>
                 </thead>
-                <tbody id="attendance-table-body" class="divide-y divide-slate-200 text-xs sm:text-sm"></tbody>
+                <tbody id="sessions-summary-tbody" class="divide-y divide-slate-200 text-xs sm:text-sm"></tbody>
               </table>
             </div>
           </div>
+
+          <!-- LEVEL 2: SELECTED MEETING PARTICIPANTS & IN-MEETING CHAT LOGS -->
+          <div id="attendance-session-detail-card" class="hidden ghl-card p-5 sm:p-6 rounded-2xl space-y-6">
+            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-4 border-b border-slate-200">
+              <div>
+                <button onclick="backToSessionsList()" class="text-xs font-bold text-blue-600 hover:underline mb-1 inline-block">
+                  ← Back to All Meetings List
+                </button>
+                <h2 id="detail-session-title" class="text-lg font-extrabold text-slate-900">Meeting Details</h2>
+                <p id="detail-session-meta" class="text-xs text-slate-500 mt-0.5"></p>
+              </div>
+              <button onclick="exportSingleSessionCsv()" class="px-4 py-2.5 rounded-xl ghl-btn-primary text-xs font-bold self-start sm:self-auto">
+                ⬇ Export Participants & Chat CSV
+              </button>
+            </div>
+
+            <!-- Participants Table (With Exact Join/Leave & Chat Replies) -->
+            <div>
+              <h3 class="text-sm font-extrabold text-slate-900 mb-3">Participants List & Saved Chat Messages (Q1, 12, etc.)</h3>
+              <div class="overflow-x-auto">
+                <table class="w-full text-left border-collapse">
+                  <thead>
+                    <tr class="border-b border-slate-200 text-[11px] uppercase tracking-wider text-slate-500 font-bold">
+                      <th class="py-3 px-3">Participant Name</th>
+                      <th class="py-3 px-3">Email Address</th>
+                      <th class="py-3 px-3">Role</th>
+                      <th class="py-3 px-3">Join Time</th>
+                      <th class="py-3 px-3">Leave Time</th>
+                      <th class="py-3 px-3">Duration</th>
+                      <th class="py-3 px-3">Saved Chat Messages (In-Meeting Replies)</th>
+                    </tr>
+                  </thead>
+                  <tbody id="detail-participants-tbody" class="divide-y divide-slate-200 text-xs sm:text-sm"></tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+
         </div>
 
         <!-- =============================================================== -->
@@ -535,82 +683,74 @@
         <div id="dash-content-profile" class="hidden space-y-6">
           
           <!-- 1. Profile Settings & Sign Out -->
-          <div class="ghl-card p-5 sm:p-6 rounded-xl">
+          <div class="ghl-card p-5 sm:p-6 rounded-2xl">
             <div class="flex items-center justify-between pb-4 border-b border-slate-200">
               <div>
-                <h2 class="text-base font-bold text-slate-900">Profile Settings</h2>
-                <p class="text-xs text-slate-500 mt-0.5">Manage your personal account details and session.</p>
+                <h2 class="text-base font-extrabold text-slate-900">Profile Settings</h2>
+                <p class="text-xs text-slate-500 mt-0.5">Manage your personal account details and login session.</p>
               </div>
-              <button onclick="logoutClient()" class="px-4 py-2 rounded-lg bg-rose-600 hover:bg-rose-700 text-white text-xs font-semibold whitespace-nowrap">
+              <button onclick="logoutClient()" class="px-4 py-2 rounded-xl bg-rose-600 hover:bg-rose-700 text-white text-xs font-bold whitespace-nowrap">
                 Sign Out
               </button>
             </div>
 
             <div class="mt-4 grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
-                <label class="text-xs font-semibold text-slate-700">Full Name</label>
-                <input id="prof-name" type="text" placeholder="Your full name" class="mt-1 w-full px-3.5 py-2.5 rounded-lg ghl-input text-sm" />
+                <label class="text-xs font-bold text-slate-700">Full Name</label>
+                <input id="prof-name" type="text" placeholder="Your full name" class="mt-1 w-full px-3.5 py-2.5 rounded-xl ghl-input text-sm" />
               </div>
               <div>
-                <label class="text-xs font-semibold text-slate-700">Email Address</label>
-                <input id="prof-email" type="email" placeholder="you@example.com" class="mt-1 w-full px-3.5 py-2.5 rounded-lg ghl-input text-sm" />
+                <label class="text-xs font-bold text-slate-700">Email Address</label>
+                <input id="prof-email" type="email" placeholder="you@example.com" class="mt-1 w-full px-3.5 py-2.5 rounded-xl ghl-input text-sm" />
               </div>
             </div>
             <div class="mt-4 flex justify-end">
-              <button onclick="saveProfileDetails()" class="px-4 py-2 rounded-lg ghl-btn-primary text-xs font-semibold">
-                Update Profile
+              <button onclick="saveProfileDetails()" class="px-5 py-2.5 rounded-xl ghl-btn-primary text-xs font-bold">
+                Save Profile Changes
               </button>
             </div>
           </div>
 
-          <!-- 2. Zoom Integration -->
-          <div class="ghl-card p-5 sm:p-6 rounded-xl">
-            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pb-4 border-b border-slate-200">
+          <!-- 2. Zoom Account OAuth Integration (Clean, No Confusing Link Box) -->
+          <div class="ghl-card p-5 sm:p-6 rounded-2xl">
+            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
               <div>
-                <h2 class="text-base font-bold text-slate-900">Zoom Integration</h2>
-                <p class="text-xs text-slate-500 mt-0.5">Connect your Zoom account via Google OAuth and set your default Zoom meeting link.</p>
+                <div class="flex items-center gap-2.5">
+                  <h2 class="text-base font-extrabold text-slate-900">Zoom Account Integration</h2>
+                  <span id="zoom-conn-badge" class="px-2.5 py-0.5 rounded-md text-xs font-bold bg-emerald-50 text-emerald-700 border border-emerald-200 whitespace-nowrap">
+                    ● Ready to Connect
+                  </span>
+                </div>
+                <p class="text-xs text-slate-500 mt-1">
+                  Connect your Zoom account with Google in one click. Our system automatically generates and starts your scheduled Zoom meetings.
+                </p>
               </div>
-              <span id="zoom-conn-badge" class="px-2.5 py-1 rounded-md text-xs font-bold bg-emerald-50 text-emerald-700 border border-emerald-200 whitespace-nowrap self-start sm:self-auto">
-                ● Ready to Connect
-              </span>
-            </div>
-
-            <div class="mt-4 grid grid-cols-1 md:grid-cols-2 gap-4 items-end">
-              <div>
-                <label class="text-xs font-semibold text-slate-700">Default Zoom Meeting Link</label>
-                <input id="cfg-zoom-url" type="text" placeholder="https://zoom.us/j/..." class="mt-1 w-full px-3.5 py-2.5 rounded-lg ghl-input text-sm" />
-              </div>
-              <div class="flex gap-2">
-                <button onclick="reconnectZoomOAuth()" class="w-full py-2.5 px-4 rounded-lg ghl-btn-primary text-xs sm:text-sm font-semibold">
-                  Connect Zoom with Google
-                </button>
-              </div>
+              <button onclick="reconnectZoomOAuth()" class="px-5 py-2.5 rounded-xl ghl-btn-primary text-xs sm:text-sm font-bold self-start sm:self-auto">
+                Connect Zoom with Google
+              </button>
             </div>
           </div>
 
-          <!-- 3. Unlimited Team Co-Host Emails Manager (+ Add & Delete) -->
-          <div class="ghl-card p-5 sm:p-6 rounded-xl">
+          <!-- 3. Unlimited Team Co-Host Emails Manager -->
+          <div class="ghl-card p-5 sm:p-6 rounded-2xl">
             <div class="pb-4 border-b border-slate-200">
               <div class="flex items-center justify-between">
-                <h2 class="text-base font-bold text-slate-900">Team Auto Co-Host Emails (Unlimited)</h2>
-                <span id="cohost-count-badge" class="px-2.5 py-1 rounded-md text-xs font-bold bg-blue-50 text-[#155eef] whitespace-nowrap">0 Team Members</span>
+                <h2 class="text-base font-extrabold text-slate-900">Team Auto Co-Host Emails (Unlimited)</h2>
+                <span id="cohost-count-badge" class="px-2.5 py-1 rounded-md text-xs font-bold bg-blue-50 text-blue-700 whitespace-nowrap">0 Team Members</span>
               </div>
               <p class="text-xs text-slate-500 mt-0.5">
-                Add all your team members' emails (15, 20, or unlimited). Whenever any of these emails joins a meeting, our bot automatically promotes them to <strong>Co-Host</strong>.
+                Add all your team members' emails (15, 20, or unlimited). Anyone from this list who joins a broadcast is automatically promoted to <strong>Co-Host</strong>.
               </p>
             </div>
 
             <div class="mt-4 flex flex-col sm:flex-row gap-2.5">
-              <input id="new-cohost-email" type="email" placeholder="Enter team member email (e.g. member@company.com)" class="flex-1 px-3.5 py-2.5 rounded-lg ghl-input text-sm" onkeydown="if(event.key==='Enter') addCoHostEmail()" />
-              <button type="button" onclick="addCoHostEmail()" class="px-5 py-2.5 rounded-lg ghl-btn-primary text-xs sm:text-sm font-semibold">
+              <input id="new-cohost-email" type="email" placeholder="Enter team member email (e.g. member@company.com)" class="flex-1 px-3.5 py-2.5 rounded-xl ghl-input text-sm" onkeydown="if(event.key==='Enter') addCoHostEmail()" />
+              <button type="button" onclick="addCoHostEmail()" class="px-5 py-2.5 rounded-xl ghl-btn-primary text-xs sm:text-sm font-bold">
                 + Add Co-Host Email
               </button>
             </div>
 
-            <!-- List of Added Co-Host Emails -->
-            <div id="cohost-emails-list" class="mt-4 grid grid-cols-1 sm:grid-cols-2 gap-2.5">
-              <!-- Populated dynamically via app.js -->
-            </div>
+            <div id="cohost-emails-list" class="mt-4 grid grid-cols-1 sm:grid-cols-2 gap-2.5"></div>
           </div>
 
         </div>
@@ -621,7 +761,7 @@
   </div>
 
   <!-- Toast Notification -->
-  <div id="toast-box" class="fixed bottom-5 right-5 z-50 hidden px-4 py-3 rounded-lg bg-slate-900 text-white font-semibold text-xs sm:text-sm shadow-xl border border-slate-700"></div>
+  <div id="toast-box" class="fixed bottom-5 right-5 z-50 hidden px-4 py-3 rounded-xl bg-slate-900 text-white font-bold text-xs sm:text-sm shadow-2xl border border-slate-700"></div>
 
   <script src="app.js"></script>
 </body>
