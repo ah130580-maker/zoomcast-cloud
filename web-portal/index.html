@@ -1,0 +1,473 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>ZoomCast Cloud — Automated Zoom Broadcast Platform</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <style>
+    body {
+      font-family: 'Plus Jakarta Sans', sans-serif;
+      background-color: #060913;
+      color: #f8fafc;
+    }
+    .glass {
+      background: rgba(15, 23, 42, 0.75);
+      backdrop-filter: blur(16px);
+      border: 1px solid rgba(148, 163, 184, 0.12);
+    }
+    .glass-card {
+      background: linear-gradient(145deg, rgba(30, 41, 59, 0.55), rgba(15, 23, 42, 0.88));
+      border: 1px solid rgba(99, 102, 241, 0.2);
+    }
+    .vip-gradient {
+      background: linear-gradient(135deg, #4f46e5 0%, #06b6d4 50%, #10b981 100%);
+    }
+    .vip-text {
+      background: linear-gradient(135deg, #818cf8 0%, #38bdf8 50%, #34d399 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+  </style>
+</head>
+<body class="min-h-screen flex flex-col selection:bg-indigo-500 selection:text-white">
+
+  <!-- CUSTOMER TOP NAVIGATION -->
+  <header class="sticky top-0 z-50 glass border-b border-slate-800/80">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-20 flex items-center justify-between">
+      <div class="flex items-center gap-3 cursor-pointer" onclick="switchView('landing')">
+        <div class="w-10 h-10 rounded-xl vip-gradient flex items-center justify-center shadow-lg shadow-indigo-500/30 font-extrabold text-lg">
+          Z
+        </div>
+        <span class="font-extrabold text-xl tracking-tight text-white">ZoomCast <span class="vip-text">Cloud</span></span>
+      </div>
+
+      <nav id="public-nav-links" class="hidden md:flex items-center gap-8 text-sm font-medium text-slate-300">
+        <a href="#how-it-works" onclick="switchView('landing')" class="hover:text-white transition">How It Works</a>
+        <a href="#pricing-section" onclick="switchView('landing')" class="hover:text-white transition">Pricing</a>
+      </nav>
+
+      <div id="nav-auth-actions" class="flex items-center gap-3">
+        <button onclick="switchView('auth')" class="px-4 py-2.5 rounded-xl bg-slate-800/90 hover:bg-slate-700 text-sm font-semibold text-slate-200 border border-slate-700 transition">
+          Sign In
+        </button>
+        <button onclick="switchView('auth')" class="px-5 py-2.5 rounded-xl vip-gradient text-sm font-bold text-white shadow-lg shadow-indigo-500/25 hover:opacity-95 transition">
+          Get Started
+        </button>
+      </div>
+
+      <div id="nav-logged-in-actions" class="hidden items-center gap-3">
+        <button onclick="switchView('dashboard')" class="px-4 py-2 rounded-xl bg-indigo-600/20 border border-indigo-500/40 text-indigo-300 text-xs font-bold">
+          Dashboard
+        </button>
+        <button onclick="logoutClient()" class="px-4 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-xs font-semibold text-slate-300">
+          Sign Out
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <!-- ===================================================================== -->
+  <!-- VIEW 1: CUSTOMER LANDING PAGE                                         -->
+  <!-- ===================================================================== -->
+  <main id="view-landing" class="flex-1">
+    <section class="relative overflow-hidden py-20 lg:py-28">
+      <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
+        <div class="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-indigo-500/10 border border-indigo-500/30 text-indigo-300 text-xs font-semibold uppercase tracking-wider mb-6">
+          <span class="w-2 h-2 rounded-full bg-emerald-400 animate-ping"></span>
+          100% Cloud-Hosted Zoom Automation
+        </div>
+        <h1 class="text-4xl sm:text-6xl font-extrabold tracking-tight leading-tight max-w-4xl mx-auto">
+          Automate Your Recorded <span class="vip-text">Zoom Broadcasts</span> On Autopilot
+        </h1>
+        <p class="mt-6 text-lg text-slate-300 max-w-2xl mx-auto leading-relaxed">
+          Schedule your recorded sessions to start automatically 2 or 3 times a day. Our cloud engine launches your Zoom meeting, streams HD video with audio, admits participants, promotes your Co-Hosts, and ends the meeting automatically.
+        </p>
+
+        <div class="mt-10 flex flex-wrap justify-center gap-4">
+          <button onclick="switchView('auth')" class="px-8 py-4 rounded-2xl vip-gradient font-bold text-base text-white shadow-xl shadow-indigo-500/30 hover:scale-[1.02] transition">
+            Get Started Now →
+          </button>
+          <a href="#pricing-section" class="px-8 py-4 rounded-2xl glass hover:bg-slate-800/80 font-bold text-base text-slate-200 border border-slate-700 transition">
+            View Pricing Plans
+          </a>
+        </div>
+
+        <!-- 4-Step Clean Workflow -->
+        <div id="how-it-works" class="mt-20 grid grid-cols-1 md:grid-cols-4 gap-6 text-left">
+          <div class="glass-card p-6 rounded-2xl">
+            <div class="w-9 h-9 rounded-lg bg-indigo-500/20 text-indigo-400 font-bold flex items-center justify-center mb-4">01</div>
+            <h3 class="font-bold text-white text-base">Connect Zoom</h3>
+            <p class="text-xs text-slate-400 mt-1.5 leading-relaxed">Sign in with Google and link your Zoom account in one click.</p>
+          </div>
+          <div class="glass-card p-6 rounded-2xl">
+            <div class="w-9 h-9 rounded-lg bg-sky-500/20 text-sky-400 font-bold flex items-center justify-center mb-4">02</div>
+            <h3 class="font-bold text-white text-base">Upload & Schedule</h3>
+            <p class="text-xs text-slate-400 mt-1.5 leading-relaxed">Upload your video and set up to 3 daily broadcast times.</p>
+          </div>
+          <div class="glass-card p-6 rounded-2xl">
+            <div class="w-9 h-9 rounded-lg bg-emerald-500/20 text-emerald-400 font-bold flex items-center justify-center mb-4">03</div>
+            <h3 class="font-bold text-white text-base">Auto-Admit & Co-Host</h3>
+            <p class="text-xs text-slate-400 mt-1.5 leading-relaxed">Attendees join seamlessly and your designated emails become Co-Hosts.</p>
+          </div>
+          <div class="glass-card p-6 rounded-2xl">
+            <div class="w-9 h-9 rounded-lg bg-purple-500/20 text-purple-400 font-bold flex items-center justify-center mb-4">04</div>
+            <h3 class="font-bold text-white text-base">Auto-End & Analytics</h3>
+            <p class="text-xs text-slate-400 mt-1.5 leading-relaxed">Meetings end automatically when the video finishes with full attendance logs.</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- PRICING PLANS SECTION -->
+    <section id="pricing-section" class="py-20 border-t border-slate-800/80 bg-slate-950/60">
+      <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="text-center max-w-2xl mx-auto mb-12">
+          <span class="text-xs uppercase tracking-widest text-indigo-400 font-bold">Pricing Plans</span>
+          <h2 class="text-3xl sm:text-4xl font-extrabold text-white mt-2">Simple, Transparent Pricing</h2>
+          <div class="mt-6 inline-flex items-center gap-2 bg-slate-900 p-1.5 rounded-xl border border-slate-800">
+            <button onclick="setCurrency('PKR')" id="cur-pkr" class="px-4 py-1.5 rounded-lg text-xs font-bold bg-indigo-600 text-white">PKR (Rs.)</button>
+            <button onclick="setCurrency('USD')" id="cur-usd" class="px-4 py-1.5 rounded-lg text-xs font-bold text-slate-400">USD ($)</button>
+          </div>
+        </div>
+
+        <div id="pricing-cards-container" class="grid grid-cols-1 md:grid-cols-3 gap-8"></div>
+      </div>
+    </section>
+  </main>
+
+  <!-- ===================================================================== -->
+  <!-- VIEW 2: SIGN UP + CARD CHECKOUT                                       -->
+  <!-- ===================================================================== -->
+  <section id="view-auth" class="hidden flex-1 py-14">
+    <div class="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 grid grid-cols-1 lg:grid-cols-2 gap-8">
+      
+      <!-- Step 1: Account Creation -->
+      <div class="glass-card p-8 rounded-3xl">
+        <span class="px-3 py-1 rounded-full text-xs font-bold bg-indigo-500/20 text-indigo-300">STEP 1</span>
+        <h2 class="text-2xl font-extrabold text-white mt-3">Account Sign Up</h2>
+        <p class="text-sm text-slate-400 mt-1">Continue with Google or enter your account details.</p>
+
+        <button onclick="simulateGoogleLogin()" class="mt-6 w-full py-3.5 px-4 rounded-xl bg-white hover:bg-slate-100 text-slate-900 font-bold text-sm flex items-center justify-center gap-3 shadow-lg transition">
+          <svg class="w-5 h-5" viewBox="0 0 24 24">
+            <path fill="#EA4335" d="M12 5c1.6 0 3 .6 4.1 1.7l3.1-3.1C17.3 1.8 14.8 1 12 1 7.4 1 3.5 3.6 1.6 7.4l3.7 2.8C6.2 7.2 8.9 5 12 5z"/>
+            <path fill="#4285F4" d="M23.5 12.3c0-.8-.1-1.6-.2-2.3H12v4.5h6.5c-.3 1.5-1.1 2.8-2.4 3.6l3.7 2.9c2.2-2 3.7-5 3.7-8.7z"/>
+            <path fill="#FBBC05" d="M5.3 14.8c-.2-.8-.4-1.6-.4-2.5s.2-1.7.4-2.5L1.6 7C.6 9 0 11.2 0 13.5s.6 4.5 1.6 6.5l3.7-2.9z"/>
+            <path fill="#34A853" d="M12 24c3.2 0 6-1.1 8-3l-3.7-2.9c-1.1.7-2.5 1.2-4.3 1.2-3.1 0-5.8-2.1-6.7-5l-3.7 2.8C3.5 21.4 7.4 24 12 24z"/>
+          </svg>
+          Continue with Google
+        </button>
+
+        <div class="my-6 flex items-center gap-3">
+          <div class="h-px bg-slate-800 flex-1"></div>
+          <span class="text-xs text-slate-500 uppercase">OR WITH EMAIL</span>
+          <div class="h-px bg-slate-800 flex-1"></div>
+        </div>
+
+        <div class="space-y-4">
+          <div>
+            <label class="text-xs font-semibold text-slate-300">Full Name</label>
+            <input id="signup-name" type="text" value="Ahmed Raza" class="mt-1 w-full px-4 py-3 rounded-xl bg-slate-900/90 border border-slate-700 text-white text-sm focus:outline-none focus:border-indigo-500" />
+          </div>
+          <div>
+            <label class="text-xs font-semibold text-slate-300">Email Address</label>
+            <input id="signup-email" type="email" value="ahmed.raza@gmail.com" class="mt-1 w-full px-4 py-3 rounded-xl bg-slate-900/90 border border-slate-700 text-white text-sm focus:outline-none focus:border-indigo-500" />
+          </div>
+          <div>
+            <label class="text-xs font-semibold text-slate-300">Password</label>
+            <input type="password" value="••••••••••••" class="mt-1 w-full px-4 py-3 rounded-xl bg-slate-900/90 border border-slate-700 text-white text-sm focus:outline-none focus:border-indigo-500" />
+          </div>
+          <div id="google-auth-badge" class="hidden p-3 rounded-xl bg-emerald-500/10 border border-emerald-500/30 text-emerald-300 text-xs font-semibold">
+            ✓ Connected with Google
+          </div>
+        </div>
+      </div>
+
+      <!-- Step 2: Clean Card Checkout -->
+      <div class="glass-card p-8 rounded-3xl border-indigo-500/40">
+        <div class="flex items-center justify-between">
+          <span class="px-3 py-1 rounded-full text-xs font-bold bg-emerald-500/20 text-emerald-300">STEP 2 • PAYMENT</span>
+          <span class="text-xs text-slate-400">Encrypted Checkout</span>
+        </div>
+        <h2 class="text-2xl font-extrabold text-white mt-3">Card Details</h2>
+        <p class="text-sm text-slate-400 mt-1">Complete your subscription with any Debit or Credit Card.</p>
+
+        <div class="mt-5 p-4 rounded-2xl bg-slate-900/90 border border-slate-800 flex items-center justify-between">
+          <div>
+            <span class="text-xs text-slate-400">Plan</span>
+            <h4 id="checkout-plan-name" class="font-bold text-white text-base">Business Pro</h4>
+          </div>
+          <div class="text-right">
+            <span id="checkout-plan-price" class="text-xl font-extrabold text-emerald-400">Rs. 8,500</span>
+            <span class="block text-[11px] text-slate-400">/ month</span>
+          </div>
+        </div>
+
+        <div class="mt-5 space-y-4">
+          <div>
+            <label class="text-xs font-semibold text-slate-300">Cardholder Name</label>
+            <input id="card-holder" type="text" placeholder="Name on card" value="AHMED RAZA" class="mt-1 w-full px-4 py-3 rounded-xl bg-slate-900/90 border border-slate-700 text-white text-sm focus:outline-none focus:border-indigo-500" />
+          </div>
+          <div>
+            <label class="text-xs font-semibold text-slate-300 flex justify-between">
+              <span>Card Number</span>
+              <span class="text-indigo-400">Visa • Mastercard</span>
+            </label>
+            <input type="text" placeholder="0000 0000 0000 0000" value="4242 •••• •••• 8891" class="mt-1 w-full px-4 py-3 rounded-xl bg-slate-900/90 border border-slate-700 text-white text-sm font-mono focus:outline-none focus:border-indigo-500" />
+          </div>
+          <div class="grid grid-cols-2 gap-4">
+            <div>
+              <label class="text-xs font-semibold text-slate-300">Expiry Date</label>
+              <input type="text" placeholder="MM / YY" value="09 / 28" class="mt-1 w-full px-4 py-3 rounded-xl bg-slate-900/90 border border-slate-700 text-white text-sm font-mono focus:outline-none focus:border-indigo-500" />
+            </div>
+            <div>
+              <label class="text-xs font-semibold text-slate-300">CVC</label>
+              <input type="password" placeholder="123" value="884" class="mt-1 w-full px-4 py-3 rounded-xl bg-slate-900/90 border border-slate-700 text-white text-sm font-mono focus:outline-none focus:border-indigo-500" />
+            </div>
+          </div>
+
+          <button onclick="completeSubscriptionAndLogin()" class="mt-4 w-full py-4 rounded-2xl vip-gradient font-extrabold text-white text-base shadow-xl shadow-indigo-500/30 hover:opacity-95 transition">
+            Subscribe & Continue to Dashboard →
+          </button>
+        </div>
+      </div>
+
+    </div>
+  </section>
+
+  <!-- ===================================================================== -->
+  <!-- VIEW 3: CLIENT DASHBOARD                                              -->
+  <!-- ===================================================================== -->
+  <section id="view-dashboard" class="hidden flex-1 py-8">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+
+      <!-- Top Bar -->
+      <div class="glass-card p-6 rounded-3xl mb-8 flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
+        <div class="flex items-center gap-4">
+          <div class="w-12 h-12 rounded-2xl bg-emerald-500/20 border border-emerald-500/40 flex items-center justify-center text-emerald-400 font-extrabold text-base">
+            PRO
+          </div>
+          <div>
+            <div class="flex items-center gap-2.5">
+              <h2 id="dash-client-name" class="text-xl font-extrabold text-white">Ahmed Raza</h2>
+              <span class="px-2.5 py-0.5 rounded-full text-xs font-bold bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">Active</span>
+            </div>
+            <p class="text-xs text-slate-400 mt-0.5">Cloud Broadcast Automation Workspace</p>
+          </div>
+        </div>
+        <div class="flex flex-wrap items-center gap-3">
+          <button onclick="switchDashboardTab('setup')" id="dtab-setup" class="px-4 py-2.5 rounded-xl text-sm font-bold bg-indigo-600 text-white">
+            Broadcast Setup
+          </button>
+          <button onclick="switchDashboardTab('attendance')" id="dtab-attendance" class="px-4 py-2.5 rounded-xl text-sm font-bold bg-slate-800 text-slate-300 hover:text-white">
+            Attendance Report
+          </button>
+          <button onclick="triggerLiveMeetingNow()" class="px-5 py-2.5 rounded-xl vip-gradient text-sm font-extrabold text-white shadow-lg shadow-indigo-500/30">
+            ▶ Start Broadcast Now
+          </button>
+        </div>
+      </div>
+
+      <!-- TAB 1: BROADCAST & SCHEDULE SETUP -->
+      <div id="dash-content-setup" class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+        
+        <!-- Column 1: Zoom Account & Co-Host Emails -->
+        <div class="space-y-6">
+          <div class="glass-card p-6 rounded-3xl">
+            <div class="flex items-center justify-between mb-3">
+              <h3 class="text-base font-extrabold text-white">Zoom Integration</h3>
+              <span class="px-2.5 py-1 rounded-full text-xs font-bold bg-emerald-500/20 text-emerald-300">● Connected</span>
+            </div>
+            <div class="p-3.5 rounded-2xl bg-slate-900/90 border border-slate-800 text-xs">
+              <div class="text-slate-400">Connected Account</div>
+              <div id="connected-zoom-email" class="font-bold text-white text-sm mt-0.5">ahmed.raza@gmail.com</div>
+            </div>
+            <button onclick="reconnectZoomOAuth()" class="mt-4 w-full py-2.5 rounded-xl bg-blue-600 hover:bg-blue-500 text-white font-bold text-xs transition">
+              Connect / Switch Zoom with Google
+            </button>
+
+            <div class="mt-4 pt-4 border-t border-slate-800">
+              <label class="text-xs font-semibold text-slate-300 block">Zoom Meeting Link</label>
+              <input id="cfg-zoom-url" type="text" value="https://zoom.us/j/1234567890?pwd=yourpassword" class="mt-1.5 w-full px-3.5 py-2.5 rounded-xl bg-slate-900 border border-slate-700 text-white text-xs" />
+            </div>
+          </div>
+
+          <div class="glass-card p-6 rounded-3xl">
+            <div class="flex items-center justify-between mb-2">
+              <h3 class="text-base font-extrabold text-white">Auto Co-Host Emails</h3>
+              <span class="px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-amber-500/20 text-amber-300">Co-Host Role</span>
+            </div>
+            <p class="text-xs text-slate-400">
+              Participants joining with these emails will automatically be promoted to Co-Host.
+            </p>
+            <div class="mt-4 space-y-3">
+              <div>
+                <label class="text-xs font-semibold text-slate-300">Co-Host Email 1</label>
+                <input id="cfg-cohost-1" type="email" value="trainer.ali@gmail.com" placeholder="email@example.com" class="mt-1 w-full px-3.5 py-2.5 rounded-xl bg-slate-900 border border-slate-700 text-white text-xs" />
+              </div>
+              <div>
+                <label class="text-xs font-semibold text-slate-300">Co-Host Email 2 (Optional)</label>
+                <input id="cfg-cohost-2" type="email" value="support.team@gmail.com" placeholder="email@example.com" class="mt-1 w-full px-3.5 py-2.5 rounded-xl bg-slate-900 border border-slate-700 text-white text-xs" />
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Column 2: Recorded Video & Controls -->
+        <div class="glass-card p-6 rounded-3xl flex flex-col justify-between">
+          <div>
+            <h3 class="text-base font-extrabold text-white">Recorded Video</h3>
+            <p class="text-xs text-slate-400 mt-1">
+              Upload your video file. The meeting will automatically end once playback finishes.
+            </p>
+
+            <label class="mt-4 border-2 border-dashed border-indigo-500/40 hover:border-indigo-400 rounded-2xl p-6 flex flex-col items-center justify-center text-center cursor-pointer bg-slate-900/50 transition">
+              <span class="text-sm font-bold text-white">Choose Video File (.mp4, .mkv, .mov)</span>
+              <span class="text-xs text-slate-400 mt-1">Click to browse from your device</span>
+              <input id="video-file-input" type="file" accept="video/*" class="hidden" onchange="handleVideoFileSelect(event)" />
+            </label>
+
+            <video id="hidden-video-probe" class="hidden"></video>
+
+            <div class="mt-4 space-y-3">
+              <div>
+                <label class="text-xs font-semibold text-slate-300">Selected Video</label>
+                <input id="cfg-video-path" type="text" value="C:\Videos\sample_lecture.mp4" class="mt-1 w-full px-3.5 py-2.5 rounded-xl bg-slate-900 border border-slate-700 text-white text-xs" />
+              </div>
+
+              <div class="p-3.5 rounded-2xl bg-emerald-500/10 border border-emerald-500/30 flex items-center justify-between">
+                <span class="text-xs text-emerald-300 font-semibold">Video Duration</span>
+                <span id="detected-duration-badge" class="text-sm font-extrabold text-emerald-400">00:42:15</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="mt-6 pt-5 border-t border-slate-800 space-y-2.5">
+            <h4 class="text-xs font-bold uppercase tracking-wider text-indigo-400 mb-2">Meeting Preferences</h4>
+            <label class="flex items-center gap-2.5 text-xs text-slate-200 cursor-pointer">
+              <input id="cfg-auto-admit" type="checkbox" checked class="rounded bg-slate-900 border-slate-700 text-indigo-600" />
+              <span>Automatically admit all participants</span>
+            </label>
+            <label class="flex items-center gap-2.5 text-xs text-slate-200 cursor-pointer">
+              <input id="cfg-share-sound" type="checkbox" checked class="rounded bg-slate-900 border-slate-700 text-indigo-600" />
+              <span>Share computer audio in HD</span>
+            </label>
+            <label class="flex items-center gap-2.5 text-xs text-slate-200 cursor-pointer">
+              <input id="cfg-mute-entry" type="checkbox" checked class="rounded bg-slate-900 border-slate-700 text-indigo-600" />
+              <span>Mute participants upon entry</span>
+            </label>
+            <label class="flex items-center gap-2.5 text-xs text-slate-200 cursor-pointer">
+              <input id="cfg-auto-end" type="checkbox" checked class="rounded bg-slate-900 border-slate-700 text-indigo-600" />
+              <span>End meeting automatically when video finishes</span>
+            </label>
+          </div>
+        </div>
+
+        <!-- Column 3: Daily Schedule -->
+        <div class="glass-card p-6 rounded-3xl flex flex-col justify-between">
+          <div>
+            <h3 class="text-base font-extrabold text-white">Broadcast Schedule</h3>
+            <p class="text-xs text-slate-400 mt-1">Configure up to 3 automated daily broadcast times.</p>
+
+            <div class="mt-4 space-y-3">
+              <div>
+                <label class="text-xs font-semibold text-slate-300">Timezone</label>
+                <select id="cfg-timezone" class="mt-1 w-full px-3.5 py-2.5 rounded-xl bg-slate-900 border border-slate-700 text-white text-xs">
+                  <option value="Asia/Karachi">Pakistan Standard Time (PKT - UTC+5)</option>
+                  <option value="Asia/Dubai">Gulf Standard Time (UTC+4)</option>
+                  <option value="Europe/London">London (GMT/BST)</option>
+                  <option value="America/New_York">Eastern Time (ET)</option>
+                </select>
+              </div>
+
+              <div class="p-3.5 rounded-2xl bg-slate-900/90 border border-slate-800 flex items-center justify-between">
+                <label class="flex items-center gap-2.5 text-xs font-bold text-white cursor-pointer">
+                  <input id="cfg-s1-enabled" type="checkbox" checked class="rounded text-indigo-600" />
+                  <span>Time Slot 1</span>
+                </label>
+                <input id="cfg-s1-time" type="time" value="10:00" class="px-3 py-1.5 rounded-lg bg-slate-800 border border-slate-700 text-white text-xs font-bold" />
+              </div>
+
+              <div class="p-3.5 rounded-2xl bg-slate-900/90 border border-slate-800 flex items-center justify-between">
+                <label class="flex items-center gap-2.5 text-xs font-bold text-white cursor-pointer">
+                  <input id="cfg-s2-enabled" type="checkbox" checked class="rounded text-indigo-600" />
+                  <span>Time Slot 2</span>
+                </label>
+                <input id="cfg-s2-time" type="time" value="15:00" class="px-3 py-1.5 rounded-lg bg-slate-800 border border-slate-700 text-white text-xs font-bold" />
+              </div>
+
+              <div class="p-3.5 rounded-2xl bg-slate-900/90 border border-slate-800 flex items-center justify-between">
+                <label class="flex items-center gap-2.5 text-xs font-bold text-white cursor-pointer">
+                  <input id="cfg-s3-enabled" type="checkbox" checked class="rounded text-indigo-600" />
+                  <span>Time Slot 3</span>
+                </label>
+                <input id="cfg-s3-time" type="time" value="20:00" class="px-3 py-1.5 rounded-lg bg-slate-800 border border-slate-700 text-white text-xs font-bold" />
+              </div>
+
+              <div>
+                <label class="text-xs font-semibold text-slate-300">Recurrence</label>
+                <select id="cfg-days" class="mt-1 w-full px-3.5 py-2.5 rounded-xl bg-slate-900 border border-slate-700 text-white text-xs">
+                  <option value="daily">Every Day (Mon – Sun)</option>
+                  <option value="weekdays">Weekdays Only (Mon – Fri)</option>
+                  <option value="weekends">Weekends Only (Sat – Sun)</option>
+                </select>
+              </div>
+            </div>
+          </div>
+
+          <div class="mt-6 space-y-3">
+            <div id="save-status-banner" class="hidden p-3 rounded-xl bg-emerald-500/20 border border-emerald-500/40 text-emerald-300 text-xs font-semibold text-center">
+              ✓ Schedule Saved & Activated
+            </div>
+            <button onclick="saveClientAutomationSettings()" class="w-full py-4 rounded-2xl bg-emerald-600 hover:bg-emerald-500 font-extrabold text-white text-sm shadow-lg shadow-emerald-600/25 transition">
+              Save & Activate Schedule
+            </button>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- TAB 2: PARTICIPANT ATTENDANCE REPORT -->
+      <div id="dash-content-attendance" class="hidden space-y-6">
+        <div class="glass-card p-6 rounded-3xl">
+          <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 pb-6 border-b border-slate-800">
+            <div>
+              <h3 class="text-xl font-extrabold text-white">Participant Attendance Report</h3>
+              <p class="text-xs text-slate-400 mt-1">
+                Complete log of all attendees, join/leave times, watch duration, and auto-assigned Co-Hosts.
+              </p>
+            </div>
+            <div class="flex items-center gap-3">
+              <button onclick="exportAttendanceCsv()" class="px-4 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-xs font-bold text-white">
+                ⬇ Export CSV
+              </button>
+            </div>
+          </div>
+
+          <div class="overflow-x-auto mt-6">
+            <table class="w-full text-left border-collapse">
+              <thead>
+                <tr class="border-b border-slate-800 text-[11px] uppercase tracking-wider text-slate-400">
+                  <th class="py-3 px-4">Participant Name</th>
+                  <th class="py-3 px-4">Email Address</th>
+                  <th class="py-3 px-4">Role</th>
+                  <th class="py-3 px-4">Join Time</th>
+                  <th class="py-3 px-4">Leave Time</th>
+                  <th class="py-3 px-4">Duration</th>
+                </tr>
+              </thead>
+              <tbody id="attendance-table-body" class="divide-y divide-slate-800/60 text-sm"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </section>
+
+  <div id="toast-box" class="fixed bottom-6 right-6 z-50 hidden px-5 py-3.5 rounded-2xl bg-indigo-600 text-white font-bold text-sm shadow-2xl border border-indigo-400/40"></div>
+
+  <script src="app.js"></script>
+</body>
+</html>
