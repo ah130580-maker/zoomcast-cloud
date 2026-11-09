@@ -272,21 +272,32 @@ if (-not (Test-Path $ConfigPath)) {
 
 $Config = Get-Content -Path $ConfigPath -Raw | ConvertFrom-Json
 
-# 1. Validate Video File & Duration
-$VideoPath = $Config.VideoFilePath
-if (-not (Test-Path $VideoPath)) {
-    Write-AutomationLog "Video file not found at '$VideoPath'. Please select a valid video in Control Panel." "ERROR"
+# 1. Validate Video File(s) & Playlist
+$Playlist = @()
+if ($Config.VideoPlaylist -and $Config.VideoPlaylist.Count -gt 0) {
+    foreach ($v in $Config.VideoPlaylist) {
+        if (Test-Path $v) { $Playlist += $v }
+    }
+}
+if ($Playlist.Count -eq 0 -and -not [string]::IsNullOrWhiteSpace($Config.VideoFilePath)) {
+    if (Test-Path $Config.VideoFilePath) {
+        $Playlist += $Config.VideoFilePath
+    }
+}
+
+if ($Playlist.Count -eq 0) {
+    Write-AutomationLog "No valid video files found in configuration." "ERROR"
     exit 1
 }
 
-$DetectedDuration = Get-VideoDurationSeconds -FilePath $VideoPath
-$VideoDuration = if ($Config.VideoDurationSeconds -gt 0) { [int]$Config.VideoDurationSeconds } else { $DetectedDuration }
-if ($VideoDuration -le 0) {
-    Write-AutomationLog "Duration metadata was 0; MediaElement will detect exact duration upon opening." "WARN"
-    $VideoDuration = 3600 # Fallback max timeout if metadata is missing
-} else {
-    Write-AutomationLog "Video File: '$VideoPath' | Duration: $VideoDuration seconds ($([TimeSpan]::FromSeconds($VideoDuration).ToString('hh\:mm\:ss')))"
+$TotalDuration = 0
+foreach ($vp in $Playlist) {
+    $d = Get-VideoDurationSeconds -FilePath $vp
+    $TotalDuration += $d
 }
+$VideoPath = $Playlist[0]
+$VideoDuration = if ($Config.VideoDurationSeconds -gt 0) { [int]$Config.VideoDurationSeconds } elseif ($TotalDuration -gt 0) { $TotalDuration } else { 3600 }
+Write-AutomationLog "Loaded Playlist with $($Playlist.Count) video(s) | Total Duration: $VideoDuration seconds"
 
 # 2. Launch Zoom Meeting
 $ZoomUri = ConvertTo-ZoomProtocolUri -MeetingUrl $Config.ZoomMeetingUrl -MeetingId $Config.MeetingId -Passcode $Config.Passcode
@@ -385,14 +396,15 @@ if (-not $DryRun) {
         }
     })
 
+    $Script:CurrentTrackIndex = 0
     $Script:PlaybackFinished = $false
     $Script:StartTime = Get-Date
-    $Script:MaxSeconds = $VideoDuration + 5
+    $Script:MaxSeconds = $VideoDuration + 10
 
     $MediaElement.Add_MediaOpened({
         if ($MediaElement.NaturalDuration.HasTimeSpan) {
             $ExactSec = [math]::Ceiling($MediaElement.NaturalDuration.TimeSpan.TotalSeconds)
-            if ($ExactSec -gt 0) {
+            if ($ExactSec -gt 0 -and $Playlist.Count -eq 1) {
                 $Script:MaxSeconds = $ExactSec + 3
                 Write-AutomationLog "MediaElement confirmed exact video length: $ExactSec seconds."
             }
@@ -400,9 +412,17 @@ if (-not $DryRun) {
     })
 
     $MediaElement.Add_MediaEnded({
-        Write-AutomationLog "Video playback reached the end naturally."
-        $Script:PlaybackFinished = $true
-        $Window.Close()
+        $Script:CurrentTrackIndex++
+        if ($Script:CurrentTrackIndex -lt $Playlist.Count) {
+            $NextVideo = $Playlist[$Script:CurrentTrackIndex]
+            Write-AutomationLog "Switching seamlessly to next video in playlist ($($Script:CurrentTrackIndex + 1)/$($Playlist.Count)): $NextVideo"
+            $MediaElement.Source = New-Object System.Uri($NextVideo)
+            $MediaElement.Play()
+        } else {
+            Write-AutomationLog "All videos in playlist finished naturally."
+            $Script:PlaybackFinished = $true
+            $Window.Close()
+        }
     })
 
     $MediaElement.Add_MediaFailed({
@@ -414,7 +434,8 @@ if (-not $DryRun) {
 
     # Timer runs every 3 seconds to:
     # 1. Check Auto-Admit for any Waiting Room participants
-    # 2. Enforce max duration timeout
+    # 2. Promote any unlimited team Co-Host emails
+    # 3. Enforce max duration timeout
     $Timer = New-Object System.Windows.Threading.DispatcherTimer
     $Timer.Interval = [TimeSpan]::FromSeconds(3)
     $Timer.Add_Tick({
@@ -422,7 +443,11 @@ if (-not $DryRun) {
         if ($Config.AutoAdmitEnabled) {
             Invoke-ZoomAutoAdmit | Out-Null
         }
-        $VipList = @($Config.CoHostEmail1, $Config.CoHostEmail2) | Where-Object { -not [string]::IsNullOrWhiteSpace($_) }
+        $VipList = @()
+        if ($Config.CoHostEmails) { $VipList += $Config.CoHostEmails }
+        if ($Config.CoHostEmail1) { $VipList += $Config.CoHostEmail1 }
+        if ($Config.CoHostEmail2) { $VipList += $Config.CoHostEmail2 }
+        $VipList = $VipList | Where-Object { -not [string]::IsNullOrWhiteSpace($_) } | Select-Object -Unique
         if ($VipList.Count -gt 0) {
             Invoke-ZoomAutoCoHost -VipEmails $VipList
         }
