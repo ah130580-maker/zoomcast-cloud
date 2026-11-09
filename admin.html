@@ -1,104 +1,104 @@
 <!DOCTYPE html>
-<html lang="en" class="dark">
+<html lang="en">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>ZoomCast Cloud — Admin Console</title>
+  <title>ZoomCast CRM — Admin Console</title>
   <script src="https://cdn.tailwindcss.com"></script>
-  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
   <style>
     body {
-      font-family: 'Plus Jakarta Sans', sans-serif;
-      background-color: #060913;
-      color: #f8fafc;
+      font-family: 'Inter', sans-serif;
+      background-color: #f4f6f8;
+      color: #101828;
     }
-    .glass {
-      background: rgba(15, 23, 42, 0.78);
-      backdrop-filter: blur(16px);
-      border: 1px solid rgba(148, 163, 184, 0.14);
+    .ghl-nav {
+      background-color: #101828;
+      border-bottom: 1px solid #1d2939;
     }
-    .glass-card {
-      background: linear-gradient(145deg, rgba(30, 41, 59, 0.55), rgba(15, 23, 42, 0.88));
-      border: 1px solid rgba(99, 102, 241, 0.22);
+    .ghl-card {
+      background-color: #ffffff;
+      border: 1px solid #e4e7ec;
+      box-shadow: 0 1px 3px rgba(16, 24, 40, 0.06);
+    }
+    .ghl-btn-primary {
+      background-color: #155eef;
+      color: #ffffff;
+      white-space: nowrap;
+    }
+    .ghl-btn-primary:hover {
+      background-color: #004eeb;
     }
   </style>
 </head>
 <body class="min-h-screen flex flex-col">
 
   <!-- ADMIN HEADER -->
-  <header class="sticky top-0 z-50 glass border-b border-slate-800">
-    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-20 flex items-center justify-between">
-      <div class="flex items-center gap-3">
-        <div class="w-10 h-10 rounded-xl bg-amber-500 flex items-center justify-center font-extrabold text-slate-950 text-lg">
+  <header class="sticky top-0 z-50 ghl-nav text-white">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between gap-2">
+      <div class="flex items-center gap-2.5">
+        <div class="w-8 h-8 rounded-lg bg-[#155eef] flex items-center justify-center font-bold text-white text-sm shrink-0">
           A
         </div>
-        <div>
-          <span class="font-extrabold text-xl tracking-tight text-white">ZoomCast <span class="text-amber-400">Admin Console</span></span>
-          <span class="block text-[11px] text-slate-400 uppercase tracking-widest">Owner Management Portal</span>
-        </div>
+        <span class="font-bold text-base sm:text-lg tracking-tight text-white whitespace-nowrap">ZoomCast Admin Console</span>
       </div>
 
-      <div class="flex items-center gap-4">
-        <a href="index.html" class="px-4 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-xs font-semibold text-slate-300 border border-slate-700 transition">
-          Open Customer Site ↗
-        </a>
-      </div>
+      <a href="index.html" class="px-3.5 py-2 rounded-lg bg-slate-800 hover:bg-slate-700 text-xs font-semibold text-white border border-slate-700 whitespace-nowrap transition">
+        Open Customer Site ↗
+      </a>
     </div>
   </header>
 
   <main class="flex-1 py-8">
-    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-8">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-6">
       
-      <!-- Stats Row -->
       <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
-        <div class="glass-card p-6 rounded-2xl">
-          <span class="text-xs text-slate-400 uppercase font-semibold">Active Subscriptions</span>
-          <div id="admin-stat-clients" class="text-2xl font-extrabold text-white mt-1">3 Clients</div>
+        <div class="ghl-card p-5 rounded-xl">
+          <span class="text-xs text-slate-500 uppercase font-semibold">Registered Customers</span>
+          <div id="admin-stat-clients" class="text-2xl font-bold text-slate-900 mt-1">0 Clients</div>
         </div>
-        <div class="glass-card p-6 rounded-2xl">
-          <span class="text-xs text-slate-400 uppercase font-semibold">Monthly Revenue</span>
-          <div class="text-2xl font-extrabold text-emerald-400 mt-1">Rs. 21,500</div>
+        <div class="ghl-card p-5 rounded-xl">
+          <span class="text-xs text-slate-500 uppercase font-semibold">Cloud Worker Nodes (8GB)</span>
+          <div id="admin-stat-nodes" class="text-2xl font-bold text-[#155eef] mt-1">2 Online</div>
         </div>
-        <div class="glass-card p-6 rounded-2xl">
-          <span class="text-xs text-slate-400 uppercase font-semibold">Cloud Worker Nodes (8GB)</span>
-          <div id="admin-stat-nodes" class="text-2xl font-extrabold text-indigo-400 mt-1">2 Online</div>
+        <div class="ghl-card p-5 rounded-xl">
+          <span class="text-xs text-slate-500 uppercase font-semibold">System Status</span>
+          <div class="text-2xl font-bold text-emerald-600 mt-1">Active</div>
         </div>
       </div>
 
-      <!-- AWS 8GB Worker Nodes -->
-      <div class="glass-card p-6 rounded-3xl">
-        <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 pb-5 border-b border-slate-800">
+      <div class="ghl-card p-5 sm:p-6 rounded-xl">
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-4 border-b border-slate-200">
           <div>
-            <h3 class="text-lg font-extrabold text-white">AWS Cloud Broadcast Nodes (8GB RAM Instances)</h3>
-            <p class="text-xs text-slate-400 mt-1">Manage virtual machines executing scheduled Zoom broadcasts via OAuth ZAK tokens.</p>
+            <h3 class="text-base font-bold text-slate-900">AWS Cloud Broadcast Nodes (8GB RAM Instances)</h3>
+            <p class="text-xs text-slate-500 mt-0.5">Manage virtual machines executing scheduled Zoom broadcasts via OAuth ZAK tokens.</p>
           </div>
-          <button onclick="addNewAwsNode()" class="px-4 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-xs font-bold text-white shrink-0">
+          <button onclick="addNewAwsNode()" class="px-4 py-2 rounded-lg ghl-btn-primary text-xs font-semibold self-start sm:self-auto">
             + Add AWS Worker Node
           </button>
         </div>
-        <div id="admin-aws-nodes-list" class="grid grid-cols-1 md:grid-cols-2 gap-4 mt-5"></div>
+        <div id="admin-aws-nodes-list" class="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4"></div>
       </div>
 
-      <!-- Clients & Subscriptions Table -->
-      <div class="glass-card p-6 rounded-3xl">
-        <div class="pb-5 border-b border-slate-800">
-          <h3 class="text-lg font-extrabold text-white">Registered Clients & Subscriptions</h3>
-          <p class="text-xs text-slate-400 mt-1">View and manage customer accounts, active plans, schedules, and assigned Co-Host emails.</p>
+      <div class="ghl-card p-5 sm:p-6 rounded-xl">
+        <div class="pb-4 border-b border-slate-200">
+          <h3 class="text-base font-bold text-slate-900">Customer Subscriptions</h3>
+          <p class="text-xs text-slate-500 mt-0.5">Customers who registered on the portal.</p>
         </div>
 
-        <div class="overflow-x-auto mt-5">
+        <div class="overflow-x-auto mt-4">
           <table class="w-full text-left border-collapse">
             <thead>
-              <tr class="border-b border-slate-800 text-[11px] uppercase tracking-wider text-slate-400">
+              <tr class="border-b border-slate-200 text-[11px] uppercase tracking-wider text-slate-500">
                 <th class="py-3 px-3">Customer</th>
-                <th class="py-3 px-3">Plan & Billing</th>
-                <th class="py-3 px-3">Daily Schedule</th>
-                <th class="py-3 px-3">Auto Co-Host Emails</th>
+                <th class="py-3 px-3">Plan</th>
+                <th class="py-3 px-3">Categories</th>
+                <th class="py-3 px-3">Team Co-Hosts</th>
                 <th class="py-3 px-3">Assigned Node</th>
                 <th class="py-3 px-3">Status</th>
               </tr>
             </thead>
-            <tbody id="admin-clients-tbody" class="divide-y divide-slate-800/60 text-xs"></tbody>
+            <tbody id="admin-clients-tbody" class="divide-y divide-slate-200 text-xs"></tbody>
           </table>
         </div>
       </div>
@@ -106,7 +106,7 @@
     </div>
   </main>
 
-  <div id="toast-box" class="fixed bottom-6 right-6 z-50 hidden px-5 py-3.5 rounded-2xl bg-indigo-600 text-white font-bold text-sm shadow-2xl border border-indigo-400/40"></div>
+  <div id="toast-box" class="fixed bottom-5 right-5 z-50 hidden px-4 py-3 rounded-lg bg-slate-900 text-white font-semibold text-xs sm:text-sm shadow-xl"></div>
 
   <script src="app.js"></script>
 </body>
