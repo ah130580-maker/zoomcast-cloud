@@ -1,97 +1,333 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" class="dark">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>ZoomCast CRM — Automated Webinar & Broadcast Platform</title>
+  <title>ZoomCast CRM — Glassy Cloud Broadcast & Webinar Platform</title>
   <script src="https://cdn.tailwindcss.com"></script>
-  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
   <style>
     * {
       -webkit-font-smoothing: antialiased;
       -moz-osx-font-smoothing: grayscale;
       text-rendering: optimizeLegibility;
+      box-sizing: border-box;
     }
     body {
       font-family: 'Plus Jakarta Sans', sans-serif;
-      background-color: #f8fafc;
-      color: #0f172a;
+      background-color: #07080c;
+      color: #f8fafc;
       letter-spacing: -0.01em;
+      overflow-x: hidden;
     }
-    .ghl-nav {
-      background: linear-gradient(180deg, #0f172a 0%, #111827 100%);
-      border-bottom: 1px solid #1e293b;
+    .font-mono-card {
+      font-family: 'Space Mono', monospace;
     }
-    .ghl-sidebar {
-      background: linear-gradient(180deg, #0f172a 0%, #111827 100%);
-      color: #cbd5e1;
+
+    /* ===================================================================== */
+    /* LUXURY GOLD RIBBON & OBSIDIAN GLASSY BACKGROUND (EXACT VIDEO THEME)   */
+    /* ===================================================================== */
+    .luxury-bg {
+      background-color: #07080c;
+      background-image:
+        radial-gradient(circle at 12% 18%, rgba(234, 179, 8, 0.14) 0%, transparent 38%),
+        radial-gradient(circle at 88% 82%, rgba(217, 119, 6, 0.12) 0%, transparent 42%),
+        radial-gradient(circle at 50% 50%, rgba(17, 24, 39, 0.9) 0%, #050609 100%);
+      position: relative;
     }
-    .ghl-card {
-      background-color: #ffffff;
-      border: 1px solid #e2e8f0;
-      box-shadow: 0 4px 20px -2px rgba(15, 23, 42, 0.05), 0 1px 3px 0 rgba(15, 23, 42, 0.03);
+    .luxury-bg::before {
+      content: '';
+      position: fixed;
+      inset: -20%;
+      pointer-events: none;
+      background:
+        linear-gradient(125deg, transparent 30%, rgba(234, 179, 8, 0.07) 45%, rgba(250, 204, 21, 0.18) 50%, rgba(234, 179, 8, 0.05) 55%, transparent 70%),
+        linear-gradient(35deg, transparent 40%, rgba(245, 158, 11, 0.06) 49%, rgba(234, 179, 8, 0.12) 51%, transparent 60%);
+      filter: blur(18px);
+      z-index: 0;
     }
-    .ghl-btn-primary {
-      background: linear-gradient(180deg, #2563eb 0%, #1d4ed8 100%);
+
+    /* Dashboard Ambient Blue + Gold Glow */
+    .dashboard-glass-bg {
+      background-color: #08090f;
+      background-image:
+        radial-gradient(circle at 0% 45%, rgba(37, 99, 235, 0.22) 0%, transparent 34%),
+        radial-gradient(circle at 92% 15%, rgba(234, 179, 8, 0.10) 0%, transparent 35%),
+        radial-gradient(circle at 80% 90%, rgba(16, 185, 129, 0.08) 0%, transparent 35%);
+    }
+
+    /* Glassy Cards */
+    .glass-card {
+      background: linear-gradient(145deg, rgba(255, 255, 255, 0.055) 0%, rgba(18, 20, 28, 0.72) 100%);
+      backdrop-filter: blur(24px);
+      -webkit-backdrop-filter: blur(24px);
+      border: 1px solid rgba(255, 255, 255, 0.09);
+      box-shadow: 0 20px 50px rgba(0, 0, 0, 0.65), inset 0 1px 0 rgba(255, 255, 255, 0.12);
+    }
+    .glass-card-subtle {
+      background: rgba(255, 255, 255, 0.03);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      border: 1px solid rgba(255, 255, 255, 0.07);
+    }
+    .glass-card-gold {
+      background: linear-gradient(155deg, rgba(30, 27, 20, 0.78) 0%, rgba(12, 13, 18, 0.88) 100%);
+      backdrop-filter: blur(28px);
+      -webkit-backdrop-filter: blur(28px);
+      border: 1px solid rgba(234, 179, 8, 0.25);
+      box-shadow: 0 25px 65px rgba(0, 0, 0, 0.8), 0 0 40px rgba(234, 179, 8, 0.08), inset 0 1px 0 rgba(255, 255, 255, 0.16);
+    }
+
+    /* Corner HUD Brackets around Auth, OTP & Payment Modals (Exact Video Frame Style) */
+    .hud-frame {
+      position: relative;
+    }
+    .hud-corner-tl, .hud-corner-tr, .hud-corner-bl, .hud-corner-br {
+      position: absolute;
+      width: 28px;
+      height: 28px;
+      pointer-events: none;
+      z-index: 20;
+    }
+    .hud-corner-tl {
+      top: -10px; left: -10px;
+      border-top: 2px solid rgba(234, 179, 8, 0.55);
+      border-left: 2px solid rgba(234, 179, 8, 0.55);
+      border-top-left-radius: 14px;
+    }
+    .hud-corner-tr {
+      top: -10px; right: -10px;
+      border-top: 2px solid rgba(255, 255, 255, 0.22);
+      border-right: 2px solid rgba(255, 255, 255, 0.22);
+      border-top-right-radius: 14px;
+    }
+    .hud-corner-bl {
+      bottom: -10px; left: -10px;
+      border-bottom: 2px solid rgba(255, 255, 255, 0.22);
+      border-left: 2px solid rgba(255, 255, 255, 0.22);
+      border-bottom-left-radius: 14px;
+    }
+    .hud-corner-br {
+      bottom: -10px; right: -10px;
+      border-bottom: 2px solid rgba(234, 179, 8, 0.55);
+      border-right: 2px solid rgba(234, 179, 8, 0.55);
+      border-bottom-right-radius: 14px;
+    }
+
+    /* Glass Inputs */
+    .glass-input {
+      background: rgba(255, 255, 255, 0.04);
+      border: 1px solid rgba(255, 255, 255, 0.11);
       color: #ffffff;
-      white-space: nowrap;
-      box-shadow: 0 1px 2px rgba(15, 23, 42, 0.15), inset 0 1px 0 rgba(255, 255, 255, 0.15);
-      transition: all 0.15s ease;
+      transition: all 0.2s ease;
     }
-    .ghl-btn-primary:hover {
-      background: linear-gradient(180deg, #1d4ed8 0%, #1e40af 100%);
-      transform: translateY(-0.5px);
+    .glass-input::placeholder {
+      color: rgba(148, 163, 184, 0.6);
     }
-    .ghl-btn-secondary {
-      background-color: #ffffff;
-      color: #1e293b;
-      border: 1px solid #cbd5e1;
-      white-space: nowrap;
-      box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04);
-      transition: all 0.15s ease;
-    }
-    .ghl-btn-secondary:hover {
-      background-color: #f8fafc;
-      border-color: #94a3b8;
-    }
-    .ghl-input {
-      background-color: #ffffff;
-      border: 1px solid #cbd5e1;
-      color: #0f172a;
-      font-weight: 500;
-      transition: all 0.15s ease;
-    }
-    .ghl-input:focus {
+    .glass-input:focus {
       outline: none;
-      border-color: #2563eb;
-      box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.15);
+      border-color: #eab308;
+      background: rgba(234, 179, 8, 0.05);
+      box-shadow: 0 0 0 3px rgba(234, 179, 8, 0.16);
+    }
+    .glass-input option {
+      background-color: #0f1117;
+      color: #ffffff;
+    }
+
+    /* Gold Primary Button (Exact Login/OTP/Payment Video Style) */
+    .btn-gold {
+      background: linear-gradient(180deg, #facc15 0%, #eab308 55%, #ca8a04 100%);
+      color: #090a0f;
+      font-weight: 800;
+      box-shadow: 0 10px 25px -5px rgba(234, 179, 8, 0.45), inset 0 1px 0 rgba(255, 255, 255, 0.45);
+      transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+      white-space: nowrap;
+    }
+    .btn-gold:hover {
+      background: linear-gradient(180deg, #fde047 0%, #facc15 60%, #eab308 100%);
+      transform: translateY(-1px);
+      box-shadow: 0 14px 30px -4px rgba(234, 179, 8, 0.6);
+    }
+    .btn-gold:active {
+      transform: translateY(0);
+    }
+
+    /* Glass Secondary Button */
+    .btn-glass {
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      color: #f8fafc;
+      font-weight: 600;
+      transition: all 0.2s ease;
+      white-space: nowrap;
+    }
+    .btn-glass:hover {
+      background: rgba(255, 255, 255, 0.1);
+      border-color: rgba(234, 179, 8, 0.4);
+    }
+
+    /* Glowing Blue Dock Sidebar (Exact Theme_Stayle.mp4 Left Dock) */
+    .dock-sidebar {
+      background: linear-gradient(180deg, rgba(29, 78, 216, 0.22) 0%, rgba(15, 23, 42, 0.88) 40%, rgba(10, 12, 18, 0.95) 100%);
+      border-right: 1px solid rgba(59, 130, 246, 0.22);
+      box-shadow: 8px 0 35px -5px rgba(37, 99, 235, 0.25);
+    }
+
+    /* ===================================================================== */
+    /* LOGIN / SIGNUP 3D DIAMOND FLIP MORPH ANIMATION (sign_up_login.mp4)    */
+    /* ===================================================================== */
+    #auth-morph-wrapper {
+      transition: all 0.42s cubic-bezier(0.34, 1.56, 0.64, 1);
+      transform-style: preserve-3d;
+    }
+    .morph-diamond-active {
+      transform: scale(0.28) rotate(45deg) !important;
+      opacity: 0.15;
+      filter: blur(2px);
+    }
+    #auth-diamond-loader {
+      pointer-events: none;
+      transition: all 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+
+    /* ===================================================================== */
+    /* OTP 4-BOX DIAMOND ORBIT & CONVERGE ANIMATION (otp.mp4)                */
+    /* ===================================================================== */
+    .otp-digit-box {
+      width: 62px;
+      height: 68px;
+      background: rgba(255, 255, 255, 0.04);
+      border: 1.5px solid rgba(255, 255, 255, 0.14);
+      border-radius: 16px;
+      font-size: 1.65rem;
+      font-weight: 800;
+      color: #ffffff;
+      text-align: center;
+      transition: all 0.55s cubic-bezier(0.22, 1, 0.36, 1);
+    }
+    .otp-digit-box:focus, .otp-digit-box.filled {
+      outline: none;
+      border-color: #eab308;
+      background: rgba(234, 179, 8, 0.08);
+      box-shadow: 0 0 22px rgba(234, 179, 8, 0.28);
+    }
+    /* Diamond formation + Orbit spin when verifying */
+    .otp-stage-orbit {
+      animation: otpOrbitSpin 0.95s cubic-bezier(0.45, 0, 0.55, 1) forwards;
+    }
+    .otp-stage-orbit .otp-box-0 {
+      transform: translate(114px, -48px) rotate(-180deg) scale(0.88);
+      border-color: #eab308;
+    }
+    .otp-stage-orbit .otp-box-1 {
+      transform: translate(-18px, 0px) rotate(-180deg) scale(0.88);
+      border-color: #eab308;
+    }
+    .otp-stage-orbit .otp-box-2 {
+      transform: translate(18px, 0px) rotate(-180deg) scale(0.88);
+      border-color: #eab308;
+    }
+    .otp-stage-orbit .otp-box-3 {
+      transform: translate(-114px, 48px) rotate(-180deg) scale(0.88);
+      border-color: #eab308;
+    }
+    .otp-stage-converge .otp-digit-box {
+      transform: scale(0.1);
+      opacity: 0;
+    }
+    @keyframes otpOrbitSpin {
+      0% { transform: rotate(0deg); }
+      65% { transform: rotate(180deg) scale(0.95); }
+      100% { transform: rotate(360deg) scale(0.4); }
+    }
+
+    /* ===================================================================== */
+    /* 3D REALISTIC PLATINUM CREDIT CARD FLIP & SUCCESS (Payment_page_.mp4)  */
+    /* ===================================================================== */
+    .perspective-1000 {
+      perspective: 1200px;
+    }
+    .card-3d-inner {
+      position: relative;
+      width: 100%;
+      aspect-ratio: 1.586 / 1;
+      transition: transform 0.75s cubic-bezier(0.22, 1, 0.36, 1);
+      transform-style: preserve-3d;
+    }
+    .card-3d-inner.flipped {
+      transform: rotateY(180deg);
+    }
+    .card-face {
+      position: absolute;
+      inset: 0;
+      backface-visibility: hidden;
+      -webkit-backface-visibility: hidden;
+      border-radius: 20px;
+      overflow: hidden;
+    }
+    .card-face-front {
+      background: linear-gradient(135deg, #262936 0%, #14161f 55%, #0c0d13 100%);
+      border: 1px solid rgba(255, 255, 255, 0.18);
+      box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.85), inset 0 1px 1px rgba(255, 255, 255, 0.25);
+      transition: all 0.6s ease;
+    }
+    .card-face-front.card-emerald-success {
+      background: linear-gradient(135deg, #065f46 0%, #047857 45%, #064e3b 100%) !important;
+      border-color: rgba(52, 211, 153, 0.55) !important;
+      box-shadow: 0 25px 60px -10px rgba(16, 185, 129, 0.45), inset 0 1px 2px rgba(255, 255, 255, 0.4) !important;
+    }
+    .card-face-back {
+      background: linear-gradient(135deg, #1f222e 0%, #10121a 100%);
+      border: 1px solid rgba(234, 179, 8, 0.35);
+      transform: rotateY(180deg);
+      box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.85);
+    }
+    /* Shimmer sweep on card during processing */
+    .card-shimmer::after {
+      content: '';
+      position: absolute;
+      top: -50%;
+      left: -120%;
+      width: 70%;
+      height: 200%;
+      background: linear-gradient(90deg, transparent, rgba(250, 204, 21, 0.28), transparent);
+      transform: rotate(25deg);
+      animation: cardSweep 1.2s ease-in-out infinite;
+    }
+    @keyframes cardSweep {
+      0% { left: -120%; }
+      100% { left: 160%; }
     }
   </style>
 </head>
-<body class="min-h-screen flex flex-col">
+<body class="min-h-screen flex flex-col luxury-bg selection:bg-yellow-500 selection:text-black">
 
   <!-- ===================================================================== -->
-  <!-- PUBLIC TOP NAVBAR                                                     -->
+  <!-- PUBLIC GLASSY TOP NAVBAR                                              -->
   <!-- ===================================================================== -->
-  <header id="public-header" class="sticky top-0 z-50 ghl-nav text-white">
-    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between gap-3">
-      <div class="flex items-center gap-2.5 cursor-pointer shrink-0" onclick="switchView('landing')">
-        <div class="w-9 h-9 rounded-lg bg-blue-600 flex items-center justify-center font-extrabold text-white text-base shadow-inner shrink-0">
+  <header id="public-header" class="sticky top-0 z-50 border-b border-white/10 bg-[#07080c]/80 backdrop-blur-xl">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between gap-3 relative z-10">
+      <div class="flex items-center gap-3 cursor-pointer shrink-0" onclick="switchView('landing')">
+        <div class="w-9 h-9 rounded-xl bg-gradient-to-br from-yellow-400 to-amber-600 flex items-center justify-center font-extrabold text-black text-base shadow-lg shadow-yellow-500/20 shrink-0">
           Z
         </div>
-        <span class="font-extrabold text-base sm:text-lg tracking-tight text-white whitespace-nowrap">ZoomCast CRM</span>
+        <div class="flex items-center gap-1.5">
+          <span class="font-extrabold text-base sm:text-lg tracking-tight text-white whitespace-nowrap">ZoomCast</span>
+          <span class="font-extrabold text-base sm:text-lg tracking-tight text-yellow-400 whitespace-nowrap">CRM</span>
+        </div>
       </div>
 
       <nav class="hidden md:flex items-center gap-8 text-sm font-semibold text-slate-300">
-        <a href="#features" onclick="switchView('landing')" class="hover:text-white whitespace-nowrap transition">Features</a>
-        <a href="#pricing-section" onclick="scrollToPricingSection()" class="hover:text-white whitespace-nowrap transition">Pricing Plans</a>
+        <a href="#features" onclick="switchView('landing')" class="hover:text-yellow-400 whitespace-nowrap transition">Features</a>
+        <a href="#pricing-section" onclick="scrollToPricingSection()" class="hover:text-yellow-400 whitespace-nowrap transition">Pricing Plans</a>
       </nav>
 
       <div class="flex items-center gap-2.5 shrink-0">
-        <button onclick="openAuthMode('signin')" class="px-4 py-2 rounded-lg bg-slate-800/90 hover:bg-slate-700 text-xs sm:text-sm font-semibold text-white border border-slate-700 whitespace-nowrap transition">
+        <button onclick="openAuthMode('signin')" class="px-4 py-2 rounded-xl btn-glass text-xs sm:text-sm">
           Sign In
         </button>
-        <button onclick="openAuthMode('signup')" class="px-4 py-2 rounded-lg ghl-btn-primary text-xs sm:text-sm font-semibold whitespace-nowrap">
+        <button onclick="openAuthMode('signup')" class="px-4 py-2 rounded-xl btn-gold text-xs sm:text-sm">
           Sign Up
         </button>
       </div>
@@ -99,63 +335,63 @@
   </header>
 
   <!-- ===================================================================== -->
-  <!-- VIEW 1: 4K LANDING PAGE & USD ($) PRICING                             -->
+  <!-- VIEW 1: 4K GLASSY LANDING PAGE & USD ($) PRICING                      -->
   <!-- ===================================================================== -->
-  <main id="view-landing" class="flex-1">
-    <section class="bg-[#090d16] text-white py-20 sm:py-28 border-b border-slate-800/80 relative overflow-hidden">
-      <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 text-center relative z-10">
-        <div class="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-blue-500/15 border border-blue-500/30 text-blue-400 text-xs font-bold uppercase tracking-wider mb-6">
+  <main id="view-landing" class="flex-1 relative z-10">
+    <section class="py-20 sm:py-28 border-b border-white/10 relative overflow-hidden">
+      <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
+        <div class="inline-flex items-center gap-2.5 px-4 py-1.5 rounded-full bg-yellow-500/10 border border-yellow-500/30 text-yellow-400 text-xs font-bold uppercase tracking-wider mb-6">
           <span class="w-2 h-2 rounded-full bg-emerald-400 animate-ping"></span>
-          Cloud Zoom Broadcast & Webinar CRM
+          100% Cloud-Hosted Zoom Broadcast & Webinar Automation
         </div>
         <h1 class="text-3xl sm:text-5xl lg:text-6xl font-extrabold tracking-tight leading-[1.12] max-w-4xl mx-auto text-white">
-          Automate Your Recorded Zoom Broadcasts On Autopilot
+          Automate Your Recorded <span class="text-transparent bg-clip-text bg-gradient-to-r from-yellow-300 via-amber-400 to-yellow-500">Zoom Broadcasts</span> On Autopilot
         </h1>
         <p class="mt-6 text-base sm:text-lg text-slate-300 max-w-2xl mx-auto leading-relaxed font-medium">
-          Build automated meeting & webinar workflows, schedule multi-video playlists across any day or 12-hour AM/PM time slot, auto-promote your team to Co-Host, and track every attendee & chat message.
+          Build automated meeting & webinar workflows, schedule multi-video playlists across any day or 12-hour AM/PM time slot, auto-promote your team to Co-Host, and inspect real Zoom chat messages.
         </p>
 
-        <div class="mt-9 flex flex-col sm:flex-row items-center justify-center gap-3.5">
-          <button onclick="openGetStartedModal()" class="w-full sm:w-auto px-8 py-3.5 rounded-xl ghl-btn-primary font-bold text-sm sm:text-base shadow-lg">
-            Get Started — Choose Plan
+        <div class="mt-9 flex flex-col sm:flex-row items-center justify-center gap-4">
+          <button onclick="openGetStartedModal()" class="w-full sm:w-auto px-8 py-3.5 rounded-xl btn-gold text-sm sm:text-base">
+            Get Started — Choose Plan →
           </button>
-          <button onclick="scrollToPricingSection()" class="w-full sm:w-auto px-8 py-3.5 rounded-xl bg-slate-800/90 hover:bg-slate-700 text-white font-bold text-sm sm:text-base border border-slate-700 whitespace-nowrap transition">
-            View Plans
+          <button onclick="scrollToPricingSection()" class="w-full sm:w-auto px-8 py-3.5 rounded-xl btn-glass text-sm sm:text-base">
+            View Pricing Plans
           </button>
         </div>
 
         <div id="features" class="mt-20 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5 text-left">
-          <div class="p-6 rounded-2xl bg-slate-900/90 border border-slate-800/90 shadow-xl">
-            <div class="w-9 h-9 rounded-lg bg-blue-600/20 text-blue-400 font-extrabold text-sm flex items-center justify-center mb-4">01</div>
+          <div class="p-6 rounded-2xl glass-card hover:border-yellow-500/40 transition">
+            <div class="w-10 h-10 rounded-xl bg-yellow-500/15 border border-yellow-500/30 text-yellow-400 font-extrabold text-sm flex items-center justify-center mb-4">01</div>
             <h3 class="font-bold text-white text-base">Workflows & Draft Mode</h3>
-            <p class="text-xs text-slate-300 mt-1.5 leading-relaxed">Create meeting or webinar workflows, save them as drafts, or toggle them Active anytime.</p>
+            <p class="text-xs text-slate-400 mt-1.5 leading-relaxed">Create meeting or webinar workflows, save them as drafts, or toggle them Active anytime.</p>
           </div>
-          <div class="p-6 rounded-2xl bg-slate-900/90 border border-slate-800/90 shadow-xl">
-            <div class="w-9 h-9 rounded-lg bg-blue-600/20 text-blue-400 font-extrabold text-sm flex items-center justify-center mb-4">02</div>
+          <div class="p-6 rounded-2xl glass-card hover:border-yellow-500/40 transition">
+            <div class="w-10 h-10 rounded-xl bg-blue-500/15 border border-blue-500/30 text-blue-400 font-extrabold text-sm flex items-center justify-center mb-4">02</div>
             <h3 class="font-bold text-white text-base">12-Hour AM/PM Scheduler</h3>
-            <p class="text-xs text-slate-300 mt-1.5 leading-relaxed">Select any days of the week and multiple AM/PM broadcast times with custom hour & minute controls.</p>
+            <p class="text-xs text-slate-400 mt-1.5 leading-relaxed">Select any days of the week and multiple AM/PM broadcast times with custom hour & minute controls.</p>
           </div>
-          <div class="p-6 rounded-2xl bg-slate-900/90 border border-slate-800/90 shadow-xl">
-            <div class="w-9 h-9 rounded-lg bg-blue-600/20 text-blue-400 font-extrabold text-sm flex items-center justify-center mb-4">03</div>
+          <div class="p-6 rounded-2xl glass-card hover:border-yellow-500/40 transition">
+            <div class="w-10 h-10 rounded-xl bg-emerald-500/15 border border-emerald-500/30 text-emerald-400 font-extrabold text-sm flex items-center justify-center mb-4">03</div>
             <h3 class="font-bold text-white text-base">Unlimited Team Co-Hosts</h3>
-            <p class="text-xs text-slate-300 mt-1.5 leading-relaxed">Add all your team members' emails. Anyone from your list who joins is promoted to Co-Host.</p>
+            <p class="text-xs text-slate-400 mt-1.5 leading-relaxed">Add all your team members' emails. Anyone from your list who joins is promoted to Co-Host.</p>
           </div>
-          <div class="p-6 rounded-2xl bg-slate-900/90 border border-slate-800/90 shadow-xl">
-            <div class="w-9 h-9 rounded-lg bg-blue-600/20 text-blue-400 font-extrabold text-sm flex items-center justify-center mb-4">04</div>
+          <div class="p-6 rounded-2xl glass-card hover:border-yellow-500/40 transition">
+            <div class="w-10 h-10 rounded-xl bg-purple-500/15 border border-purple-500/30 text-purple-400 font-extrabold text-sm flex items-center justify-center mb-4">04</div>
             <h3 class="font-bold text-white text-base">Attendance & Live Chat View</h3>
-            <p class="text-xs text-slate-300 mt-1.5 leading-relaxed">Click any completed meeting to inspect every participant and open the real in-meeting chat conversation.</p>
+            <p class="text-xs text-slate-400 mt-1.5 leading-relaxed">Click any completed meeting to inspect every participant and open the real in-meeting chat conversation.</p>
           </div>
         </div>
       </div>
     </section>
 
     <!-- PRICING SECTION (USD $ ONLY) -->
-    <section id="pricing-section" class="py-20 bg-[#f8fafc]">
+    <section id="pricing-section" class="py-20">
       <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div class="text-center max-w-2xl mx-auto mb-12">
-          <span class="text-xs uppercase tracking-widest text-blue-600 font-extrabold">Subscription Plans</span>
-          <h2 class="text-3xl sm:text-4xl font-extrabold text-slate-900 mt-1">Select Your Plan to Get Started</h2>
-          <p class="text-sm text-slate-600 mt-2">All plans are billed monthly in USD ($). Choose a plan below to create your account and subscribe.</p>
+          <span class="text-xs uppercase tracking-widest text-yellow-400 font-extrabold">Subscription Plans</span>
+          <h2 class="text-3xl sm:text-4xl font-extrabold text-white mt-1">Select Your Plan to Get Started</h2>
+          <p class="text-sm text-slate-400 mt-2">All plans are billed monthly in USD ($). Choose a plan below to create your account and subscribe.</p>
         </div>
 
         <div id="pricing-cards-container" class="grid grid-cols-1 md:grid-cols-3 gap-7"></div>
@@ -164,194 +400,492 @@
   </main>
 
   <!-- ===================================================================== -->
-  <!-- VIEW 2: AUTHENTICATION (SIGN IN vs SIGN UP + OTP) -> PLAN -> PAYMENT  -->
+  <!-- VIEW 2: EXACT VIDEO AUTH (LOGIN V7 + GLASSY OTP + 3D CARD CHECKOUT)   -->
   <!-- ===================================================================== -->
-  <section id="view-auth" class="hidden flex-1 py-12 bg-[#f8fafc]">
-    <div class="max-w-xl mx-auto px-4 sm:px-6">
+  <section id="view-auth" class="hidden flex-1 py-12 sm:py-16 flex items-center justify-center relative z-10 px-4">
+    <div class="w-full max-w-4xl mx-auto flex flex-col items-center justify-center">
 
-      <!-- STEP A: SIGN IN OR SIGN UP CARD -->
-      <div id="auth-step-account" class="ghl-card p-6 sm:p-8 rounded-2xl">
-        <div class="grid grid-cols-2 gap-2 p-1 bg-slate-100 rounded-xl mb-6">
-          <button type="button" onclick="openAuthMode('signin')" id="tab-btn-signin" class="py-2.5 rounded-lg text-xs sm:text-sm font-bold bg-white text-slate-900 shadow-sm whitespace-nowrap">
-            Sign In (Existing User)
-          </button>
-          <button type="button" onclick="openAuthMode('signup')" id="tab-btn-signup" class="py-2.5 rounded-lg text-xs sm:text-sm font-bold text-slate-600 hover:text-slate-900 whitespace-nowrap">
-            Create Account (Sign Up)
-          </button>
-        </div>
-
-        <button type="button" onclick="handleGoogleAuthContinue()" class="w-full py-3 px-4 rounded-xl ghl-btn-secondary font-bold text-sm flex items-center justify-center gap-3">
-          <svg class="w-4 h-4 shrink-0" viewBox="0 0 24 24">
-            <path fill="#EA4335" d="M12 5c1.6 0 3 .6 4.1 1.7l3.1-3.1C17.3 1.8 14.8 1 12 1 7.4 1 3.5 3.6 1.6 7.4l3.7 2.8C6.2 7.2 8.9 5 12 5z"/>
-            <path fill="#4285F4" d="M23.5 12.3c0-.8-.1-1.6-.2-2.3H12v4.5h6.5c-.3 1.5-1.1 2.8-2.4 3.6l3.7 2.9c2.2-2 3.7-5 3.7-8.7z"/>
-            <path fill="#FBBC05" d="M5.3 14.8c-.2-.8-.4-1.6-.4-2.5s.2-1.7.4-2.5L1.6 7C.6 9 0 11.2 0 13.5s.6 4.5 1.6 6.5l3.7-2.9z"/>
-            <path fill="#34A853" d="M12 24c3.2 0 6-1.1 8-3l-3.7-2.9c-1.1.7-2.5 1.2-4.3 1.2-3.1 0-5.8-2.1-6.7-5l-3.7 2.8C3.5 21.4 7.4 24 12 24z"/>
-          </svg>
-          <span>Continue with Google</span>
-        </button>
-
-        <div class="my-5 flex items-center gap-3">
-          <div class="h-px bg-slate-200 flex-1"></div>
-          <span class="text-[11px] text-slate-400 font-bold uppercase">OR USE EMAIL</span>
-          <div class="h-px bg-slate-200 flex-1"></div>
-        </div>
-
-        <!-- SIGN IN FORM -->
-        <div id="form-signin" class="space-y-4">
-          <div>
-            <label class="text-xs font-bold text-slate-700">Email Address</label>
-            <input id="signin-email" type="email" placeholder="Enter your registered email" class="mt-1 w-full px-3.5 py-2.5 rounded-xl ghl-input text-sm" />
+      <!-- ================================================================= -->
+      <!-- STEP A: LOGIN FORM V7 / CREATE ACCOUNT WITH 3D DIAMOND MORPH      -->
+      <!-- (Exact match to sign_up_login.mp4)                                -->
+      <!-- ================================================================= -->
+      <div id="auth-step-account" class="w-full max-w-[460px] relative">
+        
+        <!-- Center 3D Diamond Morph Overlay (Triggered when switching Login <-> Sign Up) -->
+        <div id="auth-diamond-loader" class="opacity-0 scale-50 fixed inset-0 z-30 flex items-center justify-center pointer-events-none">
+          <div class="w-24 h-24 rounded-3xl glass-card-gold rotate-45 flex items-center justify-center shadow-2xl border border-yellow-500/40">
+            <div class="w-10 h-10 rounded-xl bg-white/10 border border-white/20 -rotate-45 flex items-center justify-center">
+              <div class="w-6 h-0.5 bg-yellow-400 rotate-45"></div>
+            </div>
           </div>
-          <div>
-            <div class="flex items-center justify-between">
-              <label class="text-xs font-bold text-slate-700">Password</label>
-              <button type="button" onclick="openAuthMode('forgot')" class="text-xs font-bold text-blue-600 hover:underline">
-                Forgot Password?
+        </div>
+
+        <div id="auth-morph-wrapper" class="hud-frame glass-card-gold rounded-[28px] p-7 sm:p-9">
+          <div class="hud-corner-tl"></div>
+          <div class="hud-corner-tr"></div>
+          <div class="hud-corner-bl"></div>
+          <div class="hud-corner-br"></div>
+
+          <!-- 1. SIGN IN FORM ("Welcome Back" - Exact Login form V7) -->
+          <div id="form-signin" class="space-y-5">
+            <div class="text-center space-y-1.5">
+              <h2 class="text-2xl sm:text-3xl font-extrabold tracking-tight text-white">
+                Welcome <span class="text-yellow-400">Back</span>
+              </h2>
+              <p class="text-xs text-slate-400">Enter your credentials to access your secure account</p>
+            </div>
+
+            <div class="space-y-4 pt-2">
+              <div>
+                <label class="text-xs font-semibold text-slate-300 block mb-1.5">Email Address</label>
+                <div class="relative">
+                  <span class="absolute inset-y-0 left-0 pl-3.5 flex items-center text-slate-400 pointer-events-none">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/></svg>
+                  </span>
+                  <input id="signin-email" type="email" placeholder="name@domain.com" class="w-full pl-10 pr-4 py-3 rounded-xl glass-input text-sm" />
+                </div>
+              </div>
+
+              <div>
+                <label class="text-xs font-semibold text-slate-300 block mb-1.5">Password</label>
+                <div class="relative">
+                  <span class="absolute inset-y-0 left-0 pl-3.5 flex items-center text-slate-400 pointer-events-none">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/></svg>
+                  </span>
+                  <input id="signin-password" type="password" placeholder="••••••••" class="w-full pl-10 pr-10 py-3 rounded-xl glass-input text-sm" onkeydown="if(event.key==='Enter') handleEmailSignIn()" />
+                  <button type="button" onclick="togglePasswordVisibility('signin-password')" class="absolute inset-y-0 right-0 pr-3.5 flex items-center text-slate-400 hover:text-yellow-400">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/><path stroke-linecap="round" stroke-linejoin="round" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/></svg>
+                  </button>
+                </div>
+              </div>
+
+              <div class="flex items-center justify-between text-xs pt-0.5">
+                <label class="flex items-center gap-2 cursor-pointer text-slate-300 select-none">
+                  <input type="checkbox" checked class="w-4 h-4 rounded accent-yellow-400" />
+                  <span>Remember me</span>
+                </label>
+                <button type="button" onclick="openAuthMode('forgot')" class="font-bold text-yellow-400 hover:underline">
+                  Forgot password?
+                </button>
+              </div>
+
+              <button type="button" onclick="handleEmailSignIn()" class="w-full py-3.5 rounded-xl btn-gold text-sm flex items-center justify-center gap-2">
+                <span>Sign In</span>
+                <span>→</span>
               </button>
             </div>
-            <input id="signin-password" type="password" placeholder="Enter your password" class="mt-1 w-full px-3.5 py-2.5 rounded-xl ghl-input text-sm" onkeydown="if(event.key==='Enter') handleEmailSignIn()" />
+
+            <div class="relative flex py-1 items-center">
+              <div class="flex-grow border-t border-white/10"></div>
+              <span class="flex-shrink mx-3 text-[10px] font-bold uppercase tracking-widest text-slate-500">OR CONTINUE WITH</span>
+              <div class="flex-grow border-t border-white/10"></div>
+            </div>
+
+            <div class="grid grid-cols-2 gap-3">
+              <button type="button" onclick="handleGoogleAuthContinue()" class="py-2.5 px-4 rounded-xl btn-glass text-xs font-bold flex items-center justify-center gap-2">
+                <svg class="w-4 h-4" viewBox="0 0 24 24"><path fill="currentColor" d="M21.35 11.1h-9.17v2.73h6.51c-.33 3.81-3.5 5.44-6.5 5.44C8.36 19.27 5 16.25 5 12c0-4.1 3.2-7.27 7.2-7.27 3.09 0 4.9 1.97 4.9 1.97L19 4.72S16.56 2 12.1 2C6.42 2 2.03 6.8 2.03 12c0 5.05 4.13 10 10.22 10 5.35 0 9.25-3.67 9.25-9.09 0-1.15-.15-1.81-.15-1.81Z"/></svg>
+                <span>Google</span>
+              </button>
+              <button type="button" onclick="handleGoogleAuthContinue()" class="py-2.5 px-4 rounded-xl btn-glass text-xs font-bold flex items-center justify-center gap-2">
+                <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 24 24"><path d="M18.71 19.5c-.83 1.24-1.71 2.45-3.05 2.47-1.34.03-1.77-.79-3.29-.79-1.53 0-2 .77-3.27.82-1.31.05-2.3-1.32-3.14-2.53C4.25 17 2.94 12.45 4.7 9.39c.87-1.52 2.43-2.48 4.12-2.51 1.28-.02 2.5.87 3.29.87.78 0 2.26-1.07 3.81-.91.65.03 2.47.26 3.64 1.98-.09.06-2.17 1.28-2.15 3.81.03 3.02 2.65 4.03 2.68 4.04-.03.07-.42 1.44-1.38 2.83M15.97 6.33c.64-.78 1.08-1.86.96-2.94-.93.04-2.06.62-2.72 1.4-.58.68-1.1 1.79-.96 2.84 1.04.08 2.08-.52 2.72-1.3Z"/></svg>
+                <span>Apple</span>
+              </button>
+            </div>
+
+            <p class="text-center text-xs text-slate-400 pt-1">
+              Don't have an account?
+              <button type="button" onclick="openAuthMode('signup')" class="font-bold text-yellow-400 hover:underline ml-1">Sign Up</button>
+            </p>
           </div>
-          <button type="button" onclick="handleEmailSignIn()" class="w-full py-3 rounded-xl ghl-btn-primary font-bold text-sm">
-            Sign In to Workspace
+
+          <!-- 2. SIGN UP FORM ("Create Account" - Exact Login form V7) -->
+          <div id="form-signup" class="hidden space-y-4">
+            <div class="text-center space-y-1">
+              <h2 class="text-2xl sm:text-3xl font-extrabold tracking-tight text-white">
+                Create <span class="text-yellow-400">Account</span>
+              </h2>
+              <p class="text-xs text-slate-400">Join us today and unlock your automated broadcast space</p>
+            </div>
+
+            <div class="space-y-3.5 pt-1">
+              <div>
+                <label class="text-xs font-semibold text-slate-300 block mb-1">Full Name</label>
+                <div class="relative">
+                  <span class="absolute inset-y-0 left-0 pl-3.5 flex items-center text-slate-400 pointer-events-none">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/></svg>
+                  </span>
+                  <input id="signup-name" type="text" placeholder="John Doe" class="w-full pl-10 pr-4 py-2.5 rounded-xl glass-input text-sm" />
+                </div>
+              </div>
+
+              <div>
+                <label class="text-xs font-semibold text-slate-300 block mb-1">Email Address</label>
+                <div class="relative">
+                  <span class="absolute inset-y-0 left-0 pl-3.5 flex items-center text-slate-400 pointer-events-none">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/></svg>
+                  </span>
+                  <input id="signup-email" type="email" placeholder="name@domain.com" class="w-full pl-10 pr-4 py-2.5 rounded-xl glass-input text-sm" />
+                </div>
+              </div>
+
+              <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div>
+                  <label class="text-xs font-semibold text-slate-300 block mb-1">Password</label>
+                  <div class="relative">
+                    <span class="absolute inset-y-0 left-0 pl-3 flex items-center text-slate-400 pointer-events-none">
+                      <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/></svg>
+                    </span>
+                    <input id="signup-password" type="password" placeholder="••••••••" class="w-full pl-9 pr-3 py-2.5 rounded-xl glass-input text-sm" />
+                  </div>
+                </div>
+                <div>
+                  <label class="text-xs font-semibold text-slate-300 block mb-1">Confirm Password</label>
+                  <div class="relative">
+                    <span class="absolute inset-y-0 left-0 pl-3 flex items-center text-slate-400 pointer-events-none">
+                      <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/></svg>
+                    </span>
+                    <input id="signup-confirm-password" type="password" placeholder="••••••••" class="w-full pl-9 pr-3 py-2.5 rounded-xl glass-input text-sm" />
+                  </div>
+                </div>
+              </div>
+
+              <label class="flex items-center gap-2 cursor-pointer text-xs text-slate-300 pt-0.5 select-none">
+                <input id="signup-terms-chk" type="checkbox" checked class="w-4 h-4 rounded accent-yellow-400" />
+                <span>I agree to the <u class="text-slate-200">Terms</u> & <u class="text-slate-200">Privacy Policy</u></span>
+              </label>
+
+              <button type="button" onclick="startSignUpOtpVerification()" class="w-full py-3.5 rounded-xl btn-gold text-sm flex items-center justify-center gap-2">
+                <span>Create Account</span>
+                <span>→</span>
+              </button>
+            </div>
+
+            <div class="relative flex py-1 items-center">
+              <div class="flex-grow border-t border-white/10"></div>
+              <span class="flex-shrink mx-3 text-[10px] font-bold uppercase tracking-widest text-slate-500">OR SIGN UP WITH</span>
+              <div class="flex-grow border-t border-white/10"></div>
+            </div>
+
+            <div class="grid grid-cols-2 gap-3">
+              <button type="button" onclick="handleGoogleAuthContinue()" class="py-2.5 px-4 rounded-xl btn-glass text-xs font-bold flex items-center justify-center gap-2">
+                <svg class="w-4 h-4" viewBox="0 0 24 24"><path fill="currentColor" d="M21.35 11.1h-9.17v2.73h6.51c-.33 3.81-3.5 5.44-6.5 5.44C8.36 19.27 5 16.25 5 12c0-4.1 3.2-7.27 7.2-7.27 3.09 0 4.9 1.97 4.9 1.97L19 4.72S16.56 2 12.1 2C6.42 2 2.03 6.8 2.03 12c0 5.05 4.13 10 10.22 10 5.35 0 9.25-3.67 9.25-9.09 0-1.15-.15-1.81-.15-1.81Z"/></svg>
+                <span>Google</span>
+              </button>
+              <button type="button" onclick="handleGoogleAuthContinue()" class="py-2.5 px-4 rounded-xl btn-glass text-xs font-bold flex items-center justify-center gap-2">
+                <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 24 24"><path d="M18.71 19.5c-.83 1.24-1.71 2.45-3.05 2.47-1.34.03-1.77-.79-3.29-.79-1.53 0-2 .77-3.27.82-1.31.05-2.3-1.32-3.14-2.53C4.25 17 2.94 12.45 4.7 9.39c.87-1.52 2.43-2.48 4.12-2.51 1.28-.02 2.5.87 3.29.87.78 0 2.26-1.07 3.81-.91.65.03 2.47.26 3.64 1.98-.09.06-2.17 1.28-2.15 3.81.03 3.02 2.65 4.03 2.68 4.04-.03.07-.42 1.44-1.38 2.83M15.97 6.33c.64-.78 1.08-1.86.96-2.94-.93.04-2.06.62-2.72 1.4-.58.68-1.1 1.79-.96 2.84 1.04.08 2.08-.52 2.72-1.3Z"/></svg>
+                <span>Apple</span>
+              </button>
+            </div>
+
+            <p class="text-center text-xs text-slate-400 pt-1">
+              Already have an account?
+              <button type="button" onclick="openAuthMode('signin')" class="font-bold text-yellow-400 hover:underline ml-1">Sign In</button>
+            </p>
+          </div>
+
+          <!-- 3. FORGOT PASSWORD FORM (Triggers Glassy OTP Animation) -->
+          <div id="form-forgot" class="hidden space-y-4">
+            <div class="text-center space-y-1">
+              <h2 class="text-2xl sm:text-3xl font-extrabold tracking-tight text-white">
+                Reset <span class="text-yellow-400">Password</span>
+              </h2>
+              <p class="text-xs text-slate-400">Enter your registered email and new password to verify via OTP</p>
+            </div>
+
+            <div class="space-y-3.5 pt-2">
+              <div>
+                <label class="text-xs font-semibold text-slate-300 block mb-1">Registered Email Address</label>
+                <div class="relative">
+                  <span class="absolute inset-y-0 left-0 pl-3.5 flex items-center text-slate-400 pointer-events-none">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/></svg>
+                  </span>
+                  <input id="forgot-email" type="email" placeholder="name@domain.com" class="w-full pl-10 pr-4 py-3 rounded-xl glass-input text-sm" />
+                </div>
+              </div>
+
+              <div>
+                <label class="text-xs font-semibold text-slate-300 block mb-1">New Password</label>
+                <div class="relative">
+                  <span class="absolute inset-y-0 left-0 pl-3.5 flex items-center text-slate-400 pointer-events-none">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/></svg>
+                  </span>
+                  <input id="forgot-new-password" type="password" placeholder="Minimum 6 characters" class="w-full pl-10 pr-4 py-3 rounded-xl glass-input text-sm" />
+                </div>
+              </div>
+
+              <button type="button" onclick="startForgotPasswordOtpFlow()" class="w-full py-3.5 rounded-xl btn-gold text-sm flex items-center justify-center gap-2">
+                <span>Send 4-Digit OTP Code</span>
+                <span>→</span>
+              </button>
+
+              <p class="text-center text-xs text-slate-400 pt-2">
+                Remembered your password?
+                <button type="button" onclick="openAuthMode('signin')" class="font-bold text-yellow-400 hover:underline ml-1">Back to Sign In</button>
+              </p>
+            </div>
+          </div>
+
+        </div>
+      </div>
+
+      <!-- ================================================================= -->
+      <!-- STEP A2: EXACT GLASSY OTP ANIMATION CARD (otp.mp4)                -->
+      <!-- ================================================================= -->
+      <div id="auth-step-otp" class="hidden w-full max-w-[440px]">
+        <div class="hud-frame glass-card-gold rounded-[28px] p-7 sm:p-9 text-center">
+          <div class="hud-corner-tl"></div>
+          <div class="hud-corner-tr"></div>
+          <div class="hud-corner-bl"></div>
+          <div class="hud-corner-br"></div>
+
+          <!-- Top Key Icon -> Morphs to Green Shield on Verified -->
+          <div id="otp-top-icon-wrap" class="w-14 h-14 mx-auto rounded-full bg-yellow-500/10 border border-yellow-500/30 flex items-center justify-center text-yellow-400 mb-4 transition-all duration-500">
+            <svg id="otp-icon-key" class="w-6 h-6" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z"/>
+            </svg>
+            <svg id="otp-icon-shield" class="w-6 h-6 hidden text-emerald-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/>
+            </svg>
+          </div>
+
+          <h2 id="otp-title-heading" class="text-2xl sm:text-3xl font-extrabold tracking-tight text-white">
+            Verify <span class="text-yellow-400">OTP</span>
+          </h2>
+          <p id="otp-subtitle-text" class="text-xs text-slate-400 mt-1.5">
+            Enter the 4-digit security code sent to your device
+          </p>
+          <div id="otp-live-code-pill" class="mt-2 inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-yellow-500/10 border border-yellow-500/25 text-[11px] font-mono font-bold text-yellow-300"></div>
+
+          <!-- 4-Digit Boxes Stage (Transforms into Orbiting Diamond -> Green Check Box) -->
+          <div class="my-8 relative h-24 flex items-center justify-center">
+            <div id="otp-boxes-row" class="flex items-center justify-center gap-3.5 transition-all duration-500">
+              <input id="otp-d0" type="text" maxlength="1" inputmode="numeric" class="otp-digit-box otp-box-0" oninput="handleOtpDigitInput(0, event)" onkeydown="handleOtpDigitKeydown(0, event)" />
+              <input id="otp-d1" type="text" maxlength="1" inputmode="numeric" class="otp-digit-box otp-box-1" oninput="handleOtpDigitInput(1, event)" onkeydown="handleOtpDigitKeydown(1, event)" />
+              <input id="otp-d2" type="text" maxlength="1" inputmode="numeric" class="otp-digit-box otp-box-2" oninput="handleOtpDigitInput(2, event)" onkeydown="handleOtpDigitKeydown(2, event)" />
+              <input id="otp-d3" type="text" maxlength="1" inputmode="numeric" class="otp-digit-box otp-box-3" oninput="handleOtpDigitInput(3, event)" onkeydown="handleOtpDigitKeydown(3, event)" />
+            </div>
+
+            <!-- Center Merged Box (Appears at 00:03 -> Turns Green Check at 00:04) -->
+            <div id="otp-merged-box" class="hidden w-16 h-16 rounded-2xl border-2 border-yellow-400 bg-yellow-500/10 flex items-center justify-center shadow-2xl transition-all duration-500">
+              <svg id="otp-merged-check" class="w-8 h-8 text-emerald-400 hidden" fill="none" stroke="currentColor" stroke-width="3" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/>
+              </svg>
+            </div>
+          </div>
+
+          <p class="text-xs text-slate-400 mb-6">
+            Didn't receive the code?
+            <button type="button" onclick="resendGlassyOtp()" id="otp-resend-timer" class="font-bold text-yellow-400 hover:underline ml-1">Resend in 00:38</button>
+          </p>
+
+          <button type="button" id="otp-submit-btn" onclick="triggerGlassyOtpVerifyAnimation()" class="w-full py-3.5 rounded-xl btn-gold text-sm flex items-center justify-center gap-2">
+            <span>Verify & Proceed</span>
+            <span>→</span>
           </button>
         </div>
+      </div>
 
-        <!-- FORGOT PASSWORD FORM (RESET VIA EMAIL OTP) -->
-        <div id="form-forgot" class="hidden space-y-4">
-          <div class="p-3.5 rounded-xl bg-slate-50 border border-slate-200 flex items-center justify-between">
-            <div>
-              <h4 class="text-xs font-extrabold text-slate-900">Reset Password via Email OTP</h4>
-              <p class="text-[11px] text-slate-500 mt-0.5">Verify your email with a 6-digit OTP to set a new password.</p>
-            </div>
-            <button type="button" onclick="openAuthMode('signin')" class="text-xs font-bold text-blue-600 hover:underline whitespace-nowrap">
-              ← Back to Sign In
+      <!-- ================================================================= -->
+      <!-- STEP B: PLAN SELECTION (GLASSY CARDS)                             -->
+      <!-- ================================================================= -->
+      <div id="auth-step-plan" class="hidden w-full max-w-xl">
+        <div class="hud-frame glass-card-gold p-7 sm:p-8 rounded-[28px] space-y-5">
+          <div class="hud-corner-tl"></div>
+          <div class="hud-corner-tr"></div>
+          <div class="hud-corner-bl"></div>
+          <div class="hud-corner-br"></div>
+
+          <div class="flex items-center justify-between">
+            <span class="px-3 py-1 rounded-lg text-xs font-bold bg-yellow-500/15 text-yellow-400 border border-yellow-500/30">STEP 2 OF 3 • SELECT PLAN</span>
+            <button type="button" onclick="scrollToPricingSection()" class="text-xs font-bold text-yellow-400 hover:underline">
+              Compare All Features ↗
             </button>
           </div>
-
           <div>
-            <label class="text-xs font-bold text-slate-700">Registered Email Address</label>
-            <div class="mt-1 flex gap-2">
-              <input id="forgot-email" type="email" placeholder="Enter your registered email" class="flex-1 px-3.5 py-2.5 rounded-xl ghl-input text-sm" />
-              <button type="button" onclick="sendForgotOtpCode()" class="px-3.5 py-2.5 rounded-xl ghl-btn-secondary text-xs font-bold">
-                Send OTP
-              </button>
-            </div>
+            <h2 class="text-2xl font-extrabold text-white">Choose Your <span class="text-yellow-400">Subscription Plan</span></h2>
+            <p class="text-xs text-slate-400 mt-1">Select a monthly USD ($) plan below to proceed to secure card checkout.</p>
           </div>
 
-          <div id="forgot-otp-box" class="hidden p-3.5 rounded-xl bg-blue-50/70 border border-blue-200 space-y-2">
-            <div class="flex items-center justify-between">
-              <label class="text-xs font-bold text-blue-900">Enter 6-Digit Reset OTP Code</label>
-              <span id="forgot-otp-hint" class="text-[11px] font-mono font-bold text-blue-700"></span>
-            </div>
-            <input id="forgot-otp-input" type="text" maxlength="6" placeholder="Enter 6-digit OTP" class="w-full px-3.5 py-2 rounded-lg ghl-input text-sm font-mono tracking-widest text-center" />
-          </div>
-
-          <div>
-            <label class="text-xs font-bold text-slate-700">New Password</label>
-            <input id="forgot-new-password" type="password" placeholder="Enter new password" class="mt-1 w-full px-3.5 py-2.5 rounded-xl ghl-input text-sm" />
-          </div>
-
-          <button type="button" onclick="handleForgotPasswordReset()" class="w-full py-3 rounded-xl ghl-btn-primary font-bold text-sm">
-            Verify OTP & Reset Password
-          </button>
-        </div>
-
-        <!-- SIGN UP FORM (WITH EMAIL OTP VERIFICATION) -->
-        <div id="form-signup" class="hidden space-y-4">
-          <div>
-            <label class="text-xs font-bold text-slate-700">Full Name</label>
-            <input id="signup-name" type="text" placeholder="Enter your full name" class="mt-1 w-full px-3.5 py-2.5 rounded-xl ghl-input text-sm" />
-          </div>
-          <div>
-            <label class="text-xs font-bold text-slate-700">Email Address</label>
-            <div class="mt-1 flex gap-2">
-              <input id="signup-email" type="email" placeholder="you@example.com" class="flex-1 px-3.5 py-2.5 rounded-xl ghl-input text-sm" />
-              <button type="button" onclick="sendEmailOtpCode()" class="px-3.5 py-2.5 rounded-xl ghl-btn-secondary text-xs font-bold">
-                Send OTP
-              </button>
-            </div>
-          </div>
-
-          <div id="otp-verification-box" class="hidden p-3.5 rounded-xl bg-blue-50/70 border border-blue-200 space-y-2">
-            <div class="flex items-center justify-between">
-              <label class="text-xs font-bold text-blue-900">Enter 6-Digit Email OTP Code</label>
-              <span id="otp-hint-badge" class="text-[11px] font-mono font-bold text-blue-700"></span>
-            </div>
-            <input id="signup-otp-input" type="text" maxlength="6" placeholder="Enter 6-digit OTP" class="w-full px-3.5 py-2 rounded-lg ghl-input text-sm font-mono tracking-widest text-center" />
-          </div>
-
-          <div>
-            <label class="text-xs font-bold text-slate-700">Create Password</label>
-            <input id="signup-password" type="password" placeholder="Minimum 6 characters" class="mt-1 w-full px-3.5 py-2.5 rounded-xl ghl-input text-sm" />
-          </div>
-          <button type="button" onclick="handleEmailSignUp()" class="w-full py-3 rounded-xl ghl-btn-primary font-bold text-sm">
-            Verify & Continue to Plan Selection →
-          </button>
+          <div id="modal-plan-selector-list" class="space-y-3"></div>
         </div>
       </div>
 
-      <!-- STEP B: PLAN SELECTION -->
-      <div id="auth-step-plan" class="hidden ghl-card p-6 sm:p-8 rounded-2xl space-y-5">
-        <div class="flex items-center justify-between">
-          <span class="px-2.5 py-1 rounded-md text-xs font-bold bg-blue-50 text-blue-700">STEP 2 OF 3 • SELECT PLAN</span>
-          <button type="button" onclick="scrollToPricingSection()" class="text-xs font-bold text-blue-600 hover:underline">
-            View Full Plan Comparison ↗
-          </button>
-        </div>
-        <h2 class="text-xl sm:text-2xl font-extrabold text-slate-900">Choose Your Subscription Plan</h2>
-        <p class="text-xs sm:text-sm text-slate-600">Select a plan below to proceed to USD ($) card checkout.</p>
+      <!-- ================================================================= -->
+      <!-- STEP C: GLASSY PAYMENT CHECKOUT (Exact match to Payment_page_.mp4)-->
+      <!-- ================================================================= -->
+      <div id="auth-step-payment" class="hidden w-full max-w-4xl">
+        <div class="hud-frame glass-card-gold rounded-[30px] p-6 sm:p-9 relative overflow-hidden">
+          <div class="hud-corner-tl"></div>
+          <div class="hud-corner-tr"></div>
+          <div class="hud-corner-bl"></div>
+          <div class="hud-corner-br"></div>
 
-        <div id="modal-plan-selector-list" class="space-y-3"></div>
-      </div>
-
-      <!-- STEP C: CARD PAYMENT CHECKOUT -->
-      <div id="auth-step-payment" class="hidden ghl-card p-6 sm:p-8 rounded-2xl">
-        <div class="flex items-center justify-between">
-          <span class="px-2.5 py-1 rounded-md text-xs font-bold bg-emerald-50 text-emerald-700">STEP 3 OF 3 • USD CARD CHECKOUT</span>
-          <button type="button" onclick="showAuthStep('plan')" class="text-xs font-bold text-blue-600 hover:underline">
-            ← Change Plan
-          </button>
-        </div>
-        <h2 class="text-xl sm:text-2xl font-extrabold text-slate-900 mt-3">Complete Payment</h2>
-        <p class="text-xs sm:text-sm text-slate-600 mt-1">Enter your Debit or Credit Card details to activate your subscription.</p>
-
-        <div class="mt-4 p-4 rounded-xl bg-slate-50 border border-slate-200 flex items-center justify-between">
-          <div>
-            <span class="text-xs text-slate-500 font-medium">Selected Plan</span>
-            <h4 id="checkout-plan-name" class="font-extrabold text-slate-900 text-base">Business Pro</h4>
-          </div>
-          <div class="text-right">
-            <span id="checkout-plan-price" class="text-xl font-extrabold text-blue-600">$35</span>
-            <span class="block text-[11px] text-slate-500">/ month</span>
-          </div>
-        </div>
-
-        <div class="mt-5 space-y-4">
-          <div>
-            <label class="text-xs font-bold text-slate-700">Cardholder Name</label>
-            <input id="card-holder" type="text" placeholder="Name on card" class="mt-1 w-full px-3.5 py-2.5 rounded-xl ghl-input text-sm" />
-          </div>
-          <div>
-            <label class="text-xs font-bold text-slate-700 flex justify-between">
-              <span>Card Number</span>
-              <span class="text-blue-600 font-semibold">Visa • Mastercard • Amex</span>
-            </label>
-            <input id="card-number" type="text" maxlength="19" placeholder="0000 0000 0000 0000" class="mt-1 w-full px-3.5 py-2.5 rounded-xl ghl-input text-sm font-mono" />
-          </div>
-          <div class="grid grid-cols-2 gap-4">
-            <div>
-              <label class="text-xs font-bold text-slate-700">Expiry Date</label>
-              <input id="card-expiry" type="text" maxlength="7" placeholder="MM / YY" class="mt-1 w-full px-3.5 py-2.5 rounded-xl ghl-input text-sm font-mono" />
+          <!-- Top Checkout Header Bar -->
+          <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-6 border-b border-white/10">
+            <div class="flex items-center gap-3">
+              <div class="w-8 h-8 rounded-full bg-yellow-500/20 border border-yellow-500/40 flex items-center justify-center text-yellow-400 font-extrabold text-xs">
+                Z
+              </div>
+              <span class="text-xs sm:text-sm font-extrabold tracking-widest uppercase text-white">ZOOMCAST CHECKOUT</span>
             </div>
-            <div>
-              <label class="text-xs font-bold text-slate-700">CVC</label>
-              <input id="card-cvc" type="password" maxlength="4" placeholder="CVC" class="mt-1 w-full px-3.5 py-2.5 rounded-xl ghl-input text-sm font-mono" />
+
+            <div class="flex items-center gap-3 text-xs font-bold">
+              <button type="button" onclick="showAuthStep('plan')" class="text-slate-400 hover:text-white flex items-center gap-1.5">
+                <span>🛒</span>
+                <span>Plan</span>
+              </button>
+              <span class="w-6 h-px bg-white/15"></span>
+              <span class="text-slate-400 flex items-center gap-1.5">
+                <span>👤</span>
+                <span>Account</span>
+              </span>
+              <span class="w-6 h-px bg-yellow-500/40"></span>
+              <span class="px-3 py-1 rounded-full bg-yellow-500/15 border border-yellow-500/40 text-yellow-400 flex items-center gap-1.5">
+                <span>💳</span>
+                <span>Payment</span>
+              </span>
             </div>
           </div>
 
-          <button type="button" onclick="completeSubscriptionAndLogin()" class="mt-3 w-full py-3.5 px-4 rounded-xl ghl-btn-primary font-bold text-sm shadow-md">
-            Pay Now & Activate Workspace →
-          </button>
+          <!-- Checkout Stage: 2-Column Split -> Animates to Centered Card on Pay -->
+          <div id="payment-split-stage" class="mt-8 grid grid-cols-1 lg:grid-cols-12 gap-8 items-center transition-all duration-500">
+            
+            <!-- Left Column: 3D Realistic Platinum Card (Flips on CVV focus, turns green on success) -->
+            <div id="payment-card-col" class="lg:col-span-6 flex flex-col items-center justify-center transition-all duration-700">
+              <div class="w-full max-w-[380px] perspective-1000">
+                <div id="credit-card-3d" class="card-3d-inner">
+                  
+                  <!-- FRONT OF 3D PLATINUM CARD -->
+                  <div id="credit-card-front" class="card-face card-face-front p-6 flex flex-col justify-between">
+                    <div class="flex items-center justify-between">
+                      <div class="flex items-center gap-3">
+                        <!-- Realistic Gold EMV Chip -->
+                        <div class="w-11 h-8 rounded-md bg-gradient-to-br from-yellow-300 via-amber-400 to-yellow-600 border border-yellow-200/50 flex items-center justify-center shadow-inner">
+                          <div class="w-7 h-5 border border-black/25 rounded-sm grid grid-cols-2 gap-px"></div>
+                        </div>
+                        <!-- Contactless Waves Icon -->
+                        <svg class="w-5 h-5 text-slate-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                          <path stroke-linecap="round" stroke-linejoin="round" d="M8.111 16.404a5.5 5.5 0 017.778 0M12 20h.01m-7.08-7.071c3.904-3.905 10.236-3.905 14.141 0M1.394 9.393c5.857-5.857 15.355-5.857 21.213 0"/>
+                        </svg>
+                      </div>
+                      <span class="text-[11px] font-extrabold tracking-[0.25em] uppercase text-slate-300">PLATINUM</span>
+                    </div>
+
+                    <div class="my-auto pt-3">
+                      <div id="live-card-number" class="font-mono-card text-lg sm:text-xl font-bold tracking-[0.18em] text-white drop-shadow">
+                        5412  7534  8910  3414
+                      </div>
+                    </div>
+
+                    <div class="flex items-end justify-between">
+                      <div class="flex items-center gap-6">
+                        <div>
+                          <span class="block text-[9px] uppercase tracking-widest text-slate-400">Card Holder</span>
+                          <span id="live-card-holder" class="text-xs font-bold tracking-wider uppercase text-white">AMIR HAYAT</span>
+                        </div>
+                        <div>
+                          <span class="block text-[9px] uppercase tracking-widest text-slate-400">Expires</span>
+                          <span id="live-card-expiry" class="text-xs font-bold tracking-wider text-white">09/28</span>
+                        </div>
+                      </div>
+                      <span class="text-lg font-black italic tracking-wider text-white">VISA</span>
+                    </div>
+                  </div>
+
+                  <!-- BACK OF 3D PLATINUM CARD (Shown when typing CVV) -->
+                  <div class="card-face card-face-back flex flex-col justify-between py-5">
+                    <div class="w-full h-11 bg-black/90 mt-1"></div>
+                    <div class="px-6">
+                      <div class="flex items-center justify-between text-[10px] text-slate-400 uppercase tracking-wider mb-1">
+                        <span>Authorized Signature</span>
+                        <span>Security Code (CVV)</span>
+                      </div>
+                      <div class="w-full h-9 rounded bg-white/90 flex items-center justify-end px-3">
+                        <span id="live-card-cvc" class="font-mono-card text-sm font-bold text-slate-900 tracking-widest">842</span>
+                      </div>
+                    </div>
+                    <div class="px-6 flex items-center justify-between text-[10px] text-slate-400">
+                      <span>256-Bit Encrypted Virtual Card</span>
+                      <span class="font-black italic text-white text-sm">VISA</span>
+                    </div>
+                  </div>
+
+                </div>
+              </div>
+
+              <!-- Security Badges under 3D Card (Hidden during processing) -->
+              <div id="card-security-badges" class="mt-5 flex items-center justify-center gap-6 text-[11px] text-slate-400 font-semibold">
+                <span class="flex items-center gap-1.5">🔒 256-Bit SSL Encrypted</span>
+                <span class="flex items-center gap-1.5">🛡️ PCI-DSS Compliant</span>
+              </div>
+
+              <!-- Processing & Success Status Area (Shown when PAY NOW is clicked - Frame 00:02 -> 00:05) -->
+              <div id="payment-processing-status" class="hidden mt-7 w-full max-w-xs text-center space-y-3">
+                <div id="payment-progress-bar-wrap" class="w-full h-1.5 rounded-full bg-white/10 overflow-hidden">
+                  <div id="payment-progress-fill" class="h-full bg-yellow-400 w-0 transition-all duration-1000"></div>
+                </div>
+                <p id="payment-status-label" class="text-xs font-bold text-slate-300 tracking-wide">Processing Secure Transaction...</p>
+
+                <div id="payment-success-badge" class="hidden pt-2 space-y-2">
+                  <div class="w-11 h-11 rounded-full bg-emerald-500/20 border border-emerald-500/50 text-emerald-400 flex items-center justify-center mx-auto">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" stroke-width="3" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>
+                  </div>
+                  <h4 class="text-xl font-extrabold text-white">Payment Successful!</h4>
+                  <p class="text-xs text-emerald-400 font-semibold">✓ Transaction Verified • Launching Workspace</p>
+                </div>
+              </div>
+            </div>
+
+            <!-- Right Column: Payment Details Form -->
+            <div id="payment-form-col" class="lg:col-span-6 space-y-4 transition-all duration-500">
+              <div>
+                <h3 class="text-xl font-extrabold text-white">Payment Details</h3>
+                <p class="text-xs text-slate-400 mt-0.5">Complete your subscription with any USD Debit or Credit Card.</p>
+              </div>
+
+              <div>
+                <label class="text-[11px] font-bold uppercase tracking-wider text-slate-400 block mb-1.5">Cardholder Name</label>
+                <input id="card-holder" type="text" placeholder="AMIR HAYAT" oninput="updateLive3DCard()" onfocus="flip3DCard(false)" class="w-full px-4 py-3 rounded-xl glass-input text-sm font-semibold uppercase" />
+              </div>
+
+              <div>
+                <label class="text-[11px] font-bold uppercase tracking-wider text-slate-400 block mb-1.5">Card Number</label>
+                <div class="relative">
+                  <input id="card-number" type="text" maxlength="19" placeholder="5412 7534 8910 3414" oninput="formatAndSyncCardNumber(this)" onfocus="flip3DCard(false)" class="w-full pl-4 pr-16 py-3 rounded-xl glass-input text-sm font-mono-card" />
+                  <span class="absolute inset-y-0 right-0 pr-4 flex items-center text-xs font-black italic text-yellow-400 pointer-events-none">VISA</span>
+                </div>
+              </div>
+
+              <div class="grid grid-cols-2 gap-4">
+                <div>
+                  <label class="text-[11px] font-bold uppercase tracking-wider text-slate-400 block mb-1.5">Expiry Date</label>
+                  <input id="card-expiry" type="text" maxlength="5" placeholder="09/28" oninput="formatAndSyncExpiry(this)" onfocus="flip3DCard(false)" class="w-full px-4 py-3 rounded-xl glass-input text-sm font-mono-card" />
+                </div>
+                <div>
+                  <label class="text-[11px] font-bold uppercase tracking-wider text-slate-400 block mb-1.5">CVV</label>
+                  <input id="card-cvc" type="text" maxlength="4" placeholder="842" oninput="updateLive3DCard()" onfocus="flip3DCard(true)" onblur="flip3DCard(false)" class="w-full px-4 py-3 rounded-xl glass-input text-sm font-mono-card" />
+                </div>
+              </div>
+
+              <div class="pt-2 pb-1 border-t border-white/10 flex items-center justify-between">
+                <div>
+                  <span class="text-xs text-slate-400 block">Total Payment Amount</span>
+                  <span id="checkout-plan-name" class="text-xs font-bold text-yellow-400">Business Pro Plan</span>
+                </div>
+                <span id="checkout-plan-price" class="text-2xl font-extrabold text-yellow-400">$35.00</span>
+              </div>
+
+              <button type="button" id="btn-pay-now" onclick="completeSubscriptionAndLogin()" class="w-full py-3.5 px-5 rounded-xl btn-gold text-sm flex items-center justify-center gap-2">
+                <span id="btn-pay-now-text">PAY $35.00 NOW</span>
+                <span>→</span>
+              </button>
+
+              <p class="text-center text-[11px] text-slate-400">
+                🔒 Instant Cloud Activation • Cancel Anytime
+              </p>
+            </div>
+
+          </div>
         </div>
       </div>
 
@@ -359,93 +893,151 @@
   </section>
 
   <!-- ===================================================================== -->
-  <!-- VIEW 3: GOHIGHLEVEL CRM CLIENT WORKSPACE (NO PLAN SWITCHER / TEST UI) -->
+  <!-- VIEW 3: GLASSY DASHBOARD (Exact match to Theme_Stayle.mp4)            -->
   <!-- ===================================================================== -->
-  <div id="view-dashboard" class="hidden flex-1 flex flex-col lg:flex-row min-h-screen bg-[#f8fafc]">
+  <div id="view-dashboard" class="hidden flex-1 flex flex-col lg:flex-row min-h-screen dashboard-glass-bg relative z-10">
 
-    <!-- GHL LEFT SIDEBAR -->
-    <aside class="ghl-sidebar w-full lg:w-64 shrink-0 flex flex-col justify-between border-b lg:border-b-0 lg:border-r border-slate-800">
+    <!-- LEFT GLOWING GLASS SIDEBAR DOCK -->
+    <aside class="dock-sidebar w-full lg:w-64 shrink-0 flex flex-col justify-between">
       <div>
-        <div class="h-16 px-5 flex items-center justify-between border-b border-slate-800">
-          <div class="flex items-center gap-2.5">
-            <div class="w-8 h-8 rounded-lg bg-blue-600 flex items-center justify-center font-extrabold text-white text-sm shrink-0">
+        <div class="h-16 px-5 flex items-center justify-between border-b border-white/10">
+          <div class="flex items-center gap-3">
+            <div class="w-9 h-9 rounded-xl bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center font-extrabold text-white text-sm shadow-lg shadow-blue-500/30 shrink-0">
               Z
             </div>
-            <span class="font-extrabold text-white text-base whitespace-nowrap">ZoomCast CRM</span>
+            <div>
+              <span class="font-extrabold text-white text-sm block leading-none">ZoomCast</span>
+              <span class="text-[10px] font-bold text-blue-400 uppercase tracking-widest">Glassy OS</span>
+            </div>
           </div>
-          <button onclick="switchDashboardTab('profile')" class="lg:hidden px-3 py-1.5 rounded-lg bg-slate-800 text-xs font-semibold text-white whitespace-nowrap">
-            Profile & Settings
+          <button onclick="switchDashboardTab('profile')" class="lg:hidden px-3 py-1.5 rounded-xl btn-glass text-xs">
+            Settings
           </button>
         </div>
 
-        <nav class="p-3 flex lg:flex-col gap-1.5 overflow-x-auto">
-          <button onclick="switchDashboardTab('categories')" id="dtab-categories" class="flex items-center gap-2.5 px-3.5 py-2.5 rounded-xl text-xs sm:text-sm font-bold bg-blue-600 text-white whitespace-nowrap text-left">
+        <nav class="p-3.5 flex lg:flex-col gap-2 overflow-x-auto">
+          <button onclick="switchDashboardTab('categories')" id="dtab-categories" class="flex items-center gap-3 px-4 py-3 rounded-2xl text-xs sm:text-sm font-bold bg-gradient-to-r from-blue-600/90 to-indigo-600/80 text-white shadow-lg shadow-blue-600/25 border border-blue-400/30 whitespace-nowrap text-left transition">
             <span>📅</span>
             <span>Meeting Workflows</span>
           </button>
-          <button onclick="switchDashboardTab('attendance')" id="dtab-attendance" class="flex items-center gap-2.5 px-3.5 py-2.5 rounded-xl text-xs sm:text-sm font-semibold text-slate-300 hover:bg-slate-800 hover:text-white whitespace-nowrap text-left">
+          <button onclick="switchDashboardTab('attendance')" id="dtab-attendance" class="flex items-center gap-3 px-4 py-3 rounded-2xl text-xs sm:text-sm font-semibold text-slate-300 hover:bg-white/5 hover:text-white whitespace-nowrap text-left transition">
             <span>📊</span>
             <span id="dtab-attendance-label">Attendance & Chat Logs</span>
           </button>
-          <button onclick="switchDashboardTab('profile')" id="dtab-profile" class="flex items-center gap-2.5 px-3.5 py-2.5 rounded-xl text-xs sm:text-sm font-semibold text-slate-300 hover:bg-slate-800 hover:text-white whitespace-nowrap text-left">
-            <span>⚙️</span>
-            <span>Profile & Integrations</span>
+          <button onclick="switchDashboardTab('profile')" id="dtab-profile" class="flex items-center gap-3 px-4 py-3 rounded-2xl text-xs sm:text-sm font-semibold text-slate-300 hover:bg-white/5 hover:text-white whitespace-nowrap text-left transition">
+            <span>🛡️</span>
+            <span>Security & Integrations</span>
           </button>
         </nav>
       </div>
 
-      <div class="hidden lg:block p-4 border-t border-slate-800 space-y-3">
-        <div class="p-2.5 rounded-xl bg-slate-900 border border-slate-800">
-          <span class="text-[10px] uppercase tracking-wider text-slate-400 font-bold block">Active Plan</span>
-          <div class="flex items-center justify-between mt-0.5">
-            <span id="sidebar-plan-badge" class="text-xs font-extrabold text-blue-400">Enterprise</span>
+      <!-- Sidebar Footer: Active Plan (No Upgrade Button on 3rd Enterprise Plan!) -->
+      <div class="hidden lg:block p-4 border-t border-white/10 space-y-3">
+        <div class="p-3.5 rounded-2xl glass-card-subtle">
+          <span class="text-[10px] uppercase tracking-widest text-slate-400 font-bold block">Active Plan</span>
+          <div class="flex items-center justify-between mt-1">
+            <span id="sidebar-plan-badge" class="text-xs font-extrabold text-yellow-400">Enterprise</span>
             <button id="sidebar-upgrade-btn" onclick="switchView('auth'); showAuthStep('plan');" class="text-[11px] font-bold text-emerald-400 hover:underline">Upgrade</button>
           </div>
         </div>
-        <div class="flex items-center justify-between gap-2">
+        <div class="flex items-center justify-between gap-2 px-1">
           <div class="truncate">
-            <div id="sidebar-user-name" class="text-xs font-bold text-white truncate">Workspace User</div>
-            <div id="sidebar-user-email" class="text-[11px] text-slate-400 truncate">Active Session</div>
+            <div id="sidebar-user-name" class="text-xs font-bold text-white truncate">Amir Hayat</div>
+            <div id="sidebar-user-email" class="text-[11px] text-slate-400 truncate">amirjupiteradvisers@gmail.com</div>
           </div>
-          <button onclick="logoutClient()" class="px-2.5 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-[11px] font-semibold text-slate-300 whitespace-nowrap">
+          <button onclick="logoutClient()" class="px-3 py-1.5 rounded-xl btn-glass text-[11px] text-rose-300 hover:border-rose-500/40">
             Sign Out
           </button>
         </div>
       </div>
     </aside>
 
-    <!-- MAIN CRM CONTENT -->
+    <!-- MAIN GLASSY BENTO WORKSPACE -->
     <div class="flex-1 flex flex-col min-w-0">
       
-      <header class="bg-white border-b border-slate-200 h-16 px-4 sm:px-8 flex items-center justify-between gap-3">
+      <!-- Top Glassy Workspace Header (Exact match to Theme_Stayle.mp4 00:00) -->
+      <header class="h-16 px-4 sm:px-8 border-b border-white/10 bg-[#08090f]/75 backdrop-blur-xl flex items-center justify-between gap-3">
         <div class="flex items-center gap-3 truncate">
-          <h1 id="workspace-page-title" class="text-base sm:text-lg font-extrabold text-slate-900 truncate">Meeting Workflows</h1>
+          <div>
+            <h1 id="workspace-page-title" class="text-sm sm:text-base font-extrabold text-white truncate">Hi, Amir Hayat 👋</h1>
+            <p class="text-[11px] text-slate-400 hidden sm:block">Cloud Broadcast Command Center & Automated Scheduler</p>
+          </div>
         </div>
-        <div class="flex items-center gap-2.5 shrink-0">
-          <button onclick="triggerLiveMeetingNow()" class="px-4 py-2 rounded-xl ghl-btn-primary text-xs sm:text-sm font-bold">
+        <div class="flex items-center gap-3 shrink-0">
+          <span class="hidden md:inline-flex items-center gap-2 px-3 py-1.5 rounded-xl bg-emerald-500/10 border border-emerald-500/25 text-emerald-400 text-xs font-bold">
+            <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
+            Cloud Bot Ready
+          </span>
+          <button onclick="triggerLiveMeetingNow()" class="px-4 py-2 rounded-xl btn-gold text-xs sm:text-sm">
             ▶ Run Broadcast Now
-          </button>
-          <button onclick="switchDashboardTab('profile')" class="hidden sm:inline-flex px-3.5 py-2 rounded-xl ghl-btn-secondary text-xs sm:text-sm font-bold">
-            Profile & Settings
           </button>
         </div>
       </header>
 
       <div class="p-4 sm:p-8 max-w-6xl w-full mx-auto space-y-6">
 
+        <!-- TOP BENTO STATS ROW (Exact match to Theme_Stayle.mp4 Radial Rings & Progress Bars) -->
+        <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+          <div class="glass-card p-5 rounded-2xl flex items-center justify-between">
+            <div>
+              <span class="text-xs text-slate-400 font-semibold">Scheduled Workflows</span>
+              <div id="bento-stat-workflows" class="text-2xl font-extrabold text-white mt-1">0 Active</div>
+              <span class="text-[11px] text-emerald-400 font-semibold flex items-center gap-1 mt-1">↗ 100% Cloud Sync</span>
+            </div>
+            <!-- Radial SVG Gauge -->
+            <div class="relative w-14 h-14 flex items-center justify-center">
+              <svg class="w-14 h-14 -rotate-90" viewBox="0 0 36 36">
+                <path class="text-white/10" stroke="currentColor" stroke-width="3.5" fill="none" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"/>
+                <path class="text-yellow-400" stroke="currentColor" stroke-width="3.5" stroke-dasharray="85, 100" stroke-linecap="round" fill="none" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"/>
+              </svg>
+              <span class="absolute text-[11px] font-extrabold text-yellow-400">Auto</span>
+            </div>
+          </div>
+
+          <div class="glass-card p-5 rounded-2xl flex items-center justify-between">
+            <div>
+              <span class="text-xs text-slate-400 font-semibold">Team Auto Co-Hosts</span>
+              <div id="bento-stat-cohosts" class="text-2xl font-extrabold text-white mt-1">0 Members</div>
+              <span class="text-[11px] text-blue-400 font-semibold flex items-center gap-1 mt-1">⚡ Auto-Role Promotion</span>
+            </div>
+            <div class="relative w-14 h-14 flex items-center justify-center">
+              <svg class="w-14 h-14 -rotate-90" viewBox="0 0 36 36">
+                <path class="text-white/10" stroke="currentColor" stroke-width="3.5" fill="none" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"/>
+                <path class="text-blue-400" stroke="currentColor" stroke-width="3.5" stroke-dasharray="92, 100" stroke-linecap="round" fill="none" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"/>
+              </svg>
+              <span class="absolute text-[11px] font-extrabold text-blue-400">VIP</span>
+            </div>
+          </div>
+
+          <div class="glass-card p-5 rounded-2xl flex items-center justify-between">
+            <div>
+              <span class="text-xs text-slate-400 font-semibold">Completed Broadcasts</span>
+              <div id="bento-stat-sessions" class="text-2xl font-extrabold text-white mt-1">0 Sessions</div>
+              <span class="text-[11px] text-emerald-400 font-semibold flex items-center gap-1 mt-1">💬 Real Chat Capture</span>
+            </div>
+            <div class="relative w-14 h-14 flex items-center justify-center">
+              <svg class="w-14 h-14 -rotate-90" viewBox="0 0 36 36">
+                <path class="text-white/10" stroke="currentColor" stroke-width="3.5" fill="none" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"/>
+                <path class="text-emerald-400" stroke="currentColor" stroke-width="3.5" stroke-dasharray="100, 100" stroke-linecap="round" fill="none" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"/>
+              </svg>
+              <span class="absolute text-[11px] font-extrabold text-emerald-400">100%</span>
+            </div>
+          </div>
+        </div>
+
         <!-- =============================================================== -->
-        <!-- TAB 1: WORKFLOWS                                                -->
+        <!-- TAB 1: WORKFLOWS & GLASSY CALENDAR SCHEDULER                    -->
         <!-- =============================================================== -->
         <div id="dash-content-categories" class="space-y-6">
 
           <!-- Saved Workflows List -->
-          <div class="ghl-card p-5 sm:p-6 rounded-2xl">
-            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-4 border-b border-slate-200">
+          <div class="glass-card p-5 sm:p-6 rounded-2xl">
+            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-4 border-b border-white/10">
               <div>
-                <h2 class="text-base font-extrabold text-slate-900">Your Scheduled Workflows</h2>
-                <p class="text-xs text-slate-500 mt-0.5">Manage your automated Zoom broadcasts.</p>
+                <h2 class="text-base font-extrabold text-white">Your Scheduled Workflows</h2>
+                <p class="text-xs text-slate-400 mt-0.5">Manage your automated Zoom broadcasts and active/draft schedules.</p>
               </div>
-              <button onclick="resetCategoryForm()" class="px-4 py-2 rounded-xl ghl-btn-primary text-xs font-bold self-start sm:self-auto">
+              <button onclick="resetCategoryForm()" class="px-4 py-2 rounded-xl btn-gold text-xs self-start sm:self-auto">
                 + Create New Workflow
               </button>
             </div>
@@ -454,18 +1046,18 @@
           </div>
 
           <!-- Workflow Builder -->
-          <div class="ghl-card p-5 sm:p-6 rounded-2xl space-y-6">
-            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-200 pb-4">
+          <div class="glass-card p-5 sm:p-6 rounded-2xl space-y-6">
+            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-white/10 pb-4">
               <div>
-                <h3 id="cat-form-heading" class="text-base font-extrabold text-slate-900">Workflow Builder</h3>
-                <p class="text-xs text-slate-500 mt-0.5">Configure your workflow name, weekly days, 12-hour AM/PM times, and video playback.</p>
+                <h3 id="cat-form-heading" class="text-base font-extrabold text-white">Workflow Builder</h3>
+                <p class="text-xs text-slate-400 mt-0.5">Configure your workflow name, weekly days, 12-hour AM/PM times, and video playback.</p>
               </div>
 
-              <div id="builder-draft-toggle-wrap" class="flex items-center gap-3 bg-slate-50 px-3.5 py-2 rounded-xl border border-slate-200 self-start sm:self-auto">
-                <span class="text-xs font-bold text-slate-700">Workflow Status:</span>
+              <div id="builder-draft-toggle-wrap" class="flex items-center gap-3 glass-card-subtle px-3.5 py-2 rounded-xl self-start sm:self-auto">
+                <span class="text-xs font-bold text-slate-300">Workflow Status:</span>
                 <label class="inline-flex items-center cursor-pointer gap-2">
-                  <input id="cat-status-active" type="checkbox" checked class="w-4 h-4 rounded text-emerald-600" onchange="updateBuilderStatusLabel()" />
-                  <span id="cat-status-label" class="text-xs font-extrabold text-emerald-700 bg-emerald-50 px-2.5 py-0.5 rounded-md border border-emerald-200">Active (Live)</span>
+                  <input id="cat-status-active" type="checkbox" checked class="w-4 h-4 rounded accent-emerald-400" onchange="updateBuilderStatusLabel()" />
+                  <span id="cat-status-label" class="text-xs font-extrabold text-emerald-400 bg-emerald-500/15 px-2.5 py-0.5 rounded-md border border-emerald-500/30">Active (Live)</span>
                 </label>
               </div>
             </div>
@@ -473,12 +1065,12 @@
             <!-- Step 1: Workflow Name & Session Type -->
             <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
               <div id="workflow-name-col" class="md:col-span-2">
-                <label class="text-xs font-bold text-slate-700">1. Workflow / Meeting Name</label>
-                <input id="cat-name" type="text" placeholder="e.g. Daily Training Session" class="mt-1 w-full px-3.5 py-2.5 rounded-xl ghl-input text-sm" />
+                <label class="text-xs font-bold text-slate-300">1. Workflow / Meeting Name</label>
+                <input id="cat-name" type="text" placeholder="e.g. Daily Training Session" class="mt-1.5 w-full px-4 py-2.5 rounded-xl glass-input text-sm" />
               </div>
               <div id="session-type-wrap">
-                <label class="text-xs font-bold text-slate-700">Session Type</label>
-                <select id="cat-session-type" class="mt-1 w-full px-3.5 py-2.5 rounded-xl ghl-input text-sm">
+                <label class="text-xs font-bold text-slate-300">Session Type</label>
+                <select id="cat-session-type" class="mt-1.5 w-full px-4 py-2.5 rounded-xl glass-input text-sm">
                   <option value="Zoom Meeting">Automated Zoom Meeting</option>
                   <option value="Zoom Webinar">Automated Zoom Webinar</option>
                 </select>
@@ -487,40 +1079,40 @@
 
             <!-- Step 2: Weekly Days -->
             <div>
-              <div class="flex items-center justify-between mb-2">
-                <label class="text-xs font-bold text-slate-700">2. Select Weekly Days</label>
-                <button type="button" onclick="toggleAllWeekdays()" class="text-xs font-bold text-blue-600 hover:underline whitespace-nowrap">
+              <div class="flex items-center justify-between mb-2.5">
+                <label class="text-xs font-bold text-slate-300">2. Select Weekly Days</label>
+                <button type="button" onclick="toggleAllWeekdays()" class="text-xs font-bold text-yellow-400 hover:underline whitespace-nowrap">
                   Select / Deselect All 7 Days
                 </button>
               </div>
               <div class="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-7 gap-2.5">
-                <label class="flex items-center justify-between p-3 rounded-xl border border-slate-200 bg-slate-50/70 hover:bg-white cursor-pointer">
-                  <span class="text-xs font-bold text-slate-800">Monday</span>
-                  <input type="checkbox" value="Monday" class="cat-day-chk w-4 h-4 rounded text-blue-600" checked />
+                <label class="flex items-center justify-between p-3 rounded-xl glass-card-subtle hover:border-yellow-500/40 cursor-pointer transition">
+                  <span class="text-xs font-bold text-white">Monday</span>
+                  <input type="checkbox" value="Monday" class="cat-day-chk w-4 h-4 rounded accent-yellow-400" checked />
                 </label>
-                <label class="flex items-center justify-between p-3 rounded-xl border border-slate-200 bg-slate-50/70 hover:bg-white cursor-pointer">
-                  <span class="text-xs font-bold text-slate-800">Tuesday</span>
-                  <input type="checkbox" value="Tuesday" class="cat-day-chk w-4 h-4 rounded text-blue-600" checked />
+                <label class="flex items-center justify-between p-3 rounded-xl glass-card-subtle hover:border-yellow-500/40 cursor-pointer transition">
+                  <span class="text-xs font-bold text-white">Tuesday</span>
+                  <input type="checkbox" value="Tuesday" class="cat-day-chk w-4 h-4 rounded accent-yellow-400" checked />
                 </label>
-                <label class="flex items-center justify-between p-3 rounded-xl border border-slate-200 bg-slate-50/70 hover:bg-white cursor-pointer">
-                  <span class="text-xs font-bold text-slate-800">Wednesday</span>
-                  <input type="checkbox" value="Wednesday" class="cat-day-chk w-4 h-4 rounded text-blue-600" checked />
+                <label class="flex items-center justify-between p-3 rounded-xl glass-card-subtle hover:border-yellow-500/40 cursor-pointer transition">
+                  <span class="text-xs font-bold text-white">Wednesday</span>
+                  <input type="checkbox" value="Wednesday" class="cat-day-chk w-4 h-4 rounded accent-yellow-400" checked />
                 </label>
-                <label class="flex items-center justify-between p-3 rounded-xl border border-slate-200 bg-slate-50/70 hover:bg-white cursor-pointer">
-                  <span class="text-xs font-bold text-slate-800">Thursday</span>
-                  <input type="checkbox" value="Thursday" class="cat-day-chk w-4 h-4 rounded text-blue-600" checked />
+                <label class="flex items-center justify-between p-3 rounded-xl glass-card-subtle hover:border-yellow-500/40 cursor-pointer transition">
+                  <span class="text-xs font-bold text-white">Thursday</span>
+                  <input type="checkbox" value="Thursday" class="cat-day-chk w-4 h-4 rounded accent-yellow-400" checked />
                 </label>
-                <label class="flex items-center justify-between p-3 rounded-xl border border-slate-200 bg-slate-50/70 hover:bg-white cursor-pointer">
-                  <span class="text-xs font-bold text-slate-800">Friday</span>
-                  <input type="checkbox" value="Friday" class="cat-day-chk w-4 h-4 rounded text-blue-600" checked />
+                <label class="flex items-center justify-between p-3 rounded-xl glass-card-subtle hover:border-yellow-500/40 cursor-pointer transition">
+                  <span class="text-xs font-bold text-white">Friday</span>
+                  <input type="checkbox" value="Friday" class="cat-day-chk w-4 h-4 rounded accent-yellow-400" checked />
                 </label>
-                <label class="flex items-center justify-between p-3 rounded-xl border border-slate-200 bg-slate-50/70 hover:bg-white cursor-pointer">
-                  <span class="text-xs font-bold text-slate-800">Saturday</span>
-                  <input type="checkbox" value="Saturday" class="cat-day-chk w-4 h-4 rounded text-blue-600" />
+                <label class="flex items-center justify-between p-3 rounded-xl glass-card-subtle hover:border-yellow-500/40 cursor-pointer transition">
+                  <span class="text-xs font-bold text-white">Saturday</span>
+                  <input type="checkbox" value="Saturday" class="cat-day-chk w-4 h-4 rounded accent-yellow-400" />
                 </label>
-                <label class="flex items-center justify-between p-3 rounded-xl border border-slate-200 bg-slate-50/70 hover:bg-white cursor-pointer">
-                  <span class="text-xs font-bold text-slate-800">Sunday</span>
-                  <input type="checkbox" value="Sunday" class="cat-day-chk w-4 h-4 rounded text-blue-600" />
+                <label class="flex items-center justify-between p-3 rounded-xl glass-card-subtle hover:border-yellow-500/40 cursor-pointer transition">
+                  <span class="text-xs font-bold text-white">Sunday</span>
+                  <input type="checkbox" value="Sunday" class="cat-day-chk w-4 h-4 rounded accent-yellow-400" />
                 </label>
               </div>
             </div>
@@ -529,33 +1121,33 @@
             <div>
               <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-2">
                 <div>
-                  <label id="video-upload-heading" class="text-xs font-bold text-slate-700">3. Upload Recorded Video(s)</label>
-                  <p id="video-upload-subtext" class="text-[11px] text-slate-500">Select your recorded video file from your computer.</p>
+                  <label id="video-upload-heading" class="text-xs font-bold text-slate-300">3. Upload Recorded Video(s)</label>
+                  <p id="video-upload-subtext" class="text-[11px] text-slate-400">Select your recorded video file from your computer.</p>
                 </div>
-                <span id="cat-total-duration" class="text-xs font-extrabold text-emerald-700 bg-emerald-50 border border-emerald-200 px-3 py-1 rounded-lg whitespace-nowrap self-start sm:self-auto">
+                <span id="cat-total-duration" class="text-xs font-extrabold text-emerald-400 bg-emerald-500/15 border border-emerald-500/30 px-3 py-1 rounded-lg whitespace-nowrap self-start sm:self-auto">
                   Total Duration: 00:00:00
                 </span>
               </div>
 
-              <label class="mt-2 border-2 border-dashed border-slate-300 hover:border-blue-600 rounded-xl p-5 flex flex-col items-center justify-center text-center cursor-pointer bg-slate-50/60 transition">
-                <span id="video-dropzone-title" class="text-sm font-extrabold text-slate-800">+ Choose Video File(s) From Computer</span>
-                <span class="text-xs text-slate-500 mt-1">Supports MP4, MKV, MOV, AVI, WEBM (Unlimited GB Size)</span>
+              <label class="mt-2 border-2 border-dashed border-white/15 hover:border-yellow-400 rounded-2xl p-6 flex flex-col items-center justify-center text-center cursor-pointer glass-card-subtle transition">
+                <span id="video-dropzone-title" class="text-sm font-extrabold text-white">+ Choose Video File(s) From Computer</span>
+                <span class="text-xs text-slate-400 mt-1">Supports MP4, MKV, MOV, AVI, WEBM (Unlimited GB Size)</span>
                 <input id="cat-video-input" type="file" accept="video/*" multiple class="hidden" onchange="handleCategoryVideosSelect(event)" />
               </label>
 
               <div id="cat-videos-list" class="mt-3 space-y-2"></div>
             </div>
 
-            <!-- Step 4: 12-Hour (AM / PM) Time Calendar + Custom Time Picker -->
+            <!-- Step 4: Glassy 12-Hour (AM / PM) Calendar Grid (Exact Theme_Stayle.mp4 00:04 Gold Slot Highlight) -->
             <div>
               <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-3 mb-3">
                 <div>
-                  <label id="time-slots-heading" class="text-xs font-bold text-slate-700">4. Select Broadcast Times (12-Hour AM / PM)</label>
-                  <p id="time-slots-subtext" class="text-[11px] text-slate-500">Select your daily broadcast times below.</p>
+                  <label id="time-slots-heading" class="text-xs font-bold text-slate-300">4. Select Broadcast Times (12-Hour AM / PM)</label>
+                  <p id="time-slots-subtext" class="text-[11px] text-slate-400">Click any time slot below (highlighted in glowing Gold).</p>
                 </div>
 
-                <div id="custom-time-picker-wrap" class="flex flex-wrap items-center gap-1.5 bg-slate-100 p-1.5 rounded-xl border border-slate-200">
-                  <select id="custom-hour-select" class="px-2.5 py-1.5 rounded-lg ghl-input text-xs font-bold">
+                <div id="custom-time-picker-wrap" class="flex flex-wrap items-center gap-1.5 glass-card-subtle p-1.5 rounded-xl">
+                  <select id="custom-hour-select" class="px-2.5 py-1.5 rounded-lg glass-input text-xs font-bold">
                     <option value="01">01</option>
                     <option value="02">02</option>
                     <option value="03">03</option>
@@ -569,8 +1161,8 @@
                     <option value="11">11</option>
                     <option value="12">12</option>
                   </select>
-                  <span class="font-bold text-slate-600">:</span>
-                  <select id="custom-minute-select" class="px-2.5 py-1.5 rounded-lg ghl-input text-xs font-bold">
+                  <span class="font-bold text-slate-400">:</span>
+                  <select id="custom-minute-select" class="px-2.5 py-1.5 rounded-lg glass-input text-xs font-bold">
                     <option value="00">00</option>
                     <option value="05">05</option>
                     <option value="10">10</option>
@@ -584,46 +1176,46 @@
                     <option value="50">50</option>
                     <option value="55">55</option>
                   </select>
-                  <select id="custom-ampm-select" class="px-2.5 py-1.5 rounded-lg ghl-input text-xs font-bold">
+                  <select id="custom-ampm-select" class="px-2.5 py-1.5 rounded-lg glass-input text-xs font-bold">
                     <option value="AM">AM</option>
                     <option value="PM" selected>PM</option>
                   </select>
-                  <button type="button" onclick="addCustomTimeSlot()" class="px-3.5 py-1.5 rounded-lg ghl-btn-primary text-xs font-bold">
+                  <button type="button" onclick="addCustomTimeSlot()" class="px-3.5 py-1.5 rounded-lg btn-gold text-xs">
                     + Add Custom Time
                   </button>
                 </div>
               </div>
 
-              <div id="time-calendar-grid" class="grid grid-cols-3 sm:grid-cols-6 md:grid-cols-8 gap-2 p-3.5 rounded-xl bg-slate-50 border border-slate-200 max-h-52 overflow-y-auto"></div>
+              <div id="time-calendar-grid" class="grid grid-cols-3 sm:grid-cols-6 md:grid-cols-8 gap-2 p-4 rounded-2xl glass-card-subtle max-h-56 overflow-y-auto"></div>
 
               <div class="mt-4">
-                <label class="text-xs font-bold text-slate-700 block mb-2">Selected Broadcast Times:</label>
+                <label class="text-xs font-bold text-slate-300 block mb-2">Agenda & Video Assignment for Selected Times:</label>
                 <div id="selected-times-container" class="space-y-2"></div>
               </div>
             </div>
 
             <!-- Footer Controls -->
-            <div class="pt-4 border-t border-slate-200 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-              <div class="flex flex-wrap items-center gap-4 text-xs font-semibold text-slate-700">
+            <div class="pt-4 border-t border-white/10 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+              <div class="flex flex-wrap items-center gap-4 text-xs font-semibold text-slate-300">
                 <label class="flex items-center gap-2 cursor-pointer">
-                  <input id="cat-auto-admit" type="checkbox" checked class="w-4 h-4 rounded text-blue-600" />
+                  <input id="cat-auto-admit" type="checkbox" checked class="w-4 h-4 rounded accent-yellow-400" />
                   <span>Auto-Admit Participants</span>
                 </label>
                 <label class="flex items-center gap-2 cursor-pointer">
-                  <input id="cat-share-sound" type="checkbox" checked class="w-4 h-4 rounded text-blue-600" />
+                  <input id="cat-share-sound" type="checkbox" checked class="w-4 h-4 rounded accent-yellow-400" />
                   <span>Share Original Video Sound</span>
                 </label>
                 <label class="flex items-center gap-2 cursor-pointer">
-                  <input id="cat-auto-end" type="checkbox" checked class="w-4 h-4 rounded text-blue-600" />
+                  <input id="cat-auto-end" type="checkbox" checked class="w-4 h-4 rounded accent-yellow-400" />
                   <span>Auto-End When Video Finishes</span>
                 </label>
               </div>
 
               <div class="flex items-center gap-2.5 self-end sm:self-auto">
-                <button id="btn-save-draft" type="button" onclick="saveMeetingCategory('Draft')" class="px-5 py-2.5 rounded-xl ghl-btn-secondary text-xs sm:text-sm font-bold">
+                <button id="btn-save-draft" type="button" onclick="saveMeetingCategory('Draft')" class="px-5 py-2.5 rounded-xl btn-glass text-xs sm:text-sm">
                   Save as Draft
                 </button>
-                <button type="button" onclick="saveMeetingCategory('Active')" class="px-6 py-2.5 rounded-xl ghl-btn-primary text-xs sm:text-sm font-bold shadow-md">
+                <button type="button" onclick="saveMeetingCategory('Active')" class="px-6 py-2.5 rounded-xl btn-gold text-xs sm:text-sm">
                   Save & Activate Workflow
                 </button>
               </div>
@@ -633,24 +1225,23 @@
         </div>
 
         <!-- =============================================================== -->
-        <!-- TAB 2: ATTENDANCE & REAL ZOOM CHAT VIEWER                       -->
+        <!-- TAB 2: ATTENDANCE & REAL GLASSY ZOOM CHAT VIEWER                -->
         <!-- =============================================================== -->
         <div id="dash-content-attendance" class="hidden space-y-6">
           
           <!-- LEVEL 1: COMPLETED MEETINGS SUMMARY TABLE -->
-          <div id="attendance-meetings-list-card" class="ghl-card p-5 sm:p-6 rounded-2xl">
-            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-4 border-b border-slate-200">
+          <div id="attendance-meetings-list-card" class="glass-card p-5 sm:p-6 rounded-2xl">
+            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-4 border-b border-white/10">
               <div>
-                <h2 class="text-base font-extrabold text-slate-900">Broadcast Sessions & Attendance History</h2>
-                <p class="text-xs text-slate-500 mt-0.5">Click on any meeting row below to inspect its participants list and open their real Zoom chat messages.</p>
+                <h2 class="text-base font-extrabold text-white">Broadcast Sessions & Attendance History</h2>
+                <p class="text-xs text-slate-400 mt-0.5">Click on any meeting row below to inspect its participants list and open their real Zoom chat messages.</p>
               </div>
               <div class="flex flex-wrap items-center gap-2">
-                <!-- Import real Zoom meeting_saved_chat.txt file -->
-                <label class="px-3.5 py-2 rounded-xl ghl-btn-secondary text-xs font-bold cursor-pointer">
+                <label class="px-3.5 py-2 rounded-xl btn-glass text-xs cursor-pointer">
                   📂 Upload Zoom Chat File (.txt)
                   <input type="file" accept=".txt" class="hidden" onchange="handleRealZoomChatUpload(event)" />
                 </label>
-                <button id="btn-export-summary-csv" onclick="exportAllSessionsSummaryCsv()" class="px-4 py-2 rounded-xl ghl-btn-primary text-xs font-bold">
+                <button id="btn-export-summary-csv" onclick="exportAllSessionsSummaryCsv()" class="px-4 py-2 rounded-xl btn-gold text-xs">
                   ⬇ Export Summary CSV
                 </button>
               </div>
@@ -659,7 +1250,7 @@
             <div class="overflow-x-auto mt-4">
               <table class="w-full text-left border-collapse">
                 <thead>
-                  <tr class="border-b border-slate-200 text-[11px] uppercase tracking-wider text-slate-500 font-bold">
+                  <tr class="border-b border-white/10 text-[11px] uppercase tracking-wider text-slate-400 font-bold">
                     <th class="py-3 px-4">Meeting / Workflow Name</th>
                     <th class="py-3 px-4">Date</th>
                     <th class="py-3 px-4">Scheduled Time</th>
@@ -668,37 +1259,37 @@
                     <th class="py-3 px-4 text-right">Action</th>
                   </tr>
                 </thead>
-                <tbody id="sessions-summary-tbody" class="divide-y divide-slate-200 text-xs sm:text-sm"></tbody>
+                <tbody id="sessions-summary-tbody" class="divide-y divide-white/10 text-xs sm:text-sm"></tbody>
               </table>
             </div>
           </div>
 
           <!-- LEVEL 2: SELECTED MEETING PARTICIPANTS & REAL CHAT DRAWER -->
-          <div id="attendance-session-detail-card" class="hidden ghl-card p-5 sm:p-6 rounded-2xl space-y-6">
-            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-4 border-b border-slate-200">
+          <div id="attendance-session-detail-card" class="hidden glass-card p-5 sm:p-6 rounded-2xl space-y-6">
+            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-4 border-b border-white/10">
               <div>
-                <button onclick="backToSessionsList()" class="text-xs font-bold text-blue-600 hover:underline mb-1 inline-block">
+                <button onclick="backToSessionsList()" class="text-xs font-bold text-yellow-400 hover:underline mb-1 inline-block">
                   ← Back to All Meetings List
                 </button>
-                <h2 id="detail-session-title" class="text-lg font-extrabold text-slate-900">Meeting Details</h2>
-                <p id="detail-session-meta" class="text-xs text-slate-500 mt-0.5"></p>
+                <h2 id="detail-session-title" class="text-lg font-extrabold text-white">Meeting Details</h2>
+                <p id="detail-session-meta" class="text-xs text-slate-400 mt-0.5"></p>
               </div>
               <div class="flex items-center gap-2 self-start sm:self-auto">
-                <button id="btn-open-full-chat" onclick="openChatTranscriptModal('ALL')" class="px-4 py-2.5 rounded-xl ghl-btn-secondary text-xs font-bold">
+                <button id="btn-open-full-chat" onclick="openChatTranscriptModal('ALL')" class="px-4 py-2.5 rounded-xl btn-glass text-xs">
                   💬 Open Full Meeting Chat
                 </button>
-                <button id="btn-export-detail-csv" onclick="exportSingleSessionCsv()" class="px-4 py-2.5 rounded-xl ghl-btn-primary text-xs font-bold">
+                <button id="btn-export-detail-csv" onclick="exportSingleSessionCsv()" class="px-4 py-2.5 rounded-xl btn-gold text-xs">
                   ⬇ Export CSV
                 </button>
               </div>
             </div>
 
             <div>
-              <h3 id="detail-table-heading" class="text-sm font-extrabold text-slate-900 mb-3">Participants List</h3>
+              <h3 id="detail-table-heading" class="text-sm font-extrabold text-white mb-3">Participants List</h3>
               <div class="overflow-x-auto">
                 <table class="w-full text-left border-collapse">
                   <thead>
-                    <tr class="border-b border-slate-200 text-[11px] uppercase tracking-wider text-slate-500 font-bold">
+                    <tr class="border-b border-white/10 text-[11px] uppercase tracking-wider text-slate-400 font-bold">
                       <th class="py-3 px-3">Participant Name</th>
                       <th class="py-3 px-3">Email Address</th>
                       <th class="py-3 px-3">Role</th>
@@ -708,7 +1299,7 @@
                       <th id="th-chat-messages" class="py-3 px-3 text-right">Client Chat Messages</th>
                     </tr>
                   </thead>
-                  <tbody id="detail-participants-tbody" class="divide-y divide-slate-200 text-xs sm:text-sm"></tbody>
+                  <tbody id="detail-participants-tbody" class="divide-y divide-white/10 text-xs sm:text-sm"></tbody>
                 </table>
               </div>
             </div>
@@ -717,45 +1308,45 @@
         </div>
 
         <!-- =============================================================== -->
-        <!-- TAB 3: PROFILE SETTINGS, ZOOM INTEGRATION & CO-HOSTS            -->
+        <!-- TAB 3: SECURITY & ACTIVE WORKSPACE SESSIONS (Theme_Stayle 00:01)-->
         <!-- =============================================================== -->
         <div id="dash-content-profile" class="hidden space-y-6">
           
-          <div class="ghl-card p-5 sm:p-6 rounded-2xl">
-            <div class="flex items-center justify-between pb-4 border-b border-slate-200">
+          <div class="glass-card p-6 rounded-2xl">
+            <div class="flex items-center justify-between pb-4 border-b border-white/10">
               <div>
-                <h2 class="text-base font-extrabold text-slate-900">Profile Settings</h2>
-                <p class="text-xs text-slate-500 mt-0.5">Manage your personal account details and login session.</p>
+                <h2 class="text-base font-extrabold text-white">Security & Active Workspace Profile</h2>
+                <p class="text-xs text-slate-400 mt-0.5">Manage your personal account details, OTP password security, and login session.</p>
               </div>
-              <button onclick="logoutClient()" class="px-4 py-2 rounded-xl bg-rose-600 hover:bg-rose-700 text-white text-xs font-bold whitespace-nowrap">
+              <button onclick="logoutClient()" class="px-4 py-2 rounded-xl bg-rose-500/20 border border-rose-500/40 hover:bg-rose-500/30 text-rose-300 text-xs font-bold whitespace-nowrap">
                 Sign Out
               </button>
             </div>
 
-            <div class="mt-4 grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div class="mt-5 grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
-                <label class="text-xs font-bold text-slate-700">Full Name</label>
-                <input id="prof-name" type="text" placeholder="Your full name" class="mt-1 w-full px-3.5 py-2.5 rounded-xl ghl-input text-sm" />
+                <label class="text-xs font-bold text-slate-300">Full Name</label>
+                <input id="prof-name" type="text" placeholder="Your full name" class="mt-1.5 w-full px-4 py-2.5 rounded-xl glass-input text-sm" />
               </div>
               <div>
-                <label class="text-xs font-bold text-slate-700">Email Address</label>
-                <input id="prof-email" type="email" placeholder="you@example.com" class="mt-1 w-full px-3.5 py-2.5 rounded-xl ghl-input text-sm" />
+                <label class="text-xs font-bold text-slate-300">Email Address</label>
+                <input id="prof-email" type="email" placeholder="you@example.com" class="mt-1.5 w-full px-4 py-2.5 rounded-xl glass-input text-sm" />
               </div>
             </div>
             <div class="mt-4 flex justify-end">
-              <button onclick="saveProfileDetails()" class="px-5 py-2.5 rounded-xl ghl-btn-primary text-xs font-bold">
+              <button onclick="saveProfileDetails()" class="px-5 py-2.5 rounded-xl btn-gold text-xs">
                 Save Profile Changes
               </button>
             </div>
 
             <!-- Forgot / Reset Password via OTP inside Profile -->
-            <div class="mt-6 pt-5 border-t border-slate-200">
+            <div class="mt-6 pt-5 border-t border-white/10">
               <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-3">
                 <div>
-                  <h3 class="text-sm font-extrabold text-slate-900">Password & Security (Forgot / Reset Password via OTP)</h3>
-                  <p class="text-xs text-slate-500">Request a 6-digit OTP on your email to reset or update your account password.</p>
+                  <h3 class="text-sm font-extrabold text-white">Password & Security (Reset Password via 4-Digit OTP)</h3>
+                  <p class="text-xs text-slate-400">Request a 4-digit security code on your email to update your account password.</p>
                 </div>
-                <button type="button" onclick="sendProfilePasswordResetOtp()" class="px-4 py-2 rounded-xl ghl-btn-secondary text-xs font-bold self-start sm:self-auto">
+                <button type="button" onclick="sendProfilePasswordResetOtp()" class="px-4 py-2 rounded-xl btn-glass text-xs self-start sm:self-auto">
                   Send Reset OTP to Email
                 </button>
               </div>
@@ -763,17 +1354,17 @@
               <div id="profile-otp-reset-box" class="grid grid-cols-1 md:grid-cols-3 gap-3 items-end">
                 <div>
                   <div class="flex items-center justify-between">
-                    <label class="text-xs font-bold text-slate-700">6-Digit OTP Code</label>
-                    <span id="prof-otp-hint" class="text-[11px] font-mono font-bold text-blue-600"></span>
+                    <label class="text-xs font-bold text-slate-300">4-Digit OTP Code</label>
+                    <span id="prof-otp-hint" class="text-[11px] font-mono font-bold text-yellow-400"></span>
                   </div>
-                  <input id="prof-reset-otp" type="text" maxlength="6" placeholder="Enter 6-digit OTP" class="mt-1 w-full px-3.5 py-2.5 rounded-xl ghl-input text-sm font-mono tracking-widest text-center" />
+                  <input id="prof-reset-otp" type="text" maxlength="4" placeholder="Enter 4-digit OTP" class="mt-1.5 w-full px-4 py-2.5 rounded-xl glass-input text-sm font-mono tracking-widest text-center" />
                 </div>
                 <div>
-                  <label class="text-xs font-bold text-slate-700">New Password</label>
-                  <input id="prof-new-password" type="password" placeholder="Enter new password" class="mt-1 w-full px-3.5 py-2.5 rounded-xl ghl-input text-sm" />
+                  <label class="text-xs font-bold text-slate-300">New Password</label>
+                  <input id="prof-new-password" type="password" placeholder="Enter new password" class="mt-1.5 w-full px-4 py-2.5 rounded-xl glass-input text-sm" />
                 </div>
                 <div>
-                  <button type="button" onclick="confirmProfilePasswordReset()" class="w-full py-2.5 px-4 rounded-xl ghl-btn-primary text-xs sm:text-sm font-bold">
+                  <button type="button" onclick="confirmProfilePasswordReset()" class="w-full py-2.5 px-4 rounded-xl btn-gold text-xs sm:text-sm">
                     Verify OTP & Update Password
                   </button>
                 </div>
@@ -781,39 +1372,39 @@
             </div>
           </div>
 
-          <div class="ghl-card p-5 sm:p-6 rounded-2xl">
+          <div class="glass-card p-6 rounded-2xl">
             <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
               <div>
                 <div class="flex items-center gap-2.5">
-                  <h2 class="text-base font-extrabold text-slate-900">Zoom Account Integration</h2>
-                  <span id="zoom-conn-badge" class="px-2.5 py-0.5 rounded-md text-xs font-bold bg-emerald-50 text-emerald-700 border border-emerald-200 whitespace-nowrap">
+                  <h2 class="text-base font-extrabold text-white">Zoom Account Integration</h2>
+                  <span id="zoom-conn-badge" class="px-2.5 py-0.5 rounded-md text-xs font-bold bg-emerald-500/15 text-emerald-400 border border-emerald-500/30 whitespace-nowrap">
                     ● Ready to Connect
                   </span>
                 </div>
-                <p class="text-xs text-slate-500 mt-1">
-                  Connect your Zoom account with Google in one click. Our system automatically generates and starts your scheduled Zoom meetings.
+                <p class="text-xs text-slate-400 mt-1">
+                  Connect your Zoom account with Google in one click. Our cloud engine automatically launches and streams your scheduled Zoom meetings.
                 </p>
               </div>
-              <button onclick="reconnectZoomOAuth()" class="px-5 py-2.5 rounded-xl ghl-btn-primary text-xs sm:text-sm font-bold self-start sm:self-auto">
+              <button onclick="reconnectZoomOAuth()" class="px-5 py-2.5 rounded-xl btn-gold text-xs sm:text-sm self-start sm:self-auto">
                 Connect Zoom with Google
               </button>
             </div>
           </div>
 
-          <div class="ghl-card p-5 sm:p-6 rounded-2xl">
-            <div class="pb-4 border-b border-slate-200">
+          <div class="glass-card p-6 rounded-2xl">
+            <div class="pb-4 border-b border-white/10">
               <div class="flex items-center justify-between">
-                <h2 id="cohost-section-heading" class="text-base font-extrabold text-slate-900">Team Auto Co-Host Emails</h2>
-                <span id="cohost-count-badge" class="px-2.5 py-1 rounded-md text-xs font-bold bg-blue-50 text-blue-700 whitespace-nowrap">0 Team Members</span>
+                <h2 id="cohost-section-heading" class="text-base font-extrabold text-white">Team Auto Co-Host Emails</h2>
+                <span id="cohost-count-badge" class="px-2.5 py-1 rounded-md text-xs font-bold bg-blue-500/15 text-blue-400 border border-blue-500/30 whitespace-nowrap">0 Team Members</span>
               </div>
-              <p id="cohost-section-subtext" class="text-xs text-slate-500 mt-0.5">
+              <p id="cohost-section-subtext" class="text-xs text-slate-400 mt-0.5">
                 Add your team members' emails so they automatically become Co-Host when joining a meeting.
               </p>
             </div>
 
             <div class="mt-4 flex flex-col sm:flex-row gap-2.5">
-              <input id="new-cohost-email" type="email" placeholder="Enter team member email (e.g. member@company.com)" class="flex-1 px-3.5 py-2.5 rounded-xl ghl-input text-sm" onkeydown="if(event.key==='Enter') addCoHostEmail()" />
-              <button type="button" onclick="addCoHostEmail()" class="px-5 py-2.5 rounded-xl ghl-btn-primary text-xs sm:text-sm font-bold">
+              <input id="new-cohost-email" type="email" placeholder="Enter team member email (e.g. member@company.com)" class="flex-1 px-4 py-2.5 rounded-xl glass-input text-sm" onkeydown="if(event.key==='Enter') addCoHostEmail()" />
+              <button type="button" onclick="addCoHostEmail()" class="px-5 py-2.5 rounded-xl btn-gold text-xs sm:text-sm">
                 + Add Co-Host Email
               </button>
             </div>
@@ -829,25 +1420,30 @@
   </div>
 
   <!-- ===================================================================== -->
-  <!-- REAL ZOOM IN-MEETING CHAT VIEWER MODAL                                -->
+  <!-- REAL ZOOM IN-MEETING GLASSY CHAT VIEWER MODAL (Theme_Stayle 00:05)    -->
   <!-- ===================================================================== -->
-  <div id="chat-viewer-modal" class="fixed inset-0 z-50 hidden bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4">
-    <div class="bg-white rounded-2xl max-w-lg w-full shadow-2xl border border-slate-200 flex flex-col max-h-[82vh]">
-      <div class="p-4 sm:p-5 border-b border-slate-200 flex items-center justify-between">
+  <div id="chat-viewer-modal" class="fixed inset-0 z-50 hidden bg-black/75 backdrop-blur-md flex items-center justify-center p-4">
+    <div class="hud-frame glass-card-gold rounded-3xl max-w-lg w-full flex flex-col max-h-[82vh]">
+      <div class="hud-corner-tl"></div>
+      <div class="hud-corner-tr"></div>
+      <div class="hud-corner-bl"></div>
+      <div class="hud-corner-br"></div>
+
+      <div class="p-5 border-b border-white/10 flex items-center justify-between">
         <div>
-          <h3 id="chat-modal-title" class="text-base font-extrabold text-slate-900">Zoom In-Meeting Chat</h3>
-          <p id="chat-modal-subtitle" class="text-xs text-slate-500 mt-0.5">Exact messages written by participant during the Zoom session.</p>
+          <h3 id="chat-modal-title" class="text-base font-extrabold text-white">Zoom In-Meeting Chat</h3>
+          <p id="chat-modal-subtitle" class="text-xs text-slate-400 mt-0.5">Exact messages written by participant during the Zoom session.</p>
         </div>
-        <button onclick="closeChatTranscriptModal()" class="px-3 py-1.5 rounded-lg bg-slate-100 hover:bg-slate-200 text-xs font-bold text-slate-700">
+        <button onclick="closeChatTranscriptModal()" class="px-3 py-1.5 rounded-xl btn-glass text-xs">
           ✕ Close
         </button>
       </div>
-      <div id="chat-modal-messages-body" class="p-4 sm:p-5 overflow-y-auto space-y-3 flex-1 bg-slate-50"></div>
+      <div id="chat-modal-messages-body" class="p-5 overflow-y-auto space-y-3 flex-1"></div>
     </div>
   </div>
 
   <!-- Toast Notification -->
-  <div id="toast-box" class="fixed bottom-5 right-5 z-50 hidden px-4 py-3 rounded-xl bg-slate-900 text-white font-bold text-xs sm:text-sm shadow-2xl border border-slate-700"></div>
+  <div id="toast-box" class="fixed bottom-5 right-5 z-50 hidden px-4 py-3 rounded-xl glass-card-gold text-white font-bold text-xs sm:text-sm shadow-2xl border border-yellow-500/40"></div>
 
   <script src="app.js"></script>
 </body>
