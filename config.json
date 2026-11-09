@@ -1,0 +1,20 @@
+{
+  "ZoomMeetingUrl": "https://zoom.us/j/1234567890?pwd=yourpassword",
+  "MeetingId": "",
+  "Passcode": "",
+  "VideoFilePath": "C:\\Videos\\sample_lecture.mp4",
+  "VideoDurationSeconds": 0,
+  "JoinWaitSeconds": 15,
+  "PreVideoDelaySeconds": 5,
+  "PostVideoDelaySeconds": 3,
+  "AutoAdmitEnabled": true,
+  "ShareComputerSound": true,
+  "OptimizeForVideo": true,
+  "MuteHostMic": true,
+  "Schedule1Enabled": true,
+  "Schedule1Time": "10:00",
+  "Schedule2Enabled": true,
+  "Schedule2Time": "15:00",
+  "Schedule3Enabled": true,
+  "Schedule3Time": "20:00"
+}
