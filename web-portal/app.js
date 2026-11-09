@@ -9,7 +9,7 @@ let appState = {
     email: '',
     authToken: '',
     hasActivePlan: false,
-    planName: '',
+    planName: 'Business Pro',
     zoomConnected: false
   },
   usersDb: [],
@@ -30,20 +30,24 @@ let appState = {
       priceUsd: 19,
       permissions: {
         maxWorkflows: 2,
-        allowWebinars: false,
-        allowDraftMode: true,
+        maxDailyTimes: 2,
+        allowCustomTime: false,
+        allowDraftMode: false,
         allowMultiVideo: false,
-        maxCoHosts: 3,
-        allowAttendanceTab: true,
+        maxVideosPerWorkflow: 1,
+        maxCoHosts: 1,
+        allowAttendanceTab: false,
         allowChatLogs: false,
-        allowCsvExport: false
+        allowCsvExport: false,
+        allowWebinars: false
       },
       features: [
-        "Up to 2 Active Meeting Workflows",
-        "Single Recorded Video per Meeting",
-        "7-Day Weekly & 12-Hour AM/PM Scheduler",
-        "Up to 3 Team Co-Host Emails",
-        "Basic Participant Attendance Report"
+        "Up to 2 Automated Meeting Workflows",
+        "1 or 2 Daily Broadcast Times (12h AM/PM)",
+        "Single Recorded Video Upload (Unlimited Size)",
+        "7-Day Weekly Schedule Checkboxes",
+        "Auto-Admit & Auto-End Meeting on Finish",
+        "1 Team Auto Co-Host Email"
       ]
     },
     {
@@ -53,21 +57,25 @@ let appState = {
       pricePkr: 8500,
       priceUsd: 35,
       permissions: {
-        maxWorkflows: 10,
-        allowWebinars: true,
+        maxWorkflows: 5,
+        maxDailyTimes: 4,
+        allowCustomTime: true,
         allowDraftMode: true,
         allowMultiVideo: true,
-        maxCoHosts: 15,
+        maxVideosPerWorkflow: 2,
+        maxCoHosts: 5,
         allowAttendanceTab: true,
-        allowChatLogs: true,
-        allowCsvExport: true
+        allowChatLogs: false,
+        allowCsvExport: false,
+        allowWebinars: false
       },
       features: [
-        "Up to 10 Meeting & Webinar Workflows",
-        "Multi-Video Seamless Back-to-Back Playlists",
-        "Draft & Active Workflow Toggle",
-        "Up to 15 Team Co-Host Emails",
-        "Attendance + In-Meeting Chat Logs & CSV Export"
+        "Up to 5 Automated Meeting Workflows",
+        "Up to 4 Daily Times + Custom Hour/Minute Picker",
+        "Save Workflows as Draft & Active Toggle",
+        "2 Videos Back-to-Back Seamless Playlist",
+        "Up to 5 Team Auto Co-Host Emails",
+        "Meeting Attendance & Participant Join/Leave List"
       ]
     },
     {
@@ -77,20 +85,24 @@ let appState = {
       priceUsd: 65,
       permissions: {
         maxWorkflows: 999,
-        allowWebinars: true,
+        maxDailyTimes: 99,
+        allowCustomTime: true,
         allowDraftMode: true,
         allowMultiVideo: true,
+        maxVideosPerWorkflow: 99,
         maxCoHosts: 999,
         allowAttendanceTab: true,
         allowChatLogs: true,
-        allowCsvExport: true
+        allowCsvExport: true,
+        allowWebinars: true
       },
       features: [
-        "Unlimited Workflows & Zoom Webinars",
-        "Unlimited Multi-Video Back-to-Back Streaming",
-        "Unlimited Team Co-Host Emails",
-        "Full Attendance, Saved Chat Messages & CSV Export",
-        "Dedicated 8GB Cloud Worker Priority"
+        "Unlimited Meeting & Zoom Webinar Workflows",
+        "Unlimited Daily AM/PM Times & Custom Picker",
+        "Unlimited Multi-Video Seamless Playlists",
+        "Unlimited Team Auto Co-Host Emails",
+        "Full Attendance + In-Meeting Saved Chat Logs (Q1, 12)",
+        "1-Click Excel / CSV Export & 8GB Cloud Priority"
       ]
     }
   ],
@@ -178,6 +190,149 @@ function scrollToPricingSection() {
     const sec = document.getElementById('pricing-section');
     if (sec) sec.scrollIntoView({ behavior: 'smooth' });
   }, 80);
+}
+
+// ============================================================================
+// PLAN FEATURE GATING ENGINE (STRICT VISIBILITY PER PLAN)
+// ============================================================================
+function getActivePlanPermissions() {
+  const planName = appState.profile.planName || 'Starter Plan';
+  const plan = appState.plans.find(p => p.name === planName) || appState.plans[0];
+  return plan.permissions;
+}
+
+function switchActivePlanInstant(newPlanName) {
+  appState.profile.planName = newPlanName;
+  persistState();
+  applyPlanFeatureRestrictions();
+  showToast(`Switched workspace view to ${newPlanName}`);
+}
+
+function applyPlanFeatureRestrictions() {
+  const planName = appState.profile.planName || 'Starter Plan';
+  const perms = getActivePlanPermissions();
+
+  // Sync sidebar & header plan badges
+  const sbPlan = document.getElementById('sidebar-plan-badge');
+  const switcher = document.getElementById('quick-plan-switcher');
+  const limitsPill = document.getElementById('header-plan-limits-pill');
+  if (sbPlan) sbPlan.textContent = planName;
+  if (switcher) switcher.value = planName;
+  if (limitsPill) {
+    const wfLimitStr = perms.maxWorkflows >= 999 ? 'Unlimited Workflows' : `Max ${perms.maxWorkflows} Workflows`;
+    const timeLimitStr = perms.maxDailyTimes >= 99 ? 'Unlimited Times' : `Max ${perms.maxDailyTimes} Times/Day`;
+    limitsPill.textContent = `${planName}: ${wfLimitStr} • ${timeLimitStr}`;
+  }
+
+  // 1. Attendance Tab Visibility (Hidden completely on Starter Plan!)
+  const attTabBtn = document.getElementById('dtab-attendance');
+  const attTabLabel = document.getElementById('dtab-attendance-label');
+  if (attTabBtn) {
+    attTabBtn.classList.toggle('hidden', !perms.allowAttendanceTab);
+  }
+  if (attTabLabel) {
+    attTabLabel.textContent = perms.allowChatLogs ? 'Attendance & Chat Logs' : 'Attendance Report';
+  }
+  // If user was on attendance tab and switched to Starter Plan, move them to categories tab
+  const attContent = document.getElementById('dash-content-attendance');
+  if (!perms.allowAttendanceTab && attContent && !attContent.classList.contains('hidden')) {
+    switchDashboardTab('categories');
+  }
+
+  // 2. Draft Mode Toggle & Save as Draft Button (Hidden on Starter Plan)
+  const draftToggleWrap = document.getElementById('builder-draft-toggle-wrap');
+  const btnSaveDraft = document.getElementById('btn-save-draft');
+  if (draftToggleWrap) draftToggleWrap.classList.toggle('hidden', !perms.allowDraftMode);
+  if (btnSaveDraft) btnSaveDraft.classList.toggle('hidden', !perms.allowDraftMode);
+
+  // 3. Session Type / Webinar Selector (Only visible on Enterprise Plan)
+  const sesTypeWrap = document.getElementById('session-type-wrap');
+  const wfNameCol = document.getElementById('workflow-name-col');
+  if (sesTypeWrap) sesTypeWrap.classList.toggle('hidden', !perms.allowWebinars);
+  if (wfNameCol) {
+    wfNameCol.className = perms.allowWebinars ? 'md:col-span-2' : 'md:col-span-3';
+  }
+
+  // 4. Custom Hour/Minute Time Picker (Hidden on Starter Plan)
+  const customTimeWrap = document.getElementById('custom-time-picker-wrap');
+  const timeSlotsSub = document.getElementById('time-slots-subtext');
+  if (customTimeWrap) customTimeWrap.classList.toggle('hidden', !perms.allowCustomTime);
+  if (timeSlotsSub) {
+    timeSlotsSub.textContent = perms.maxDailyTimes >= 99
+      ? 'Select unlimited 12-hour AM/PM times or add custom hour & minute slots.'
+      : `Your ${planName} allows up to ${perms.maxDailyTimes} broadcast times per day.`;
+  }
+
+  // Enforce maxDailyTimes on current selection if needed
+  if (appState.currentCategory.selectedTimes.length > perms.maxDailyTimes) {
+    appState.currentCategory.selectedTimes = appState.currentCategory.selectedTimes.slice(0, perms.maxDailyTimes);
+  }
+
+  // 5. Video Upload (Single vs Multi-Video Playlist)
+  const vidInput = document.getElementById('cat-video-input');
+  const vidHeading = document.getElementById('video-upload-heading');
+  const vidSub = document.getElementById('video-upload-subtext');
+  const vidDropTitle = document.getElementById('video-dropzone-title');
+  if (vidInput) {
+    if (perms.allowMultiVideo) {
+      vidInput.setAttribute('multiple', 'multiple');
+    } else {
+      vidInput.removeAttribute('multiple');
+    }
+  }
+  if (vidHeading && vidSub && vidDropTitle) {
+    if (!perms.allowMultiVideo) {
+      vidHeading.textContent = '3. Upload Recorded Video (Single Video)';
+      vidSub.textContent = 'Starter Plan supports 1 recorded video per meeting (unlimited GB file size).';
+      vidDropTitle.textContent = '+ Choose 1 Recorded Video File';
+    } else if (perms.maxVideosPerWorkflow === 2) {
+      vidHeading.textContent = '3. Upload Recorded Videos (Up to 2 Back-to-Back Videos)';
+      vidSub.textContent = 'Business Pro supports up to 2 videos playing seamlessly back-to-back.';
+      vidDropTitle.textContent = '+ Choose 1 or 2 Video Files';
+    } else {
+      vidHeading.textContent = '3. Upload Recorded Videos (Unlimited Multi-Video Playlist)';
+      vidSub.textContent = 'Enterprise supports unlimited back-to-back videos or per-time-slot video assignment.';
+      vidDropTitle.textContent = '+ Choose Unlimited Video Files';
+    }
+  }
+
+  // 6. Export CSV Buttons & Saved Chat Column (Enterprise Only)
+  const btnExpSummary = document.getElementById('btn-export-summary-csv');
+  const btnExpDetail = document.getElementById('btn-export-detail-csv');
+  const thChat = document.getElementById('th-chat-messages');
+  const detailHeading = document.getElementById('detail-table-heading');
+  if (btnExpSummary) btnExpSummary.classList.toggle('hidden', !perms.allowCsvExport);
+  if (btnExpDetail) btnExpDetail.classList.toggle('hidden', !perms.allowCsvExport);
+  if (thChat) thChat.classList.toggle('hidden', !perms.allowChatLogs);
+  if (detailHeading) {
+    detailHeading.textContent = perms.allowChatLogs
+      ? 'Participants List & Saved In-Meeting Chat Messages (Q1, 12, etc.)'
+      : 'Participants Attendance List (Name, Email, Join & Leave Time)';
+  }
+
+  // 7. Team Co-Hosts Section Text
+  const chHeading = document.getElementById('cohost-section-heading');
+  const chSub = document.getElementById('cohost-section-subtext');
+  if (chHeading && chSub) {
+    if (perms.maxCoHosts === 1) {
+      chHeading.textContent = 'Team Auto Co-Host Email (Max 1 on Starter Plan)';
+      chSub.textContent = 'Add 1 designated email who will automatically be promoted to Co-Host on joining.';
+    } else if (perms.maxCoHosts < 999) {
+      chHeading.textContent = `Team Auto Co-Host Emails (Up to ${perms.maxCoHosts} on Business Pro)`;
+      chSub.textContent = `Add up to ${perms.maxCoHosts} team member emails for automatic Co-Host promotion.`;
+    } else {
+      chHeading.textContent = 'Team Auto Co-Host Emails (Unlimited on Enterprise)';
+      chSub.textContent = 'Add unlimited team members (15, 20, or more). Anyone who joins becomes Co-Host.';
+    }
+  }
+
+  render12HourCalendarGrid();
+  renderSavedCategories();
+  renderCoHostEmails();
+  renderAttendanceSessionsList();
+  if (appState.activeSessionDetailId) {
+    openSessionDetails(appState.activeSessionDetailId);
+  }
 }
 
 // ============================================================================
@@ -283,51 +438,6 @@ async function saveFreeSmtpConfig() {
   showToast('✓ Free Gmail SMTP OTP Sender Activated!');
 }
 
-function getActivePlanPermissions() {
-  const planName = appState.profile.planName || 'Business Pro';
-  const plan = appState.plans.find(p => p.name === planName) || appState.plans[1];
-  return plan.permissions || {
-    maxWorkflows: 999,
-    allowWebinars: true,
-    allowDraftMode: true,
-    allowMultiVideo: true,
-    maxCoHosts: 999,
-    allowAttendanceTab: true,
-    allowChatLogs: true,
-    allowCsvExport: true
-  };
-}
-
-function applyPlanFeatureRestrictions() {
-  const perms = getActivePlanPermissions();
-
-  // 1. Attendance Tab visibility
-  const attTabBtn = document.getElementById('dtab-attendance');
-  if (attTabBtn) {
-    attTabBtn.classList.toggle('hidden', !perms.allowAttendanceTab);
-  }
-
-  // 2. Multi-video upload attribute (single vs multiple)
-  const vidInput = document.getElementById('cat-video-input');
-  if (vidInput) {
-    if (perms.allowMultiVideo) {
-      vidInput.setAttribute('multiple', 'multiple');
-    } else {
-      vidInput.removeAttribute('multiple');
-    }
-  }
-
-  // 3. Webinar option visibility
-  const sesTypeSelect = document.getElementById('cat-session-type');
-  if (sesTypeSelect) {
-    const webinarOpt = sesTypeSelect.querySelector('option[value="Zoom Webinar"]');
-    if (webinarOpt) {
-      webinarOpt.disabled = !perms.allowWebinars;
-      webinarOpt.hidden = !perms.allowWebinars;
-    }
-  }
-}
-
 function handleEmailSignUp() {
   const name = (document.getElementById('signup-name')?.value || '').trim();
   const email = (document.getElementById('signup-email')?.value || '').trim().toLowerCase();
@@ -341,12 +451,12 @@ function handleEmailSignUp() {
 
   if (!appState.generatedOtp) {
     sendEmailOtpCode();
-    showToast('We sent a 6-digit OTP to your email. Please enter it to verify.');
+    showToast('We generated a 6-digit OTP for your email. Please enter it to verify.');
     return;
   }
 
   if (otpEntered !== appState.generatedOtp) {
-    showToast('Invalid OTP code. Please check the 6-digit OTP shown.');
+    showToast('Invalid OTP code. Please enter the 6-digit OTP shown.');
     return;
   }
 
@@ -378,7 +488,7 @@ function handleEmailSignUp() {
 
   persistState();
   syncProfileUI();
-  showToast('✓ Account Created & Saved! Now select your subscription plan.');
+  showToast('✓ Account Created! Now select your subscription plan.');
 
   if (appState.selectedPlan) {
     proceedToCardPayment(appState.selectedPlan.id);
@@ -410,7 +520,6 @@ function handleEmailSignIn() {
       zoomConnected: true
     };
   } else {
-    // Allow signing in and saving session token
     appState.profile = {
       name: email.split('@')[0],
       email,
@@ -434,7 +543,7 @@ function handleEmailSignIn() {
 
   if (appState.profile.hasActivePlan) {
     switchView('dashboard');
-    showToast('✓ Signed in successfully!');
+    showToast(`✓ Signed in to ${appState.profile.planName}!`);
   } else {
     showAuthStep('plan');
   }
@@ -452,7 +561,7 @@ function handleGoogleAuthContinue() {
     email,
     authToken: token,
     hasActivePlan: appState.authMode === 'signin',
-    planName: 'Business Pro',
+    planName: appState.profile.planName || 'Business Pro',
     zoomConnected: true
   };
   persistState();
@@ -549,7 +658,7 @@ function completeSubscriptionAndLogin() {
   persistState();
   syncProfileUI();
   switchView('dashboard');
-  showToast('🎉 Subscription Active! Welcome to your Workspace.');
+  showToast(`🎉 ${planName} Activated! Features unlocked for your plan.`);
 }
 
 function logoutClient() {
@@ -560,6 +669,12 @@ function logoutClient() {
 }
 
 function switchDashboardTab(tab) {
+  const perms = getActivePlanPermissions();
+  if (tab === 'attendance' && !perms.allowAttendanceTab) {
+    showToast('Attendance Reports are available in Business Pro & Enterprise plans.');
+    return;
+  }
+
   const tabs = ['categories', 'attendance', 'profile'];
   tabs.forEach(t => {
     const content = document.getElementById('dash-content-' + t);
@@ -569,12 +684,15 @@ function switchDashboardTab(tab) {
       btn.className = t === tab
         ? 'flex items-center gap-2.5 px-3.5 py-2.5 rounded-xl text-xs sm:text-sm font-bold bg-blue-600 text-white whitespace-nowrap text-left'
         : 'flex items-center gap-2.5 px-3.5 py-2.5 rounded-xl text-xs sm:text-sm font-semibold text-slate-300 hover:bg-slate-800 hover:text-white whitespace-nowrap text-left';
+      if (t === 'attendance' && !perms.allowAttendanceTab) {
+        btn.classList.add('hidden');
+      }
     }
   });
 
   const titles = {
-    categories: 'Meeting & Webinar Workflows',
-    attendance: 'Broadcast Attendance & Saved Chat Logs',
+    categories: 'Meeting Workflows',
+    attendance: perms.allowChatLogs ? 'Broadcast Attendance & Saved Chat Logs' : 'Broadcast Attendance Report',
     profile: 'Profile, Zoom Integration & Team Co-Hosts'
   };
   const titleEl = document.getElementById('workspace-page-title');
@@ -675,12 +793,12 @@ function reconnectZoomOAuth() {
 }
 
 // ============================================================================
-// UNLIMITED TEAM CO-HOST EMAILS MANAGER
+// TEAM CO-HOST EMAILS MANAGER (GATED BY PLAN maxCoHosts)
 // ============================================================================
 function addCoHostEmail() {
   const perms = getActivePlanPermissions();
   if (appState.coHostEmails.length >= perms.maxCoHosts) {
-    showToast(`Your current plan allows up to ${perms.maxCoHosts} Team Co-Host emails.`);
+    showToast(`Your ${appState.profile.planName} allows up to ${perms.maxCoHosts} Team Co-Host email(s).`);
     return;
   }
   const input = document.getElementById('new-cohost-email');
@@ -711,15 +829,17 @@ function removeCoHostEmail(idx) {
 function renderCoHostEmails() {
   const listEl = document.getElementById('cohost-emails-list');
   const badgeEl = document.getElementById('cohost-count-badge');
+  const perms = getActivePlanPermissions();
   if (badgeEl) {
-    badgeEl.textContent = `${appState.coHostEmails.length} Team Member${appState.coHostEmails.length === 1 ? '' : 's'}`;
+    const maxStr = perms.maxCoHosts >= 999 ? 'Unlimited' : `Max ${perms.maxCoHosts}`;
+    badgeEl.textContent = `${appState.coHostEmails.length} / ${maxStr} Team Members`;
   }
   if (!listEl) return;
 
   if (appState.coHostEmails.length === 0) {
     listEl.innerHTML = `
       <div class="col-span-full p-4 rounded-xl bg-slate-50 border border-slate-200 text-xs text-slate-500 text-center">
-        No Co-Host emails added yet. Add your team members above so they automatically become Co-Host when joining.
+        No Co-Host emails added yet. Add your team member email above so they automatically become Co-Host when joining.
       </div>
     `;
     return;
@@ -739,7 +859,7 @@ function renderCoHostEmails() {
 }
 
 // ============================================================================
-// 12-HOUR (AM / PM) CALENDAR & WORKFLOW BUILDER (WITH DRAFT / ACTIVE TOGGLE)
+// 12-HOUR (AM / PM) CALENDAR & WORKFLOW BUILDER
 // ============================================================================
 function formatSecondsToHHMMSS(sec) {
   const hrs = Math.floor(sec / 3600);
@@ -815,16 +935,30 @@ function render12HourCalendarGrid() {
 }
 
 function toggleTimeSlot(timeStr) {
+  const perms = getActivePlanPermissions();
   const idx = appState.currentCategory.selectedTimes.indexOf(timeStr);
   if (idx >= 0) {
     appState.currentCategory.selectedTimes.splice(idx, 1);
   } else {
+    if (appState.currentCategory.selectedTimes.length >= perms.maxDailyTimes) {
+      showToast(`Your ${appState.profile.planName} allows up to ${perms.maxDailyTimes} broadcast times per day.`);
+      return;
+    }
     appState.currentCategory.selectedTimes.push(timeStr);
   }
   render12HourCalendarGrid();
 }
 
 function addCustomTimeSlot() {
+  const perms = getActivePlanPermissions();
+  if (!perms.allowCustomTime) {
+    showToast('Custom Hour/Minute Picker is available in Business Pro & Enterprise plans.');
+    return;
+  }
+  if (appState.currentCategory.selectedTimes.length >= perms.maxDailyTimes) {
+    showToast(`Your ${appState.profile.planName} allows up to ${perms.maxDailyTimes} broadcast times per day.`);
+    return;
+  }
   const hr = document.getElementById('custom-hour-select')?.value || '09';
   const min = document.getElementById('custom-minute-select')?.value || '15';
   const ampm = document.getElementById('custom-ampm-select')?.value || 'PM';
@@ -840,14 +974,28 @@ function addCustomTimeSlot() {
 }
 
 function handleCategoryVideosSelect(event) {
+  const perms = getActivePlanPermissions();
   const files = Array.from(event.target.files || []);
   if (files.length === 0) return;
 
+  if (!perms.allowMultiVideo) {
+    // Starter Plan: replace with single selected video
+    appState.currentCategory.videos = [];
+  }
+
   files.forEach(file => {
+    if (appState.currentCategory.videos.length >= perms.maxVideosPerWorkflow) {
+      showToast(`Your ${appState.profile.planName} supports up to ${perms.maxVideosPerWorkflow} video(s) per workflow.`);
+      return;
+    }
     const tempVideo = document.createElement('video');
     const objUrl = URL.createObjectURL(file);
     tempVideo.src = objUrl;
     tempVideo.onloadedmetadata = () => {
+      if (appState.currentCategory.videos.length >= perms.maxVideosPerWorkflow) {
+        URL.revokeObjectURL(objUrl);
+        return;
+      }
       const sec = Math.ceil(tempVideo.duration || 0);
       appState.currentCategory.videos.push({
         name: file.name,
@@ -899,12 +1047,13 @@ function renderCategoryVideosList() {
 
 function renderSelectedTimesAssignment() {
   const container = document.getElementById('selected-times-container');
+  const perms = getActivePlanPermissions();
   if (!container) return;
 
   if (appState.currentCategory.selectedTimes.length === 0) {
     container.innerHTML = `
       <div class="p-3.5 rounded-xl bg-slate-50 border border-slate-200 text-xs text-slate-500 text-center">
-        No broadcast times selected yet. Click any AM/PM time above or use "+ Add Custom Time".
+        No broadcast times selected yet. Click any AM/PM time above.
       </div>
     `;
     return;
@@ -922,16 +1071,17 @@ function renderSelectedTimesAssignment() {
 
   container.innerHTML = appState.currentCategory.selectedTimes.map(timeStr => {
     const savedChoice = appState.currentCategory.slotVideoMap[timeStr] || 'ALL_SEAMLESS';
+    const selectorHtml = perms.allowMultiVideo
+      ? `<select onchange="updateSlotVideoChoice('${timeStr}', this.value)" class="px-3 py-1.5 rounded-lg ghl-input text-xs font-semibold">${videoOptions}</select>`
+      : `<span class="text-xs font-semibold text-slate-600">Plays Uploaded Video</span>`;
+
     return `
       <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 p-3 rounded-xl bg-white border border-slate-200">
         <div class="flex items-center gap-2.5">
           <span class="px-3 py-1 rounded-lg bg-blue-50 text-blue-700 font-extrabold text-xs whitespace-nowrap">🕒 ${timeStr}</span>
-          <span class="text-xs font-semibold text-slate-600">Video Selection:</span>
         </div>
         <div class="flex items-center gap-2">
-          <select onchange="updateSlotVideoChoice('${timeStr}', this.value)" class="px-3 py-1.5 rounded-lg ghl-input text-xs font-semibold">
-            ${videoOptions}
-          </select>
+          ${selectorHtml}
           <button type="button" onclick="toggleTimeSlot('${timeStr}')" class="px-2.5 py-1 text-xs font-bold text-rose-600 hover:bg-rose-50 rounded-lg whitespace-nowrap">
             Remove
           </button>
@@ -963,10 +1113,20 @@ function resetCategoryForm() {
 }
 
 async function saveMeetingCategory(forcedStatus) {
+  const perms = getActivePlanPermissions();
+  if (!appState.currentCategory.editingId && appState.categories.length >= perms.maxWorkflows) {
+    showToast(`Your ${appState.profile.planName} allows up to ${perms.maxWorkflows} workflows.`);
+    return;
+  }
+
   const nameInp = document.getElementById('cat-name');
-  const sessionType = document.getElementById('cat-session-type')?.value || 'Zoom Meeting';
+  const sessionType = perms.allowWebinars
+    ? (document.getElementById('cat-session-type')?.value || 'Zoom Meeting')
+    : 'Zoom Meeting';
   const activeChk = document.getElementById('cat-status-active');
-  const status = forcedStatus || (activeChk && activeChk.checked ? 'Active' : 'Draft');
+  const status = (!perms.allowDraftMode)
+    ? 'Active'
+    : (forcedStatus || (activeChk && activeChk.checked ? 'Active' : 'Draft'));
 
   const catName = (nameInp && nameInp.value.trim()) ? nameInp.value.trim() : `Workflow #${appState.categories.length + 1}`;
   const selectedDays = Array.from(document.querySelectorAll('.cat-day-chk:checked')).map(c => c.value);
@@ -1013,6 +1173,8 @@ async function saveMeetingCategory(forcedStatus) {
 }
 
 function toggleWorkflowStatus(catId) {
+  const perms = getActivePlanPermissions();
+  if (!perms.allowDraftMode) return;
   const cat = appState.categories.find(c => c.id === catId);
   if (!cat) return;
   cat.status = cat.status === 'Active' ? 'Draft' : 'Active';
@@ -1032,12 +1194,13 @@ function deleteCategory(catId) {
 
 function renderSavedCategories() {
   const listEl = document.getElementById('saved-categories-list');
+  const perms = getActivePlanPermissions();
   if (!listEl) return;
 
   if (appState.categories.length === 0) {
     listEl.innerHTML = `
       <div class="p-5 rounded-xl bg-slate-50 border border-slate-200 text-center text-xs text-slate-500">
-        No workflows created yet. Use the Workflow Builder below to create a Meeting or Webinar workflow (or save it as Draft).
+        No workflows created yet. Use the Workflow Builder below to create your automated schedule.
       </div>
     `;
     return;
@@ -1051,6 +1214,10 @@ function renderSavedCategories() {
     const videosLabel = cat.videos.length > 0
       ? cat.videos.map((v, i) => `#${i + 1} ${v.name}`).join(' → ')
       : 'No video attached yet';
+
+    const draftBtnHtml = perms.allowDraftMode
+      ? `<button type="button" onclick="toggleWorkflowStatus('${cat.id}')" class="px-3 py-1.5 rounded-lg text-xs font-bold border whitespace-nowrap ${isActive ? 'bg-amber-50 text-amber-700 border-amber-200 hover:bg-amber-100' : 'bg-emerald-600 text-white border-emerald-600 hover:bg-emerald-500'}">${isActive ? 'Switch to Draft' : 'Activate Workflow'}</button>`
+      : '';
 
     return `
       <div class="p-4 rounded-xl bg-slate-50 border border-slate-200 flex flex-col md:flex-row md:items-center justify-between gap-4">
@@ -1068,15 +1235,12 @@ function renderSavedCategories() {
             <strong>Broadcast Times:</strong> ${cat.times.join(' • ')}
           </div>
           <div class="text-[11px] text-slate-500">
-            <strong>Playlist:</strong> ${videosLabel}
+            <strong>Video(s):</strong> ${videosLabel}
           </div>
         </div>
 
         <div class="flex items-center gap-2.5 shrink-0">
-          <!-- Instant Active / Draft Toggle Button -->
-          <button type="button" onclick="toggleWorkflowStatus('${cat.id}')" class="px-3 py-1.5 rounded-lg text-xs font-bold border whitespace-nowrap ${isActive ? 'bg-amber-50 text-amber-700 border-amber-200 hover:bg-amber-100' : 'bg-emerald-600 text-white border-emerald-600 hover:bg-emerald-500'}">
-            ${isActive ? 'Switch to Draft' : 'Activate Workflow'}
-          </button>
+          ${draftBtnHtml}
           <button type="button" onclick="triggerLiveMeetingNow('${cat.id}')" class="px-3.5 py-1.5 rounded-lg ghl-btn-primary text-xs font-bold">
             ▶ Run Now
           </button>
@@ -1137,22 +1301,25 @@ async function triggerLiveMeetingNow() {
 }
 
 // ============================================================================
-// TWO-LEVEL ATTENDANCE & IN-MEETING CHAT MESSAGES (Q1, 12, ETC.) + CSV EXPORT
+// ATTENDANCE & IN-MEETING CHAT MESSAGES (GATED BY PLAN)
 // ============================================================================
 function renderAttendanceSessionsList() {
   const tbody = document.getElementById('sessions-summary-tbody');
+  const perms = getActivePlanPermissions();
   if (!tbody) return;
 
   if (appState.attendanceSessions.length === 0) {
     tbody.innerHTML = `
       <tr>
         <td colspan="6" class="py-8 text-center text-xs text-slate-500">
-          No completed broadcast sessions yet. Click <strong>"+ Log Sample Live Session"</strong> above to preview how exact attendance & chat messages ("Q1", "12", etc.) are recorded.
+          No completed broadcast sessions yet. Click <strong>"+ Log Sample Live Session"</strong> above to preview attendance records.
         </td>
       </tr>
     `;
     return;
   }
+
+  const btnLabel = perms.allowChatLogs ? 'View Participants & Chat →' : 'View Participants →';
 
   tbody.innerHTML = appState.attendanceSessions.map(ses => `
     <tr onclick="openSessionDetails('${ses.sessionId}')" class="hover:bg-blue-50/50 cursor-pointer transition">
@@ -1165,7 +1332,7 @@ function renderAttendanceSessionsList() {
       <td class="py-3.5 px-4 font-mono text-xs text-slate-700">${ses.duration}</td>
       <td class="py-3.5 px-4 text-right">
         <button type="button" class="px-3 py-1.5 rounded-lg ghl-btn-primary text-xs font-bold">
-          View Participants & Chat →
+          ${btnLabel}
         </button>
       </td>
     </tr>
@@ -1176,6 +1343,7 @@ function openSessionDetails(sessionId) {
   const ses = appState.attendanceSessions.find(s => s.sessionId === sessionId);
   if (!ses) return;
   appState.activeSessionDetailId = sessionId;
+  const perms = getActivePlanPermissions();
 
   document.getElementById('attendance-meetings-list-card')?.classList.add('hidden');
   document.getElementById('attendance-session-detail-card')?.classList.remove('hidden');
@@ -1197,6 +1365,10 @@ function openSessionDetails(sessionId) {
       ? 'bg-amber-50 text-amber-700 border border-amber-200'
       : 'bg-emerald-50 text-emerald-700 border border-emerald-200';
 
+    const chatCellHtml = perms.allowChatLogs
+      ? `<td class="py-3.5 px-3">${chatBadges}</td>`
+      : '';
+
     return `
       <tr>
         <td class="py-3.5 px-3 font-extrabold text-slate-900 whitespace-nowrap">${p.name}</td>
@@ -1205,7 +1377,7 @@ function openSessionDetails(sessionId) {
         <td class="py-3.5 px-3 text-slate-700 whitespace-nowrap">${p.joinTime}</td>
         <td class="py-3.5 px-3 text-slate-700 whitespace-nowrap">${p.leaveTime}</td>
         <td class="py-3.5 px-3 font-bold text-slate-900 whitespace-nowrap">${p.durationMins} mins</td>
-        <td class="py-3.5 px-3">${chatBadges}</td>
+        ${chatCellHtml}
       </tr>
     `;
   }).join('');
@@ -1270,10 +1442,15 @@ function recordAccurateDemoSession() {
   appState.attendanceSessions.unshift(newSession);
   persistState();
   renderAttendanceSessionsList();
-  showToast('✓ Recorded session with exact participants & chat messages (click row to inspect)');
+  showToast('✓ Recorded session! Click the meeting row to inspect participants.');
 }
 
 function exportAllSessionsSummaryCsv() {
+  const perms = getActivePlanPermissions();
+  if (!perms.allowCsvExport) {
+    showToast('CSV Export is available exclusively on the Enterprise plan.');
+    return;
+  }
   if (appState.attendanceSessions.length === 0) {
     showToast('No sessions to export yet');
     return;
@@ -1299,6 +1476,11 @@ function exportAllSessionsSummaryCsv() {
 }
 
 function exportSingleSessionCsv() {
+  const perms = getActivePlanPermissions();
+  if (!perms.allowCsvExport) {
+    showToast('CSV Export is available exclusively on the Enterprise plan.');
+    return;
+  }
   const ses = appState.attendanceSessions.find(s => s.sessionId === appState.activeSessionDetailId);
   if (!ses) return;
 
