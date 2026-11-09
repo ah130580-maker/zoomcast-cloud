@@ -1,5 +1,13 @@
+const MASTER_ADMIN_USER = {
+  name: 'Amir Hayat',
+  email: 'amirjupiteradvisers@gmail.com',
+  password: 'Amir5748@',
+  authToken: 'master_tok_amir',
+  hasActivePlan: true,
+  planName: 'Enterprise'
+};
+
 let appState = {
-  currency: 'PKR',
   authMode: 'signin',
   generatedOtp: null,
   selectedPlan: null,
@@ -9,10 +17,10 @@ let appState = {
     email: '',
     authToken: '',
     hasActivePlan: false,
-    planName: 'Business Pro',
+    planName: 'Starter Plan',
     zoomConnected: false
   },
-  usersDb: [],
+  usersDb: [MASTER_ADMIN_USER],
   coHostEmails: [],
   categories: [],
   currentCategory: {
@@ -26,7 +34,6 @@ let appState = {
     {
       id: "starter",
       name: "Starter Plan",
-      pricePkr: 4500,
       priceUsd: 19,
       permissions: {
         maxWorkflows: 2,
@@ -54,7 +61,6 @@ let appState = {
       id: "pro",
       name: "Business Pro",
       popular: true,
-      pricePkr: 8500,
       priceUsd: 35,
       permissions: {
         maxWorkflows: 5,
@@ -81,7 +87,6 @@ let appState = {
     {
       id: "enterprise",
       name: "Enterprise",
-      pricePkr: 16500,
       priceUsd: 65,
       permissions: {
         maxWorkflows: 999,
@@ -101,7 +106,7 @@ let appState = {
         "Unlimited Daily AM/PM Times & Custom Picker",
         "Unlimited Multi-Video Seamless Playlists",
         "Unlimited Team Auto Co-Host Emails",
-        "Full Attendance + In-Meeting Saved Chat Logs (Q1, 12)",
+        "Full Attendance + Real Zoom Chat Viewer",
         "1-Click Excel / CSV Export & 8GB Cloud Priority"
       ]
     }
@@ -126,14 +131,34 @@ let appState = {
       authMode: "Zoom OAuth ZAK Token"
     }
   ],
-  clients: [],
+  clients: [
+    {
+      id: "USR-100",
+      name: "Amir Hayat",
+      email: "amirjupiteradvisers@gmail.com",
+      plan: "Enterprise",
+      categoriesCount: 0,
+      coHostsCount: 0,
+      assignedNode: "AWS EC2 Node #1 (8GB)",
+      status: "Active"
+    }
+  ],
   attendanceSessions: []
 };
 
-// Load persisted data from localStorage
+// Load persisted data from localStorage & ensure MASTER_ADMIN_USER is always present
 try {
   const savedUsers = localStorage.getItem('zoomcast_users_db');
-  if (savedUsers) appState.usersDb = JSON.parse(savedUsers);
+  if (savedUsers) {
+    const parsed = JSON.parse(savedUsers);
+    if (Array.isArray(parsed)) appState.usersDb = parsed;
+  }
+  const masterIdx = appState.usersDb.findIndex(u => u.email.toLowerCase() === MASTER_ADMIN_USER.email.toLowerCase());
+  if (masterIdx >= 0) {
+    appState.usersDb[masterIdx] = { ...MASTER_ADMIN_USER };
+  } else {
+    appState.usersDb.unshift({ ...MASTER_ADMIN_USER });
+  }
 
   const savedProfile = localStorage.getItem('zoomcast_profile');
   if (savedProfile) appState.profile = JSON.parse(savedProfile);
@@ -167,10 +192,19 @@ function showToast(msg) {
   if (!box) return;
   box.textContent = msg;
   box.classList.remove('hidden');
-  setTimeout(() => box.classList.add('hidden'), 3500);
+  setTimeout(() => box.classList.add('hidden'), 3600);
 }
 
 function switchView(viewName) {
+  // Strict access check: cannot open dashboard without authToken and hasActivePlan
+  if (viewName === 'dashboard') {
+    if (!appState.profile.authToken || !appState.profile.hasActivePlan) {
+      openAuthMode('signin');
+      showToast('Please sign in with an active subscription to access the workspace.');
+      return;
+    }
+  }
+
   const views = ['landing', 'auth', 'dashboard'];
   views.forEach(v => {
     const el = document.getElementById('view-' + v);
@@ -201,30 +235,14 @@ function getActivePlanPermissions() {
   return plan.permissions;
 }
 
-function switchActivePlanInstant(newPlanName) {
-  appState.profile.planName = newPlanName;
-  persistState();
-  applyPlanFeatureRestrictions();
-  showToast(`Switched workspace view to ${newPlanName}`);
-}
-
 function applyPlanFeatureRestrictions() {
   const planName = appState.profile.planName || 'Starter Plan';
   const perms = getActivePlanPermissions();
 
-  // Sync sidebar & header plan badges
   const sbPlan = document.getElementById('sidebar-plan-badge');
-  const switcher = document.getElementById('quick-plan-switcher');
-  const limitsPill = document.getElementById('header-plan-limits-pill');
   if (sbPlan) sbPlan.textContent = planName;
-  if (switcher) switcher.value = planName;
-  if (limitsPill) {
-    const wfLimitStr = perms.maxWorkflows >= 999 ? 'Unlimited Workflows' : `Max ${perms.maxWorkflows} Workflows`;
-    const timeLimitStr = perms.maxDailyTimes >= 99 ? 'Unlimited Times' : `Max ${perms.maxDailyTimes} Times/Day`;
-    limitsPill.textContent = `${planName}: ${wfLimitStr} • ${timeLimitStr}`;
-  }
 
-  // 1. Attendance Tab Visibility (Hidden completely on Starter Plan!)
+  // 1. Attendance Tab Visibility (Hidden completely on Starter Plan)
   const attTabBtn = document.getElementById('dtab-attendance');
   const attTabLabel = document.getElementById('dtab-attendance-label');
   if (attTabBtn) {
@@ -233,7 +251,6 @@ function applyPlanFeatureRestrictions() {
   if (attTabLabel) {
     attTabLabel.textContent = perms.allowChatLogs ? 'Attendance & Chat Logs' : 'Attendance Report';
   }
-  // If user was on attendance tab and switched to Starter Plan, move them to categories tab
   const attContent = document.getElementById('dash-content-attendance');
   if (!perms.allowAttendanceTab && attContent && !attContent.classList.contains('hidden')) {
     switchDashboardTab('categories');
@@ -245,7 +262,7 @@ function applyPlanFeatureRestrictions() {
   if (draftToggleWrap) draftToggleWrap.classList.toggle('hidden', !perms.allowDraftMode);
   if (btnSaveDraft) btnSaveDraft.classList.toggle('hidden', !perms.allowDraftMode);
 
-  // 3. Session Type / Webinar Selector (Only visible on Enterprise Plan)
+  // 3. Session Type / Webinar Selector (Enterprise Only)
   const sesTypeWrap = document.getElementById('session-type-wrap');
   const wfNameCol = document.getElementById('workflow-name-col');
   if (sesTypeWrap) sesTypeWrap.classList.toggle('hidden', !perms.allowWebinars);
@@ -263,7 +280,6 @@ function applyPlanFeatureRestrictions() {
       : `Your ${planName} allows up to ${perms.maxDailyTimes} broadcast times per day.`;
   }
 
-  // Enforce maxDailyTimes on current selection if needed
   if (appState.currentCategory.selectedTimes.length > perms.maxDailyTimes) {
     appState.currentCategory.selectedTimes = appState.currentCategory.selectedTimes.slice(0, perms.maxDailyTimes);
   }
@@ -296,17 +312,19 @@ function applyPlanFeatureRestrictions() {
     }
   }
 
-  // 6. Export CSV Buttons & Saved Chat Column (Enterprise Only)
+  // 6. Export CSV Buttons & Saved Chat View (Enterprise Only)
   const btnExpSummary = document.getElementById('btn-export-summary-csv');
   const btnExpDetail = document.getElementById('btn-export-detail-csv');
+  const btnFullChat = document.getElementById('btn-open-full-chat');
   const thChat = document.getElementById('th-chat-messages');
   const detailHeading = document.getElementById('detail-table-heading');
   if (btnExpSummary) btnExpSummary.classList.toggle('hidden', !perms.allowCsvExport);
   if (btnExpDetail) btnExpDetail.classList.toggle('hidden', !perms.allowCsvExport);
+  if (btnFullChat) btnFullChat.classList.toggle('hidden', !perms.allowChatLogs);
   if (thChat) thChat.classList.toggle('hidden', !perms.allowChatLogs);
   if (detailHeading) {
     detailHeading.textContent = perms.allowChatLogs
-      ? 'Participants List & Saved In-Meeting Chat Messages (Q1, 12, etc.)'
+      ? 'Participants List & Real In-Meeting Chat Transcripts'
       : 'Participants Attendance List (Name, Email, Join & Leave Time)';
   }
 
@@ -336,7 +354,7 @@ function applyPlanFeatureRestrictions() {
 }
 
 // ============================================================================
-// AUTHENTICATION FLOW: SIGN IN vs SIGN UP (OTP) -> PLAN SELECTION -> PAYMENT
+// STRICT AUTHENTICATION: ONLY REGISTERED PAID USERS OR MASTER USER
 // ============================================================================
 function showAuthStep(stepName) {
   const steps = ['account', 'plan', 'payment'];
@@ -374,7 +392,9 @@ function openAuthMode(mode) {
 }
 
 function openGetStartedModal() {
-  if (appState.profile.authToken) {
+  if (appState.profile.authToken && appState.profile.hasActivePlan) {
+    switchView('dashboard');
+  } else if (appState.profile.authToken) {
     switchView('auth');
     showAuthStep('plan');
   } else {
@@ -416,8 +436,8 @@ async function sendEmailOtpCode() {
     if (hint) hint.textContent = `Sent to ${email}`;
     showToast(`✓ 6-Digit OTP sent to your email (${email})!`);
   } else {
-    if (hint) hint.textContent = `OTP Code: ${otp}`;
-    showToast(`Verification OTP generated for ${email}: ${otp}`);
+    if (hint) hint.textContent = `Code: ${otp}`;
+    showToast(`Verification OTP sent for ${email}`);
   }
 }
 
@@ -451,12 +471,12 @@ function handleEmailSignUp() {
 
   if (!appState.generatedOtp) {
     sendEmailOtpCode();
-    showToast('We generated a 6-digit OTP for your email. Please enter it to verify.');
+    showToast('Please enter the 6-digit OTP code sent to your email.');
     return;
   }
 
   if (otpEntered !== appState.generatedOtp) {
-    showToast('Invalid OTP code. Please enter the 6-digit OTP shown.');
+    showToast('Invalid OTP code. Please enter the correct 6-digit OTP.');
     return;
   }
 
@@ -470,7 +490,7 @@ function handleEmailSignUp() {
     planName: ''
   };
 
-  const idx = appState.usersDb.findIndex(u => u.email === email);
+  const idx = appState.usersDb.findIndex(u => u.email.toLowerCase() === email);
   if (idx >= 0) {
     appState.usersDb[idx] = userObj;
   } else {
@@ -488,7 +508,7 @@ function handleEmailSignUp() {
 
   persistState();
   syncProfileUI();
-  showToast('✓ Account Created! Now select your subscription plan.');
+  showToast('✓ Account Created! Please complete plan selection & payment to unlock access.');
 
   if (appState.selectedPlan) {
     proceedToCardPayment(appState.selectedPlan.id);
@@ -506,75 +526,79 @@ function handleEmailSignIn() {
     return;
   }
 
-  const existingUser = appState.usersDb.find(u => u.email === email && u.password === password);
-  const token = 'tok_' + Date.now();
+  // Strictly match against registered users in usersDb (including amirjupiteradvisers@gmail.com / Amir5748@)
+  const existingUser = appState.usersDb.find(
+    u => u.email.toLowerCase() === email && u.password === password
+  );
 
-  if (existingUser) {
-    existingUser.authToken = token;
-    appState.profile = {
-      name: existingUser.name,
-      email: existingUser.email,
-      authToken: token,
-      hasActivePlan: existingUser.hasActivePlan,
-      planName: existingUser.planName || 'Business Pro',
-      zoomConnected: true
-    };
-  } else {
-    appState.profile = {
-      name: email.split('@')[0],
-      email,
-      authToken: token,
-      hasActivePlan: true,
-      planName: 'Business Pro',
-      zoomConnected: false
-    };
-    appState.usersDb.push({
-      name: appState.profile.name,
-      email,
-      password,
-      authToken: token,
-      hasActivePlan: true,
-      planName: 'Business Pro'
-    });
+  if (!existingUser) {
+    showToast('Access Denied: Invalid email or password. Only paid subscribers can sign in.');
+    return;
   }
+
+  const token = 'tok_' + Date.now();
+  existingUser.authToken = token;
+
+  appState.profile = {
+    name: existingUser.name,
+    email: existingUser.email,
+    authToken: token,
+    hasActivePlan: Boolean(existingUser.hasActivePlan),
+    planName: existingUser.planName || 'Enterprise',
+    zoomConnected: true
+  };
 
   persistState();
   syncProfileUI();
 
   if (appState.profile.hasActivePlan) {
     switchView('dashboard');
-    showToast(`✓ Signed in to ${appState.profile.planName}!`);
+    showToast(`✓ Welcome back, ${appState.profile.name}!`);
   } else {
     showAuthStep('plan');
+    showToast('Please complete your plan subscription payment to access the workspace.');
   }
 }
 
 function handleGoogleAuthContinue() {
-  const token = 'google_tok_' + Date.now();
   const emailInp = document.getElementById(appState.authMode === 'signin' ? 'signin-email' : 'signup-email');
-  const nameInp = document.getElementById('signup-name');
-  const email = (emailInp && emailInp.value.trim()) ? emailInp.value.trim() : 'google.user@gmail.com';
-  const name = (nameInp && nameInp.value.trim()) ? nameInp.value.trim() : 'Google Verified User';
+  const enteredEmail = (emailInp && emailInp.value.trim()) ? emailInp.value.trim().toLowerCase() : '';
 
-  appState.profile = {
-    name,
-    email,
-    authToken: token,
-    hasActivePlan: appState.authMode === 'signin',
-    planName: appState.profile.planName || 'Business Pro',
-    zoomConnected: true
-  };
-  persistState();
-  syncProfileUI();
-
-  if (appState.authMode === 'signin' && appState.profile.hasActivePlan) {
+  if (appState.authMode === 'signin') {
+    const matchedUser = appState.usersDb.find(u => u.email.toLowerCase() === enteredEmail && u.hasActivePlan);
+    if (!matchedUser) {
+      showToast('No active paid subscription found for this Google account. Please Sign Up and subscribe first.');
+      openAuthMode('signup');
+      return;
+    }
+    appState.profile = {
+      name: matchedUser.name,
+      email: matchedUser.email,
+      authToken: 'google_tok_' + Date.now(),
+      hasActivePlan: true,
+      planName: matchedUser.planName,
+      zoomConnected: true
+    };
+    persistState();
+    syncProfileUI();
     switchView('dashboard');
-    showToast('✓ Signed in with Google!');
-  } else if (appState.selectedPlan) {
-    proceedToCardPayment(appState.selectedPlan.id);
+    showToast(`✓ Signed in as ${matchedUser.email}`);
   } else {
+    // Sign Up via Google -> Must still select plan & pay!
+    const nameInp = document.getElementById('signup-name');
+    const email = enteredEmail || 'new.subscriber@gmail.com';
+    const name = (nameInp && nameInp.value.trim()) ? nameInp.value.trim() : 'New Subscriber';
+    appState.profile = {
+      name,
+      email,
+      authToken: 'google_tok_' + Date.now(),
+      hasActivePlan: false,
+      planName: '',
+      zoomConnected: true
+    };
+    persistState();
     showAuthStep('plan');
-    showToast('✓ Google Account Connected! Please choose your plan.');
+    showToast('Google account linked. Please select a plan and complete payment to unlock access.');
   }
 }
 
@@ -583,9 +607,7 @@ function renderModalPlanSelector() {
   if (!container) return;
 
   container.innerHTML = appState.plans.map(plan => {
-    const priceStr = appState.currency === 'PKR'
-      ? `Rs. ${plan.pricePkr.toLocaleString()}`
-      : `$${plan.priceUsd}`;
+    const priceStr = `$${plan.priceUsd}`;
     return `
       <div onclick="proceedToCardPayment('${plan.id}')" class="p-4 rounded-xl border ${plan.popular ? 'border-2 border-blue-600 bg-blue-50/30' : 'border-slate-200 bg-white'} hover:border-blue-600 cursor-pointer flex items-center justify-between transition">
         <div>
@@ -596,7 +618,7 @@ function renderModalPlanSelector() {
           <p class="text-xs text-slate-500 mt-0.5">${plan.features[0]} • ${plan.features[1]}</p>
         </div>
         <div class="text-right shrink-0 ml-3">
-          <span class="text-base sm:text-lg font-extrabold text-slate-900 block">${priceStr}</span>
+          <span class="text-base sm:text-lg font-extrabold text-slate-900 block">${priceStr}/mo</span>
           <span class="text-xs font-bold text-blue-600">Select Plan →</span>
         </div>
       </div>
@@ -609,7 +631,7 @@ function selectPlanForCheckout(planId) {
   appState.selectedPlan = plan;
   if (!appState.profile.authToken) {
     openAuthMode('signup');
-    showToast(`Selected ${plan.name}. Create your account first to continue to payment.`);
+    showToast(`Selected ${plan.name} ($${plan.priceUsd}/mo). Create your account first to proceed to payment.`);
   } else {
     switchView('auth');
     proceedToCardPayment(plan.id);
@@ -619,30 +641,39 @@ function selectPlanForCheckout(planId) {
 function proceedToCardPayment(planId) {
   const plan = appState.plans.find(p => p.id === planId) || appState.plans[1];
   appState.selectedPlan = plan;
-  const priceStr = appState.currency === 'PKR' ? `Rs. ${plan.pricePkr.toLocaleString()}` : `$${plan.priceUsd}`;
   const nameEl = document.getElementById('checkout-plan-name');
   const priceEl = document.getElementById('checkout-plan-price');
   if (nameEl) nameEl.textContent = plan.name;
-  if (priceEl) priceEl.textContent = priceStr;
+  if (priceEl) priceEl.textContent = `$${plan.priceUsd}`;
   showAuthStep('payment');
 }
 
 function completeSubscriptionAndLogin() {
+  const holder = (document.getElementById('card-holder')?.value || '').trim();
+  const number = (document.getElementById('card-number')?.value || '').replace(/\s+/g, '');
+  const expiry = (document.getElementById('card-expiry')?.value || '').trim();
+  const cvc = (document.getElementById('card-cvc')?.value || '').trim();
+
+  if (!holder || number.length < 12 || !expiry || cvc.length < 3) {
+    showToast('Please enter valid Cardholder Name, Card Number, Expiry Date, and CVC to complete payment.');
+    return;
+  }
+
   const planName = document.getElementById('checkout-plan-name')?.textContent || 'Business Pro';
   appState.profile.hasActivePlan = true;
   appState.profile.planName = planName;
 
-  const uIdx = appState.usersDb.findIndex(u => u.email === appState.profile.email);
+  const uIdx = appState.usersDb.findIndex(u => u.email.toLowerCase() === appState.profile.email.toLowerCase());
   if (uIdx >= 0) {
     appState.usersDb[uIdx].hasActivePlan = true;
     appState.usersDb[uIdx].planName = planName;
   }
 
-  const existingIdx = appState.clients.findIndex(c => c.email === appState.profile.email);
+  const existingIdx = appState.clients.findIndex(c => c.email.toLowerCase() === appState.profile.email.toLowerCase());
   const clientRecord = {
     id: 'USR-' + Math.floor(100 + Math.random() * 900),
-    name: appState.profile.name || 'Workspace User',
-    email: appState.profile.email || 'user@workspace.com',
+    name: appState.profile.name || holder,
+    email: appState.profile.email,
     plan: planName,
     categoriesCount: appState.categories.length,
     coHostsCount: appState.coHostEmails.length,
@@ -658,11 +689,12 @@ function completeSubscriptionAndLogin() {
   persistState();
   syncProfileUI();
   switchView('dashboard');
-  showToast(`🎉 ${planName} Activated! Features unlocked for your plan.`);
+  showToast(`🎉 Payment Successful! ${planName} is now active.`);
 }
 
 function logoutClient() {
   appState.profile.authToken = '';
+  appState.profile.hasActivePlan = false;
   persistState();
   switchView('landing');
   showToast('Signed out successfully.');
@@ -692,35 +724,18 @@ function switchDashboardTab(tab) {
 
   const titles = {
     categories: 'Meeting Workflows',
-    attendance: perms.allowChatLogs ? 'Broadcast Attendance & Saved Chat Logs' : 'Broadcast Attendance Report',
+    attendance: perms.allowChatLogs ? 'Broadcast Attendance & Live Chat Logs' : 'Broadcast Attendance Report',
     profile: 'Profile, Zoom Integration & Team Co-Hosts'
   };
   const titleEl = document.getElementById('workspace-page-title');
   if (titleEl && titles[tab]) titleEl.textContent = titles[tab];
 }
 
-function setCurrency(cur) {
-  appState.currency = cur;
-  const pkrBtn = document.getElementById('cur-pkr');
-  const usdBtn = document.getElementById('cur-usd');
-  if (pkrBtn && usdBtn) {
-    pkrBtn.className = cur === 'PKR'
-      ? 'px-4 py-1.5 rounded-lg text-xs font-bold ghl-btn-primary'
-      : 'px-4 py-1.5 rounded-lg text-xs font-bold text-slate-600 hover:text-slate-900 whitespace-nowrap';
-    usdBtn.className = cur === 'USD'
-      ? 'px-4 py-1.5 rounded-lg text-xs font-bold ghl-btn-primary'
-      : 'px-4 py-1.5 rounded-lg text-xs font-bold text-slate-600 hover:text-slate-900 whitespace-nowrap';
-  }
-  renderPricingCards();
-}
-
 function renderPricingCards() {
   const container = document.getElementById('pricing-cards-container');
   if (!container) return;
   container.innerHTML = appState.plans.map(plan => {
-    const priceStr = appState.currency === 'PKR'
-      ? `Rs. ${plan.pricePkr.toLocaleString()}`
-      : `$${plan.priceUsd}`;
+    const priceStr = `$${plan.priceUsd}`;
     const borderClass = plan.popular
       ? 'border-2 border-blue-600 shadow-xl relative'
       : 'border border-slate-200';
@@ -748,7 +763,7 @@ function renderPricingCards() {
           </ul>
         </div>
         <button onclick="selectPlanForCheckout('${plan.id}')" class="mt-7 w-full py-3 px-4 rounded-xl font-bold text-xs sm:text-sm ${plan.popular ? 'ghl-btn-primary' : 'ghl-btn-secondary'}">
-          Choose ${plan.name} →
+          Choose ${plan.name} ($${plan.priceUsd}/mo) →
         </button>
       </div>
     `;
@@ -793,7 +808,7 @@ function reconnectZoomOAuth() {
 }
 
 // ============================================================================
-// TEAM CO-HOST EMAILS MANAGER (GATED BY PLAN maxCoHosts)
+// TEAM CO-HOST EMAILS MANAGER
 // ============================================================================
 function addCoHostEmail() {
   const perms = getActivePlanPermissions();
@@ -979,7 +994,6 @@ function handleCategoryVideosSelect(event) {
   if (files.length === 0) return;
 
   if (!perms.allowMultiVideo) {
-    // Starter Plan: replace with single selected video
     appState.currentCategory.videos = [];
   }
 
@@ -1301,8 +1315,81 @@ async function triggerLiveMeetingNow() {
 }
 
 // ============================================================================
-// ATTENDANCE & IN-MEETING CHAT MESSAGES (GATED BY PLAN)
+// REAL ZOOM CHAT PARSER & DEDICATED CHAT TRANSCRIPT MODAL VIEWER
 // ============================================================================
+async function syncRealBackendSessions() {
+  try {
+    const res = await fetch('/api/sessions');
+    if (res.ok) {
+      const serverSessions = await res.json();
+      if (Array.isArray(serverSessions) && serverSessions.length > 0) {
+        appState.attendanceSessions = serverSessions;
+        persistState();
+        renderAttendanceSessionsList();
+      }
+    }
+  } catch (e) {}
+}
+
+function handleRealZoomChatUpload(event) {
+  const file = event.target.files?.[0];
+  if (!file) return;
+
+  const reader = new FileReader();
+  reader.onload = (e) => {
+    const content = e.target.result || '';
+    const lines = content.split(/\r?\n/);
+    const participantsMap = {};
+    const allChatMessages = [];
+
+    lines.forEach(line => {
+      // Standard Zoom meeting_saved_chat.txt format:
+      // 10:12:05 From Client Name to Everyone : Exact message written by client
+      const match = line.match(/^(\d{2}:\d{2}:\d{2})\s+From\s+(.+?)(?:\s+to\s+.+?)?\s*:\s*(.+)$/i);
+      if (match) {
+        const msgTime = match[1];
+        const sender = match[2].trim();
+        const msgText = match[3].trim();
+        if (!msgText) return;
+
+        allChatMessages.push({ sender, time: msgTime, text: msgText });
+        if (!participantsMap[sender]) {
+          const isCoHost = appState.coHostEmails.some(em => sender.toLowerCase().includes(em.split('@')[0]));
+          participantsMap[sender] = {
+            name: sender,
+            email: '—',
+            role: isCoHost ? 'Co-Host' : 'Participant',
+            joinTime: msgTime,
+            leaveTime: msgTime,
+            durationMins: 45,
+            messages: []
+          };
+        }
+        participantsMap[sender].leaveTime = msgTime;
+        participantsMap[sender].messages.push({ time: msgTime, text: msgText });
+      }
+    });
+
+    const wfName = appState.categories[0]?.name || file.name.replace('.txt', '');
+    const newSession = {
+      sessionId: 'SES-' + Date.now(),
+      meetingName: wfName,
+      date: new Date().toISOString().split('T')[0],
+      time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+      duration: appState.categories[0]?.formattedTotalDuration || '00:45:00',
+      participants: Object.values(participantsMap),
+      chatMessages: allChatMessages
+    };
+
+    appState.attendanceSessions.unshift(newSession);
+    persistState();
+    renderAttendanceSessionsList();
+    openSessionDetails(newSession.sessionId);
+    showToast(`✓ Imported ${allChatMessages.length} real chat message(s) from Zoom chat file!`);
+  };
+  reader.readAsText(file);
+}
+
 function renderAttendanceSessionsList() {
   const tbody = document.getElementById('sessions-summary-tbody');
   const perms = getActivePlanPermissions();
@@ -1312,7 +1399,7 @@ function renderAttendanceSessionsList() {
     tbody.innerHTML = `
       <tr>
         <td colspan="6" class="py-8 text-center text-xs text-slate-500">
-          No completed broadcast sessions yet. Click <strong>"+ Log Sample Live Session"</strong> above to preview attendance records.
+          No completed broadcast sessions yet. Real Zoom meetings and uploaded <code>meeting_saved_chat.txt</code> logs appear here automatically.
         </td>
       </tr>
     `;
@@ -1356,17 +1443,18 @@ function openSessionDetails(sessionId) {
   const tbody = document.getElementById('detail-participants-tbody');
   if (!tbody) return;
 
-  tbody.innerHTML = ses.participants.map(p => {
-    const chatBadges = (p.messages && p.messages.length > 0)
-      ? p.messages.map(m => `<span class="inline-block mr-1.5 mb-1 px-2.5 py-1 rounded-md bg-slate-100 border border-slate-300 font-mono text-xs font-bold text-slate-900">[${m.time}] "${m.text}"</span>`).join('')
-      : '<span class="text-xs text-slate-400">No messages sent</span>';
-
+  tbody.innerHTML = ses.participants.map((p, idx) => {
+    const msgCount = (p.messages || []).length;
     const roleStyle = p.role.includes('Co-Host')
       ? 'bg-amber-50 text-amber-700 border border-amber-200'
       : 'bg-emerald-50 text-emerald-700 border border-emerald-200';
 
     const chatCellHtml = perms.allowChatLogs
-      ? `<td class="py-3.5 px-3">${chatBadges}</td>`
+      ? `<td class="py-3.5 px-3 text-right">
+          <button type="button" onclick="openChatTranscriptModal(${idx})" class="px-3 py-1.5 rounded-lg ${msgCount > 0 ? 'ghl-btn-primary' : 'ghl-btn-secondary'} text-xs font-bold">
+            💬 Open Chat (${msgCount})
+          </button>
+        </td>`
       : '';
 
     return `
@@ -1383,66 +1471,65 @@ function openSessionDetails(sessionId) {
   }).join('');
 }
 
+function openChatTranscriptModal(participantIndexOrAll) {
+  const ses = appState.attendanceSessions.find(s => s.sessionId === appState.activeSessionDetailId);
+  if (!ses) return;
+
+  const modal = document.getElementById('chat-viewer-modal');
+  const titleEl = document.getElementById('chat-modal-title');
+  const subEl = document.getElementById('chat-modal-subtitle');
+  const bodyEl = document.getElementById('chat-modal-messages-body');
+  if (!modal || !bodyEl) return;
+
+  let messagesToDisplay = [];
+  if (participantIndexOrAll === 'ALL') {
+    if (titleEl) titleEl.textContent = `Full Zoom Chat — ${ses.meetingName}`;
+    if (subEl) subEl.textContent = `All messages written by participants in this session`;
+    if (ses.chatMessages && ses.chatMessages.length > 0) {
+      messagesToDisplay = ses.chatMessages;
+    } else {
+      ses.participants.forEach(p => {
+        (p.messages || []).forEach(m => {
+          messagesToDisplay.push({ sender: p.name, time: m.time, text: m.text });
+        });
+      });
+    }
+  } else {
+    const p = ses.participants[participantIndexOrAll];
+    if (!p) return;
+    if (titleEl) titleEl.textContent = `Chat Messages — ${p.name}`;
+    if (subEl) subEl.textContent = `Joined: ${p.joinTime} • Left: ${p.leaveTime}`;
+    messagesToDisplay = (p.messages || []).map(m => ({ sender: p.name, time: m.time, text: m.text }));
+  }
+
+  if (messagesToDisplay.length === 0) {
+    bodyEl.innerHTML = `
+      <div class="p-6 text-center text-xs text-slate-500">
+        No chat messages were written by this participant during the meeting.
+      </div>
+    `;
+  } else {
+    bodyEl.innerHTML = messagesToDisplay.map(m => `
+      <div class="p-3.5 rounded-2xl bg-white border border-slate-200 shadow-sm">
+        <div class="flex items-center justify-between mb-1">
+          <span class="text-xs font-extrabold text-blue-700">${m.sender}</span>
+          <span class="text-[11px] font-mono text-slate-400">${m.time}</span>
+        </div>
+        <p class="text-sm font-semibold text-slate-900 break-words">${m.text}</p>
+      </div>
+    `).join('');
+  }
+
+  modal.classList.remove('hidden');
+}
+
+function closeChatTranscriptModal() {
+  document.getElementById('chat-viewer-modal')?.classList.add('hidden');
+}
+
 function backToSessionsList() {
   document.getElementById('attendance-session-detail-card')?.classList.add('hidden');
   document.getElementById('attendance-meetings-list-card')?.classList.remove('hidden');
-}
-
-function recordAccurateDemoSession() {
-  const wfName = appState.categories[0]?.name || 'Automated Webinar Batch #1';
-  const now = new Date();
-  const dateStr = now.toISOString().split('T')[0];
-
-  const newSession = {
-    sessionId: 'SES-' + Date.now(),
-    meetingName: wfName,
-    date: dateStr,
-    time: '10:00 AM',
-    duration: '00:45:00',
-    participants: [
-      {
-        name: appState.profile.name || 'Team Lead',
-        email: appState.coHostEmails[0] || 'cohost@company.com',
-        role: 'Co-Host (Auto-Promoted)',
-        joinTime: '10:00:05 AM',
-        leaveTime: '10:45:00 AM',
-        durationMins: 45,
-        messages: [
-          { time: '10:02 AM', text: 'Welcome everyone!' }
-        ]
-      },
-      {
-        name: 'Usman Ali',
-        email: 'usman.ali@gmail.com',
-        role: 'Participant',
-        joinTime: '10:01:12 AM',
-        leaveTime: '10:45:00 AM',
-        durationMins: 44,
-        messages: [
-          { time: '10:12 AM', text: 'Q1' },
-          { time: '10:18 AM', text: '12' }
-        ]
-      },
-      {
-        name: 'Hassan Raza',
-        email: 'hassan.raza@gmail.com',
-        role: 'Participant',
-        joinTime: '10:02:40 AM',
-        leaveTime: '10:44:50 AM',
-        durationMins: 42,
-        messages: [
-          { time: '10:12 AM', text: 'Q1' },
-          { time: '10:19 AM', text: '12' },
-          { time: '10:35 AM', text: 'Clear audio & video' }
-        ]
-      }
-    ]
-  };
-
-  appState.attendanceSessions.unshift(newSession);
-  persistState();
-  renderAttendanceSessionsList();
-  showToast('✓ Recorded session! Click the meeting row to inspect participants.');
 }
 
 function exportAllSessionsSummaryCsv() {
@@ -1485,7 +1572,7 @@ function exportSingleSessionCsv() {
   if (!ses) return;
 
   const rows = [
-    ['Meeting Name', 'Date', 'Time', 'Participant Name', 'Email', 'Role', 'Join Time', 'Leave Time', 'Duration (Mins)', 'Chat Messages'],
+    ['Meeting Name', 'Date', 'Time', 'Participant Name', 'Email', 'Role', 'Join Time', 'Leave Time', 'Duration (Mins)', 'Chat Messages Written'],
     ...ses.participants.map(p => {
       const msgStr = (p.messages || []).map(m => `[${m.time}] ${m.text}`).join(' | ');
       return [
@@ -1544,15 +1631,15 @@ function renderAdminPanel() {
     } else {
       clientsTbody.innerHTML = appState.clients.map((c, idx) => `
         <tr>
-          <td class="py-3 px-3">
+          <td class="py-3.5 px-3">
             <div class="font-bold text-slate-900">${c.name}</div>
             <div class="text-slate-500 font-mono text-[11px]">${c.email}</div>
           </td>
-          <td class="py-3 px-3 font-semibold text-blue-600">${c.plan}</td>
-          <td class="py-3 px-3 text-slate-700">${c.categoriesCount || 0} Workflows</td>
+          <td class="py-3.5 px-3 font-semibold text-blue-600">${c.plan}</td>
+          <td class="py-3.5 px-3 text-slate-700">${c.categoriesCount || 0} Workflows</td>
           <td class="py-3 px-3 text-slate-700">${c.coHostsCount || 0} Team Members</td>
           <td class="py-3 px-3 text-slate-700">${c.assignedNode}</td>
-          <td class="py-3 px-3">
+          <td class="py-3.5 px-3">
             <button onclick="toggleClientStatus(${idx})" class="px-2.5 py-1 rounded text-xs font-bold ${c.status === 'Active' ? 'bg-emerald-50 text-emerald-700' : 'bg-rose-50 text-rose-700'}">
               ${c.status}
             </button>
@@ -1599,5 +1686,6 @@ window.addEventListener('DOMContentLoaded', () => {
   render12HourCalendarGrid();
   renderSavedCategories();
   renderAttendanceSessionsList();
+  syncRealBackendSessions();
   renderAdminPanel();
 });
