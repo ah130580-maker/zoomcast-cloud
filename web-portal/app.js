@@ -7,9 +7,39 @@ const MASTER_ADMIN_USER = {
   planName: 'Enterprise'
 };
 
+const DEFAULT_CMS_CONTENT = {
+  heroTitle: 'Automate Your Recorded Zoom Broadcasts On Autopilot',
+  heroSubtitle: 'Build automated meeting & webinar workflows, schedule multi-video playlists across any day or 12-hour AM/PM time slot, auto-promote your team to Co-Host, and inspect real Zoom chat messages.',
+  supportEmail: 'amirjupiteradvisers@gmail.com',
+  otpWebhookUrl: '',
+  refundPolicy: 'If you are not 100% satisfied with our setup or if the platform does not fit your workflow for any reason, you can cancel your subscription within 7 days of purchase and receive a 100% full refund of your payment — no questions asked. Simply email our support team or open a ticket in your portal within 7 days for an immediate full refund.',
+  termsBody: `1. 7-Day 100% Money-Back Refund Guarantee
+We stand behind our automated Zoom broadcast platform. If you are not satisfied with the setup or if it does not meet your business needs, you may cancel your subscription within seven (7) calendar days of your initial purchase and receive a 100% full refund.
+
+2. Account Registration & Subscription Access
+Access to the ZoomCast CRM workspace requires a verified account and an active monthly USD ($) subscription plan (Starter, Business Pro, or Enterprise). Plan features and limits are provisioned automatically according to the tier selected.
+
+3. Automated Zoom Broadcast & Co-Host Execution
+By connecting your Zoom account and scheduling workflows, you authorize ZoomCast Cloud nodes to launch your scheduled meetings, stream your uploaded recorded video playlists, auto-promote your designated Co-Host emails, and capture attendance & in-meeting chat logs on your behalf.
+
+4. Customer Support & Help Desk
+Customers may contact us anytime via email at amirjupiteradvisers@gmail.com or through the built-in Support & Tickets section inside the portal with Low, Normal, or High priority.`,
+  privacyBody: `1. Information We Collect
+We collect your name, email address, encrypted account credentials, and subscription status when you register on ZoomCast CRM.
+
+2. Zoom OAuth & Broadcast Data Security
+When you connect your Zoom account via Google OAuth, we use secure authorization tokens solely to start and manage your scheduled broadcasts. Your uploaded videos, meeting schedules, participant attendance records, and saved in-meeting chat transcripts remain strictly private to your workspace.
+
+3. Payment Security
+All subscription payments are processed in USD ($) through 256-bit SSL encrypted, PCI-DSS compliant checkout channels. We never store raw credit card CVC numbers on our servers.
+
+4. Data Control & Deletion
+You may update your profile, reset your password via 4-digit security OTP, export your attendance logs, or request complete account deletion at any time by contacting amirjupiteradvisers@gmail.com.`
+};
+
 let appState = {
   authMode: 'signin',
-  otpPurpose: 'signup', // 'signup' or 'forgot'
+  otpPurpose: 'signup',
   generatedOtp: null,
   otpTimerInterval: null,
   otpSecondsRemaining: 38,
@@ -17,6 +47,7 @@ let appState = {
   pendingForgotData: null,
   selectedPlan: null,
   activeSessionDetailId: null,
+  cms: { ...DEFAULT_CMS_CONTENT },
   profile: {
     name: '',
     email: '',
@@ -28,6 +59,7 @@ let appState = {
   usersDb: [MASTER_ADMIN_USER],
   coHostEmails: [],
   categories: [],
+  supportTickets: [],
   currentCategory: {
     editingId: null,
     status: 'Active',
@@ -151,7 +183,7 @@ let appState = {
   attendanceSessions: []
 };
 
-// Load persisted data from localStorage & ensure MASTER_ADMIN_USER is always present
+// Load persisted data from localStorage
 try {
   const savedUsers = localStorage.getItem('zoomcast_users_db');
   if (savedUsers) {
@@ -168,6 +200,9 @@ try {
     appState.usersDb.unshift({ ...MASTER_ADMIN_USER });
   }
 
+  const savedCms = localStorage.getItem('zoomcast_cms');
+  if (savedCms) appState.cms = { ...DEFAULT_CMS_CONTENT, ...JSON.parse(savedCms) };
+
   const savedProfile = localStorage.getItem('zoomcast_profile');
   if (savedProfile) appState.profile = JSON.parse(savedProfile);
 
@@ -182,17 +217,45 @@ try {
 
   const savedSessions = localStorage.getItem('zoomcast_sessions');
   if (savedSessions) appState.attendanceSessions = JSON.parse(savedSessions);
+
+  const savedTickets = localStorage.getItem('zoomcast_support_tickets');
+  if (savedTickets) appState.supportTickets = JSON.parse(savedTickets);
 } catch (e) {}
 
 function persistState() {
   try {
     localStorage.setItem('zoomcast_users_db', JSON.stringify(appState.usersDb));
+    localStorage.setItem('zoomcast_cms', JSON.stringify(appState.cms));
     localStorage.setItem('zoomcast_profile', JSON.stringify(appState.profile));
     localStorage.setItem('zoomcast_cohosts', JSON.stringify(appState.coHostEmails));
     localStorage.setItem('zoomcast_categories', JSON.stringify(appState.categories));
     localStorage.setItem('zoomcast_clients', JSON.stringify(appState.clients));
     localStorage.setItem('zoomcast_sessions', JSON.stringify(appState.attendanceSessions));
+    localStorage.setItem('zoomcast_support_tickets', JSON.stringify(appState.supportTickets));
   } catch (e) {}
+}
+
+function cleanBrowserUrlHash() {
+  try {
+    if (window.location.hash) {
+      history.replaceState(null, '', window.location.pathname + window.location.search);
+    }
+  } catch (e) {}
+}
+
+function refreshPortalHome() {
+  cleanBrowserUrlHash();
+  switchView('landing');
+  showToast('✓ Refreshed ZoomCast CRM Home');
+}
+
+function refreshDashboardView() {
+  cleanBrowserUrlHash();
+  syncProfileUI();
+  switchDashboardTab('categories');
+  const mainScroll = document.getElementById('dashboard-main-scroll');
+  if (mainScroll) mainScroll.scrollTo({ top: 0, behavior: 'smooth' });
+  showToast('✓ Workspace Refreshed');
 }
 
 function showToast(msg) {
@@ -200,7 +263,7 @@ function showToast(msg) {
   if (!box) return;
   box.textContent = msg;
   box.classList.remove('hidden');
-  setTimeout(() => box.classList.add('hidden'), 3600);
+  setTimeout(() => box.classList.add('hidden'), 3800);
 }
 
 function togglePasswordVisibility(inputId) {
@@ -209,7 +272,16 @@ function togglePasswordVisibility(inputId) {
   inp.type = inp.type === 'password' ? 'text' : 'password';
 }
 
+function triggerSmoothEnterAnimation(el) {
+  if (!el) return;
+  el.classList.remove('animate-view-enter');
+  void el.offsetWidth; // trigger reflow for smooth animation replay
+  el.classList.add('animate-view-enter');
+}
+
 function switchView(viewName) {
+  cleanBrowserUrlHash();
+
   if (viewName === 'dashboard') {
     if (!appState.profile.authToken || !appState.profile.hasActivePlan) {
       openAuthMode('signin');
@@ -218,10 +290,14 @@ function switchView(viewName) {
     }
   }
 
-  const views = ['landing', 'auth', 'dashboard'];
+  const views = ['landing', 'auth', 'dashboard', 'terms', 'privacy', 'contact'];
   views.forEach(v => {
     const el = document.getElementById('view-' + v);
-    if (el) el.classList.toggle('hidden', v !== viewName);
+    if (el) {
+      const isTarget = v === viewName;
+      el.classList.toggle('hidden', !isTarget);
+      if (isTarget) triggerSmoothEnterAnimation(el);
+    }
   });
 
   const pubHeader = document.getElementById('public-header');
@@ -236,7 +312,101 @@ function scrollToPricingSection() {
   setTimeout(() => {
     const sec = document.getElementById('pricing-section');
     if (sec) sec.scrollIntoView({ behavior: 'smooth' });
-  }, 80);
+    cleanBrowserUrlHash();
+  }, 100);
+}
+
+function scrollToFeaturesSection() {
+  switchView('landing');
+  setTimeout(() => {
+    const sec = document.getElementById('features-section');
+    if (sec) sec.scrollIntoView({ behavior: 'smooth' });
+    cleanBrowserUrlHash();
+  }, 100);
+}
+
+// ============================================================================
+// AGENCY CMS CONTENT RENDERER & EDITOR (Hero, Terms, 7-Day Refund, Privacy)
+// ============================================================================
+function renderCmsContentToDOM() {
+  const c = appState.cms || DEFAULT_CMS_CONTENT;
+
+  // Hero Headline (highlight "Zoom Broadcasts" in gold gradient if present)
+  const heroTitleEl = document.getElementById('cms-hero-title');
+  if (heroTitleEl) {
+    if (c.heroTitle.includes('Zoom Broadcasts')) {
+      heroTitleEl.innerHTML = c.heroTitle.replace(
+        'Zoom Broadcasts',
+        '<span class="text-transparent bg-clip-text bg-gradient-to-r from-yellow-300 via-amber-400 to-yellow-500">Zoom Broadcasts</span>'
+      );
+    } else {
+      heroTitleEl.textContent = c.heroTitle;
+    }
+  }
+
+  const heroSubEl = document.getElementById('cms-hero-subtitle');
+  if (heroSubEl) heroSubEl.textContent = c.heroSubtitle;
+
+  const refundEl = document.getElementById('cms-refund-policy-display');
+  if (refundEl) refundEl.textContent = c.refundPolicy;
+
+  const termsEl = document.getElementById('cms-terms-body-display');
+  if (termsEl) termsEl.textContent = c.termsBody;
+
+  const privEl = document.getElementById('cms-privacy-body-display');
+  if (privEl) privEl.textContent = c.privacyBody;
+
+  const emailIds = ['terms-support-email', 'privacy-support-email'];
+  emailIds.forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.textContent = c.supportEmail;
+  });
+
+  const emailLinks = ['contact-page-email-link', 'portal-support-email-link'];
+  emailLinks.forEach(id => {
+    const el = document.getElementById(id);
+    if (el) {
+      el.textContent = c.supportEmail;
+      el.href = `mailto:${c.supportEmail}`;
+    }
+  });
+
+  // Populate Agency CMS Editor inputs if on screen
+  const editHeroTitle = document.getElementById('cms-edit-hero-title');
+  const editHeroSub = document.getElementById('cms-edit-hero-subtitle');
+  const editEmail = document.getElementById('cms-edit-support-email');
+  const editRefund = document.getElementById('cms-edit-refund-policy');
+  const editTerms = document.getElementById('cms-edit-terms-body');
+  const editPrivacy = document.getElementById('cms-edit-privacy-body');
+  const editWebhook = document.getElementById('cms-otp-webhook-url');
+
+  if (editHeroTitle) editHeroTitle.value = c.heroTitle;
+  if (editHeroSub) editHeroSub.value = c.heroSubtitle;
+  if (editEmail) editEmail.value = c.supportEmail;
+  if (editRefund) editRefund.value = c.refundPolicy;
+  if (editTerms) editTerms.value = c.termsBody;
+  if (editPrivacy) editPrivacy.value = c.privacyBody;
+  if (editWebhook && c.otpWebhookUrl) editWebhook.value = c.otpWebhookUrl;
+}
+
+function saveAgencyCmsSettings() {
+  const editHeroTitle = document.getElementById('cms-edit-hero-title');
+  const editHeroSub = document.getElementById('cms-edit-hero-subtitle');
+  const editEmail = document.getElementById('cms-edit-support-email');
+  const editRefund = document.getElementById('cms-edit-refund-policy');
+  const editTerms = document.getElementById('cms-edit-terms-body');
+  const editPrivacy = document.getElementById('cms-edit-privacy-body');
+
+  if (editHeroTitle) appState.cms.heroTitle = editHeroTitle.value.trim() || DEFAULT_CMS_CONTENT.heroTitle;
+  if (editHeroSub) appState.cms.heroSubtitle = editHeroSub.value.trim() || DEFAULT_CMS_CONTENT.heroSubtitle;
+  if (editEmail) appState.cms.supportEmail = editEmail.value.trim() || DEFAULT_CMS_CONTENT.supportEmail;
+  if (editRefund) appState.cms.refundPolicy = editRefund.value.trim() || DEFAULT_CMS_CONTENT.refundPolicy;
+  if (editTerms) appState.cms.termsBody = editTerms.value.trim() || DEFAULT_CMS_CONTENT.termsBody;
+  if (editPrivacy) appState.cms.privacyBody = editPrivacy.value.trim() || DEFAULT_CMS_CONTENT.privacyBody;
+
+  persistState();
+  renderCmsContentToDOM();
+  showToast('✓ Website Hero, Terms (7-Day Refund), and Privacy Policy updated live!');
 }
 
 // ============================================================================
@@ -248,13 +418,23 @@ function getActivePlanPermissions() {
   return plan.permissions;
 }
 
+function isMasterAgencyOwner() {
+  return (appState.profile.email || '').toLowerCase() === MASTER_ADMIN_USER.email.toLowerCase();
+}
+
 function updateBentoStats() {
   const wfStat = document.getElementById('bento-stat-workflows');
   const chStat = document.getElementById('bento-stat-cohosts');
   const sesStat = document.getElementById('bento-stat-sessions');
+  const tckStat = document.getElementById('bento-stat-tickets');
+
   if (wfStat) wfStat.textContent = `${appState.categories.length} Workflows`;
   if (chStat) chStat.textContent = `${appState.coHostEmails.length} Members`;
   if (sesStat) sesStat.textContent = `${appState.attendanceSessions.length} Sessions`;
+  if (tckStat) tckStat.textContent = `${appState.supportTickets.length} Tickets`;
+
+  const agencyBadge = document.getElementById('agency-unread-tickets-badge');
+  if (agencyBadge) agencyBadge.textContent = String(appState.supportTickets.length);
 }
 
 function applyPlanFeatureRestrictions() {
@@ -270,7 +450,12 @@ function applyPlanFeatureRestrictions() {
     sbUpgradeBtn.classList.toggle('hidden', planName === 'Enterprise');
   }
 
-  // 1. Attendance Tab Visibility (Hidden on Starter Plan)
+  // Show Agency Admin View button only for Master Owner (amirjupiteradvisers@gmail.com)
+  const isOwner = isMasterAgencyOwner();
+  document.getElementById('dtab-agency')?.classList.toggle('hidden', !isOwner);
+  document.getElementById('header-agency-btn')?.classList.toggle('hidden', !isOwner);
+
+  // 1. Attendance Tab Visibility
   const attTabBtn = document.getElementById('dtab-attendance');
   const attTabLabel = document.getElementById('dtab-attendance-label');
   if (attTabBtn) {
@@ -279,18 +464,12 @@ function applyPlanFeatureRestrictions() {
   if (attTabLabel) {
     attTabLabel.textContent = perms.allowChatLogs ? 'Attendance & Chat Logs' : 'Attendance Report';
   }
-  const attContent = document.getElementById('dash-content-attendance');
-  if (!perms.allowAttendanceTab && attContent && !attContent.classList.contains('hidden')) {
-    switchDashboardTab('categories');
-  }
 
   // 2. Draft Mode Toggle & Save as Draft Button
-  const draftToggleWrap = document.getElementById('builder-draft-toggle-wrap');
-  const btnSaveDraft = document.getElementById('btn-save-draft');
-  if (draftToggleWrap) draftToggleWrap.classList.toggle('hidden', !perms.allowDraftMode);
-  if (btnSaveDraft) btnSaveDraft.classList.toggle('hidden', !perms.allowDraftMode);
+  document.getElementById('builder-draft-toggle-wrap')?.classList.toggle('hidden', !perms.allowDraftMode);
+  document.getElementById('btn-save-draft')?.classList.toggle('hidden', !perms.allowDraftMode);
 
-  // 3. Session Type / Webinar Selector (Enterprise Only)
+  // 3. Session Type / Webinar Selector
   const sesTypeWrap = document.getElementById('session-type-wrap');
   const wfNameCol = document.getElementById('workflow-name-col');
   if (sesTypeWrap) sesTypeWrap.classList.toggle('hidden', !perms.allowWebinars);
@@ -312,7 +491,7 @@ function applyPlanFeatureRestrictions() {
     appState.currentCategory.selectedTimes = appState.currentCategory.selectedTimes.slice(0, perms.maxDailyTimes);
   }
 
-  // 5. Video Upload (Single vs Multi-Video Playlist)
+  // 5. Video Upload
   const vidInput = document.getElementById('cat-video-input');
   const vidHeading = document.getElementById('video-upload-heading');
   const vidSub = document.getElementById('video-upload-subtext');
@@ -340,16 +519,13 @@ function applyPlanFeatureRestrictions() {
     }
   }
 
-  // 6. Export CSV Buttons & Saved Chat View (Enterprise Only)
-  const btnExpSummary = document.getElementById('btn-export-summary-csv');
-  const btnExpDetail = document.getElementById('btn-export-detail-csv');
-  const btnFullChat = document.getElementById('btn-open-full-chat');
-  const thChat = document.getElementById('th-chat-messages');
+  // 6. Export CSV Buttons & Saved Chat View
+  document.getElementById('btn-export-summary-csv')?.classList.toggle('hidden', !perms.allowCsvExport);
+  document.getElementById('btn-export-detail-csv')?.classList.toggle('hidden', !perms.allowCsvExport);
+  document.getElementById('btn-open-full-chat')?.classList.toggle('hidden', !perms.allowChatLogs);
+  document.getElementById('th-chat-messages')?.classList.toggle('hidden', !perms.allowChatLogs);
+
   const detailHeading = document.getElementById('detail-table-heading');
-  if (btnExpSummary) btnExpSummary.classList.toggle('hidden', !perms.allowCsvExport);
-  if (btnExpDetail) btnExpDetail.classList.toggle('hidden', !perms.allowCsvExport);
-  if (btnFullChat) btnFullChat.classList.toggle('hidden', !perms.allowChatLogs);
-  if (thChat) thChat.classList.toggle('hidden', !perms.allowChatLogs);
   if (detailHeading) {
     detailHeading.textContent = perms.allowChatLogs
       ? 'Participants List & Real In-Meeting Chat Transcripts'
@@ -377,6 +553,8 @@ function applyPlanFeatureRestrictions() {
   renderSavedCategories();
   renderCoHostEmails();
   renderAttendanceSessionsList();
+  renderSupportTicketsUI();
+  renderAdminPanel();
   if (appState.activeSessionDetailId) {
     openSessionDetails(appState.activeSessionDetailId);
   }
@@ -389,7 +567,11 @@ function showAuthStep(stepName) {
   const steps = ['account', 'otp', 'plan', 'payment'];
   steps.forEach(s => {
     const el = document.getElementById('auth-step-' + s);
-    if (el) el.classList.toggle('hidden', s !== stepName);
+    if (el) {
+      const isTarget = s === stepName;
+      el.classList.toggle('hidden', !isTarget);
+      if (isTarget) triggerSmoothEnterAnimation(el);
+    }
   });
   if (stepName === 'plan') {
     renderModalPlanSelector();
@@ -428,7 +610,6 @@ function openAuthMode(mode) {
     }
   };
 
-  // Run the exact 3D Diamond Flip Morph animation when switching between Login & Sign Up
   if (alreadyInAuth && modeChanged && wrapper && loader) {
     wrapper.classList.add('morph-diamond-active');
     loader.classList.remove('opacity-0', 'scale-50');
@@ -460,8 +641,83 @@ function openGetStartedModal() {
 }
 
 // ============================================================================
-// EXACT GLASSY 4-DIGIT OTP ANIMATION ENGINE (otp.mp4)
+// EXACT GLASSY 4-DIGIT OTP ENGINE + INSTANT PUSH EMAIL NOTIFICATION
 // ============================================================================
+function showInstantOtpPushBanner(email, otp) {
+  const popup = document.getElementById('instant-email-otp-popup');
+  const recEl = document.getElementById('popup-otp-recipient');
+  const digEl = document.getElementById('popup-otp-digits');
+  if (!popup) return;
+  if (recEl) recEl.innerHTML = `To: <strong class="text-white">${email}</strong> — Use this 4-digit security code:`;
+  if (digEl) digEl.textContent = otp;
+  popup.classList.remove('hidden');
+  triggerSmoothEnterAnimation(popup);
+}
+
+function autoFillOtpFromBanner() {
+  const otp = String(appState.generatedOtp || appState.profileResetOtp || '');
+  if (!otp) return;
+
+  // If on Auth OTP screen
+  if (!document.getElementById('auth-step-otp')?.classList.contains('hidden')) {
+    for (let i = 0; i < 4; i++) {
+      const box = document.getElementById(`otp-d${i}`);
+      if (box) {
+        box.value = otp[i] || '';
+        box.classList.add('filled');
+      }
+    }
+    document.getElementById('instant-email-otp-popup')?.classList.add('hidden');
+    triggerGlassyOtpVerifyAnimation();
+    return;
+  }
+
+  // If on Profile OTP reset
+  const profOtpInp = document.getElementById('prof-reset-otp');
+  if (profOtpInp) {
+    profOtpInp.value = otp;
+    document.getElementById('instant-email-otp-popup')?.classList.add('hidden');
+    showToast('✓ 4-Digit OTP Auto-Filled! Enter your new password and click Verify.');
+  }
+}
+
+async function dispatchOtpEmailEverywhere(email, otp, subjectText) {
+  // 1. Show Instant Push Mail Popup at top-right so user NEVER misses the code
+  showInstantOtpPushBanner(email, otp);
+
+  // 2. Try Cloud Google Apps Script Webhook if configured
+  if (appState.cms.otpWebhookUrl) {
+    try {
+      fetch(appState.cms.otpWebhookUrl, {
+        method: 'POST',
+        mode: 'no-cors',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          to: email,
+          otp,
+          subject: subjectText || `Your ZoomCast CRM 4-Digit Security OTP: ${otp}`
+        })
+      });
+    } catch (e) {}
+  }
+
+  // 3. Try Local Server.ps1 SMTP API
+  let sentViaSmtp = false;
+  try {
+    const res = await fetch('/api/send-otp', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email, otp })
+    });
+    if (res.ok) {
+      const data = await res.json();
+      if (data.sentEmail) sentViaSmtp = true;
+    }
+  } catch (e) {}
+
+  return sentViaSmtp;
+}
+
 function startOtpCountdownTimer() {
   if (appState.otpTimerInterval) clearInterval(appState.otpTimerInterval);
   appState.otpSecondsRemaining = 38;
@@ -498,7 +754,7 @@ function resetGlassyOtpStageUI() {
   const btn = document.getElementById('otp-submit-btn');
 
   if (row) {
-    row.classList.remove('hidden', 'otp-stage-orbit', 'otp-stage-converge');
+    row.classList.remove('hidden', 'otp-stage-orbit');
   }
   if (merged) {
     merged.classList.add('hidden');
@@ -513,7 +769,7 @@ function resetGlassyOtpStageUI() {
   if (iconShield) iconShield.classList.add('hidden');
 
   if (titleEl) titleEl.innerHTML = `Verify <span class="text-yellow-400">OTP</span>`;
-  if (subEl) subEl.textContent = `Enter the 4-digit security code sent to your device`;
+  if (subEl) subEl.textContent = `Enter the 4-digit security code sent to your email`;
 
   if (btn) {
     btn.className = 'w-full py-3.5 rounded-xl btn-gold text-sm flex items-center justify-center gap-2';
@@ -531,7 +787,7 @@ function resetGlassyOtpStageUI() {
 
 async function launchGlassyOtpScreen(email, purpose) {
   appState.otpPurpose = purpose;
-  const otp = String(Math.floor(1000 + Math.random() * 9000)); // 4-digit security code matching otp.mp4
+  const otp = String(Math.floor(1000 + Math.random() * 9000));
   appState.generatedOtp = otp;
 
   resetGlassyOtpStageUI();
@@ -539,24 +795,11 @@ async function launchGlassyOtpScreen(email, purpose) {
   startOtpCountdownTimer();
 
   const codePill = document.getElementById('otp-live-code-pill');
-  let sentViaSmtp = false;
-  try {
-    const res = await fetch('/api/send-otp', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ email, otp })
-    });
-    if (res.ok) {
-      const data = await res.json();
-      if (data.sentEmail) sentViaSmtp = true;
-    }
-  } catch (e) {}
-
   if (codePill) {
-    codePill.textContent = sentViaSmtp
-      ? `Sent to ${email} • Security Code: ${otp}`
-      : `Security Code for ${email}: ${otp}`;
+    codePill.innerHTML = `<span>Code for ${email}: <strong class="text-white underline">${otp}</strong></span>`;
   }
+
+  await dispatchOtpEmailEverywhere(email, otp, `ZoomCast 4-Digit Security OTP: ${otp}`);
 
   setTimeout(() => {
     document.getElementById('otp-d0')?.focus();
@@ -605,9 +848,11 @@ function triggerGlassyOtpVerifyAnimation() {
     return;
   }
   if (entered !== appState.generatedOtp) {
-    showToast('Invalid 4-digit OTP code. Please check the security code shown above.');
+    showToast(`Invalid 4-digit OTP code. Please enter ${appState.generatedOtp}.`);
     return;
   }
+
+  document.getElementById('instant-email-otp-popup')?.classList.add('hidden');
 
   const row = document.getElementById('otp-boxes-row');
   const merged = document.getElementById('otp-merged-box');
@@ -619,7 +864,7 @@ function triggerGlassyOtpVerifyAnimation() {
   const subEl = document.getElementById('otp-subtitle-text');
   const btn = document.getElementById('otp-submit-btn');
 
-  // Phase 1 (00:01 - 00:02): Button shows "Verifying Code..." + 4 Boxes form Rotating Diamond Orbit
+  // Phase 1: Diamond Orbit Spin
   if (btn) {
     btn.innerHTML = `<span class="inline-block w-4 h-4 border-2 border-black border-t-transparent rounded-full animate-spin"></span><span>Verifying Code...</span>`;
   }
@@ -627,13 +872,13 @@ function triggerGlassyOtpVerifyAnimation() {
     row.classList.add('otp-stage-orbit');
   }
 
-  // Phase 2 (00:03): Converge into single center glowing square
+  // Phase 2: Converge into single center glowing square
   setTimeout(() => {
     if (row) row.classList.add('hidden');
     if (merged) merged.classList.remove('hidden');
   }, 850);
 
-  // Phase 3 (00:04): Morph to Emerald Green Checkmark + "Verified Successfully" + "Verified & Secured"
+  // Phase 3: Morph to Emerald Green Checkmark + "Verified Successfully"
   setTimeout(() => {
     if (merged) {
       merged.className = 'w-16 h-16 rounded-2xl border-2 border-emerald-400 bg-emerald-500/20 flex items-center justify-center shadow-2xl shadow-emerald-500/30 transition-all duration-500 scale-105';
@@ -655,7 +900,7 @@ function triggerGlassyOtpVerifyAnimation() {
     }
   }, 1350);
 
-  // Phase 4: Complete action after user sees "Verified Successfully"
+  // Phase 4: Complete action
   setTimeout(() => {
     if (appState.otpPurpose === 'forgot' && appState.pendingForgotData) {
       const { email, newPass } = appState.pendingForgotData;
@@ -762,20 +1007,25 @@ function startForgotPasswordOtpFlow() {
 }
 
 async function saveFreeSmtpConfig() {
+  const webhookUrl = (document.getElementById('cms-otp-webhook-url')?.value || '').trim();
   const gmailUser = (document.getElementById('smtp-gmail-user')?.value || '').trim();
   const gmailAppPassword = (document.getElementById('smtp-gmail-pass')?.value || '').trim();
-  if (!gmailUser || !gmailAppPassword) {
-    showToast('Please enter both Gmail Address and 16-Digit App Password');
-    return;
+
+  if (webhookUrl) {
+    appState.cms.otpWebhookUrl = webhookUrl;
+    persistState();
   }
-  try {
-    await fetch('/api/save-smtp', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ gmailUser, gmailAppPassword })
-    });
-  } catch (e) {}
-  showToast('✓ Free Gmail SMTP OTP Sender Activated!');
+
+  if (gmailUser && gmailAppPassword) {
+    try {
+      await fetch('/api/save-smtp', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ gmailUser, gmailAppPassword })
+      });
+    } catch (e) {}
+  }
+  showToast('✓ Email OTP Delivery Settings Saved & Activated!');
 }
 
 function handleEmailSignIn() {
@@ -827,7 +1077,7 @@ function handleGoogleAuthContinue() {
   if (appState.authMode === 'signin') {
     const matchedUser = appState.usersDb.find(u => u.email.toLowerCase() === enteredEmail && u.hasActivePlan);
     if (!matchedUser) {
-      showToast('No active paid subscription found for this account. Please Sign Up and subscribe first.');
+      showToast('No active paid subscription found for this Google account. Please Sign Up and subscribe first.');
       openAuthMode('signup');
       return;
     }
@@ -857,7 +1107,7 @@ function handleGoogleAuthContinue() {
     };
     persistState();
     showAuthStep('plan');
-    showToast('Account linked. Please select a plan and complete payment to unlock access.');
+    showToast('Google account linked. Please select a plan and complete payment to unlock access.');
   }
 }
 
@@ -993,8 +1243,6 @@ function completeSubscriptionAndLogin() {
     return;
   }
 
-  // Exact Video Animation (Payment_page_.mp4 00:02 -> 00:05):
-  // 1. Flip card to front, hide right form, center the 3D card, sweep gold shimmer & fill progress bar
   flip3DCard(false);
   const cardCol = document.getElementById('payment-card-col');
   const formCol = document.getElementById('payment-form-col');
@@ -1016,7 +1264,6 @@ function completeSubscriptionAndLogin() {
     if (progFill) progFill.style.width = '100%';
   }, 80);
 
-  // 2. At 1.3s (Frame 00:04): Morph 3D Card into Emerald Green Platinum Card + Show "Payment Successful!"
   setTimeout(() => {
     if (cardFront) {
       cardFront.classList.remove('card-shimmer');
@@ -1027,7 +1274,6 @@ function completeSubscriptionAndLogin() {
     if (successBadge) successBadge.classList.remove('hidden');
   }, 1300);
 
-  // 3. Activate Plan & Open Glassy Dashboard
   setTimeout(() => {
     const planName = appState.selectedPlan ? appState.selectedPlan.name : 'Business Pro';
     appState.profile.hasActivePlan = true;
@@ -1072,35 +1318,351 @@ function logoutClient() {
 }
 
 function switchDashboardTab(tab) {
+  cleanBrowserUrlHash();
   const perms = getActivePlanPermissions();
   if (tab === 'attendance' && !perms.allowAttendanceTab) {
     showToast('Attendance Reports are available in Business Pro & Enterprise plans.');
     return;
   }
+  if (tab === 'agency' && !isMasterAgencyOwner()) {
+    showToast('Agency Admin View is restricted to the master agency owner.');
+    return;
+  }
 
-  const tabs = ['categories', 'attendance', 'profile'];
+  const tabs = ['categories', 'attendance', 'support', 'profile', 'agency'];
   tabs.forEach(t => {
     const content = document.getElementById('dash-content-' + t);
     const btn = document.getElementById('dtab-' + t);
-    if (content) content.classList.toggle('hidden', t !== tab);
-    if (btn) {
+    if (content) {
+      const isTarget = t === tab;
+      content.classList.toggle('hidden', !isTarget);
+      if (isTarget) triggerSmoothEnterAnimation(content);
+    }
+    if (btn && t !== 'agency') {
       btn.className = t === tab
-        ? 'flex items-center gap-3 px-4 py-3 rounded-2xl text-xs sm:text-sm font-bold bg-gradient-to-r from-blue-600/90 to-indigo-600/80 text-white shadow-lg shadow-blue-600/25 border border-blue-400/30 whitespace-nowrap text-left transition'
-        : 'flex items-center gap-3 px-4 py-3 rounded-2xl text-xs sm:text-sm font-semibold text-slate-300 hover:bg-white/5 hover:text-white whitespace-nowrap text-left transition';
+        ? 'flex items-center justify-between gap-3 px-4 py-3 rounded-2xl text-xs sm:text-sm font-bold bg-gradient-to-r from-blue-600/90 to-indigo-600/80 text-white shadow-lg shadow-blue-600/25 border border-blue-400/30 whitespace-nowrap text-left transition'
+        : 'flex items-center justify-between gap-3 px-4 py-3 rounded-2xl text-xs sm:text-sm font-semibold text-slate-300 hover:bg-white/5 hover:text-white whitespace-nowrap text-left transition';
       if (t === 'attendance' && !perms.allowAttendanceTab) {
         btn.classList.add('hidden');
       }
     }
   });
 
+  if (tab === 'support') renderSupportTicketsUI();
+  if (tab === 'agency') {
+    renderSupportTicketsUI();
+    renderCmsContentToDOM();
+    renderAdminPanel();
+  }
+
   const userName = appState.profile.name || 'Amir Hayat';
   const titles = {
     categories: `Hi, ${userName} 👋 — Meeting Workflows`,
     attendance: perms.allowChatLogs ? 'Broadcast Attendance & Live Chat Logs' : 'Broadcast Attendance Report',
-    profile: 'Security & Active Workspace Sessions'
+    support: '24/7 Customer Support & Priority Ticket Desk',
+    profile: 'Security & Active Workspace Sessions',
+    agency: '⚡ Agency Admin Command Center'
   };
   const titleEl = document.getElementById('workspace-page-title');
   if (titleEl && titles[tab]) titleEl.textContent = titles[tab];
+}
+
+// ============================================================================
+// SUPPORT TICKET SYSTEM (LOW / NORMAL / HIGH PRIORITY + AUTO MESSAGE + REPLY)
+// ============================================================================
+function createTicketRecord(clientName, clientEmail, clientPlan, subject, priority, messageText) {
+  const ticketId = 'TCK-' + Math.floor(1000 + Math.random() * 9000);
+  const nowStr = new Date().toLocaleString([], { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' });
+
+  const autoGreeting = `Hello ${clientName}, thank you for contacting ZoomCast Support! Your ticket (#${ticketId}) has been logged with [${priority.toUpperCase()}] priority. Our agency engineering team (${appState.cms.supportEmail}) has received your message and will reply right here in your portal shortly.`;
+
+  const newTicket = {
+    id: ticketId,
+    clientName: clientName || 'Workspace Client',
+    clientEmail: clientEmail || 'client@domain.com',
+    clientPlan: clientPlan || 'Subscriber',
+    subject,
+    priority, // 'Low' | 'Normal' | 'High'
+    status: 'Open (Awaiting Agency Reply)',
+    createdAt: nowStr,
+    messages: [
+      {
+        senderRole: 'Client',
+        senderName: clientName || 'Client',
+        time: nowStr,
+        text: messageText
+      },
+      {
+        senderRole: 'System Auto-Reply',
+        senderName: 'ZoomCast Support Bot',
+        time: nowStr,
+        text: autoGreeting
+      }
+    ]
+  };
+
+  appState.supportTickets.unshift(newTicket);
+  persistState();
+  updateBentoStats();
+  renderSupportTicketsUI();
+
+  // Optional webhook notification to agency owner
+  if (appState.cms.otpWebhookUrl) {
+    try {
+      fetch(appState.cms.otpWebhookUrl, {
+        method: 'POST',
+        mode: 'no-cors',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          to: appState.cms.supportEmail,
+          subject: `[${priority} Priority Ticket #${ticketId}] ${subject} — from ${clientName} (${clientEmail})`,
+          otp: messageText
+        })
+      });
+    } catch (e) {}
+  }
+
+  return newTicket;
+}
+
+function createClientSupportTicket() {
+  const subjInp = document.getElementById('client-ticket-subject');
+  const prioInp = document.getElementById('client-ticket-priority');
+  const msgInp = document.getElementById('client-ticket-message');
+
+  const subject = (subjInp?.value || '').trim();
+  const priority = prioInp?.value || 'Normal';
+  const message = (msgInp?.value || '').trim();
+
+  if (!subject || !message) {
+    showToast('Please enter both a Ticket Subject and your Message.');
+    return;
+  }
+
+  const tck = createTicketRecord(
+    appState.profile.name || 'Workspace User',
+    appState.profile.email || 'user@zoomcast.com',
+    appState.profile.planName || 'Starter Plan',
+    subject,
+    priority,
+    message
+  );
+
+  if (subjInp) subjInp.value = '';
+  if (msgInp) msgInp.value = '';
+
+  showToast(`✓ Ticket #${tck.id} (${priority} Priority) created! Agency team notified.`);
+}
+
+function submitPublicSupportTicket() {
+  const nameInp = document.getElementById('pub-ticket-name');
+  const emailInp = document.getElementById('pub-ticket-email');
+  const subjInp = document.getElementById('pub-ticket-subject');
+  const prioInp = document.getElementById('pub-ticket-priority');
+  const msgInp = document.getElementById('pub-ticket-message');
+
+  const name = (nameInp?.value || '').trim();
+  const email = (emailInp?.value || '').trim();
+  const subject = (subjInp?.value || '').trim();
+  const priority = prioInp?.value || 'Normal';
+  const message = (msgInp?.value || '').trim();
+
+  if (!name || !email || !subject || !message) {
+    showToast('Please fill in your Name, Email, Subject, and Message.');
+    return;
+  }
+
+  const tck = createTicketRecord(name, email, 'Public Inquiry', subject, priority, message);
+  if (subjInp) subjInp.value = '';
+  if (msgInp) msgInp.value = '';
+
+  showToast(`✓ Support Ticket #${tck.id} received! We will reply to ${email} and in your portal.`);
+}
+
+function sendClientTicketFollowUp(ticketId) {
+  const inp = document.getElementById(`client-reply-inp-${ticketId}`);
+  const text = (inp?.value || '').trim();
+  if (!text) return;
+
+  const tck = appState.supportTickets.find(t => t.id === ticketId);
+  if (!tck) return;
+
+  const nowStr = new Date().toLocaleString([], { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' });
+  tck.messages.push({
+    senderRole: 'Client',
+    senderName: appState.profile.name || tck.clientName,
+    time: nowStr,
+    text
+  });
+  tck.status = 'Client Replied (Open)';
+  persistState();
+  renderSupportTicketsUI();
+  showToast('✓ Message sent to Agency Support');
+}
+
+function sendAgencyTicketReply(ticketId) {
+  const inp = document.getElementById(`agency-reply-inp-${ticketId}`);
+  const text = (inp?.value || '').trim();
+  if (!text) {
+    showToast('Please type a reply message first.');
+    return;
+  }
+
+  const tck = appState.supportTickets.find(t => t.id === ticketId);
+  if (!tck) return;
+
+  const nowStr = new Date().toLocaleString([], { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' });
+  tck.messages.push({
+    senderRole: 'Agency Admin',
+    senderName: 'Amir Hayat (Agency Support)',
+    time: nowStr,
+    text
+  });
+  tck.status = 'Answered by Agency ✓';
+
+  persistState();
+  renderSupportTicketsUI();
+  showToast(`✓ Reply delivered to ${tck.clientName}'s Portal!`);
+}
+
+function getPriorityBadgeHtml(priority) {
+  if (priority === 'High') {
+    return `<span class="px-2.5 py-0.5 rounded-full text-[10px] font-extrabold bg-rose-500/20 text-rose-400 border border-rose-500/40">🔴 HIGH PRIORITY</span>`;
+  }
+  if (priority === 'Low') {
+    return `<span class="px-2.5 py-0.5 rounded-full text-[10px] font-extrabold bg-emerald-500/20 text-emerald-400 border border-emerald-500/40">🟢 LOW PRIORITY</span>`;
+  }
+  return `<span class="px-2.5 py-0.5 rounded-full text-[10px] font-extrabold bg-yellow-500/20 text-yellow-400 border border-yellow-500/40">🟡 NORMAL PRIORITY</span>`;
+}
+
+function renderSupportTicketsUI() {
+  // 1. Render Client's Tickets inside Portal Support Tab
+  const clientListEl = document.getElementById('client-tickets-list');
+  if (clientListEl) {
+    const myEmail = (appState.profile.email || '').toLowerCase();
+    const myTickets = isMasterAgencyOwner()
+      ? appState.supportTickets
+      : appState.supportTickets.filter(t => t.clientEmail.toLowerCase() === myEmail);
+
+    if (myTickets.length === 0) {
+      clientListEl.innerHTML = `
+        <div class="p-8 rounded-2xl glass-card-subtle text-center text-xs text-slate-400">
+          You have no support tickets yet. Submit a ticket on the left with Low, Normal, or High priority and our team will respond right here.
+        </div>
+      `;
+    } else {
+      clientListEl.innerHTML = myTickets.map(t => {
+        const msgsHtml = (t.messages || []).map(m => {
+          const isAgency = m.senderRole === 'Agency Admin';
+          const isBot = m.senderRole === 'System Auto-Reply';
+          const bubbleStyle = isAgency
+            ? 'bg-yellow-500/15 border border-yellow-500/40'
+            : isBot
+              ? 'bg-blue-500/10 border border-blue-500/30'
+              : 'bg-white/5 border border-white/10';
+          const nameColor = isAgency ? 'text-yellow-400' : isBot ? 'text-blue-400' : 'text-emerald-400';
+
+          return `
+            <div class="p-3 rounded-xl ${bubbleStyle}">
+              <div class="flex items-center justify-between text-[11px] mb-1">
+                <span class="font-extrabold ${nameColor}">${m.senderName} (${m.senderRole})</span>
+                <span class="text-slate-400 font-mono">${m.time}</span>
+              </div>
+              <p class="text-xs text-slate-200 leading-relaxed break-words">${m.text}</p>
+            </div>
+          `;
+        }).join('');
+
+        return `
+          <div class="p-4 rounded-2xl glass-card-subtle space-y-3">
+            <div class="flex flex-wrap items-center justify-between gap-2 border-b border-white/10 pb-2.5">
+              <div>
+                <div class="flex items-center gap-2">
+                  <span class="font-mono text-xs font-extrabold text-yellow-400">#${t.id}</span>
+                  <h4 class="text-sm font-extrabold text-white">${t.subject}</h4>
+                </div>
+                <span class="text-[11px] text-slate-400">${t.createdAt} • Status: <strong class="text-emerald-400">${t.status}</strong></span>
+              </div>
+              ${getPriorityBadgeHtml(t.priority)}
+            </div>
+
+            <div class="space-y-2 max-h-60 overflow-y-auto pr-1">
+              ${msgsHtml}
+            </div>
+
+            <div class="flex gap-2 pt-1">
+              <input id="client-reply-inp-${t.id}" type="text" placeholder="Write a follow-up message..." class="flex-1 px-3 py-2 rounded-xl glass-input text-xs" onkeydown="if(event.key==='Enter') sendClientTicketFollowUp('${t.id}')" />
+              <button type="button" onclick="sendClientTicketFollowUp('${t.id}')" class="px-3.5 py-2 rounded-xl btn-gold text-xs">
+                Send
+              </button>
+            </div>
+          </div>
+        `;
+      }).join('');
+    }
+  }
+
+  // 2. Render All Client Tickets inside Agency Admin View Inbox
+  const agencyContainer = document.getElementById('agency-tickets-container');
+  const countLbl = document.getElementById('agency-tickets-count-label');
+  const adminStatTickets = document.getElementById('admin-stat-tickets');
+
+  if (countLbl) countLbl.textContent = `${appState.supportTickets.length} Total Tickets`;
+  if (adminStatTickets) adminStatTickets.textContent = `${appState.supportTickets.length} Tickets`;
+
+  if (agencyContainer) {
+    if (appState.supportTickets.length === 0) {
+      agencyContainer.innerHTML = `
+        <div class="p-6 rounded-2xl glass-card-subtle text-center text-xs text-slate-400">
+          No client support tickets submitted yet. When any client opens a ticket, it appears here with their Name, Email, Plan, and Priority.
+        </div>
+      `;
+    } else {
+      agencyContainer.innerHTML = appState.supportTickets.map(t => {
+        const msgsHtml = (t.messages || []).map(m => {
+          const isAgency = m.senderRole === 'Agency Admin';
+          return `
+            <div class="p-3 rounded-xl ${isAgency ? 'bg-yellow-500/15 border border-yellow-500/40' : 'bg-white/5 border border-white/10'}">
+              <div class="flex items-center justify-between text-[11px] mb-1">
+                <span class="font-extrabold ${isAgency ? 'text-yellow-400' : 'text-white'}">${m.senderName} (${m.senderRole})</span>
+                <span class="text-slate-400 font-mono">${m.time}</span>
+              </div>
+              <p class="text-xs text-slate-200 leading-relaxed">${m.text}</p>
+            </div>
+          `;
+        }).join('');
+
+        return `
+          <div class="p-5 rounded-2xl glass-card-subtle space-y-3 border border-white/10">
+            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-white/10 pb-3">
+              <div>
+                <div class="flex items-center gap-2 flex-wrap">
+                  <span class="font-mono text-xs font-extrabold text-yellow-400">#${t.id}</span>
+                  <h4 class="text-sm font-extrabold text-white">${t.subject}</h4>
+                  ${getPriorityBadgeHtml(t.priority)}
+                </div>
+                <p class="text-xs text-slate-300 mt-1">
+                  Client: <strong class="text-white">${t.clientName}</strong> (<a href="mailto:${t.clientEmail}" class="text-yellow-400 underline">${t.clientEmail}</a>) • Plan: <span class="text-emerald-400 font-bold">${t.clientPlan}</span>
+                </p>
+              </div>
+              <span class="text-xs font-bold text-emerald-400">${t.status}</span>
+            </div>
+
+            <div class="space-y-2 max-h-56 overflow-y-auto pr-1">
+              ${msgsHtml}
+            </div>
+
+            <div class="flex flex-col sm:flex-row gap-2 pt-2">
+              <input id="agency-reply-inp-${t.id}" type="text" placeholder="Type agency reply to ${t.clientName} (will appear in their portal)..." class="flex-1 px-4 py-2.5 rounded-xl glass-input text-xs" onkeydown="if(event.key==='Enter') sendAgencyTicketReply('${t.id}')" />
+              <button type="button" onclick="sendAgencyTicketReply('${t.id}')" class="px-5 py-2.5 rounded-xl btn-gold text-xs">
+                Send Reply to Client Portal →
+              </button>
+            </div>
+          </div>
+        `;
+      }).join('');
+    }
+  }
 }
 
 function renderPricingCards() {
@@ -1184,26 +1746,10 @@ async function sendProfilePasswordResetOtp() {
   appState.profileResetOtp = otp;
 
   const hint = document.getElementById('prof-otp-hint');
-  let sentViaSmtp = false;
-  try {
-    const res = await fetch('/api/send-otp', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ email, otp })
-    });
-    if (res.ok) {
-      const data = await res.json();
-      if (data.sentEmail) sentViaSmtp = true;
-    }
-  } catch (e) {}
+  if (hint) hint.textContent = `Code: ${otp}`;
 
-  if (sentViaSmtp) {
-    if (hint) hint.textContent = `Sent to ${email} (${otp})`;
-    showToast(`✓ 4-Digit Reset OTP sent to ${email}`);
-  } else {
-    if (hint) hint.textContent = `OTP: ${otp}`;
-    showToast(`✓ 4-Digit Reset OTP generated for ${email}`);
-  }
+  await dispatchOtpEmailEverywhere(email, otp, `ZoomCast Password Reset OTP: ${otp}`);
+  showToast(`✓ 4-Digit Reset OTP (${otp}) sent for ${email}`);
 }
 
 function confirmProfilePasswordReset() {
@@ -1213,12 +1759,12 @@ function confirmProfilePasswordReset() {
 
   if (!appState.profileResetOtp) {
     sendProfilePasswordResetOtp();
-    showToast('Please enter the 4-digit OTP code sent to your email.');
+    showToast('Please enter the 4-digit OTP code shown in the notification.');
     return;
   }
 
   if (otpEntered !== appState.profileResetOtp) {
-    showToast('Invalid OTP code. Please enter the correct 4-digit OTP.');
+    showToast(`Invalid OTP code. Please enter ${appState.profileResetOtp}.`);
     return;
   }
 
@@ -1388,7 +1934,6 @@ function render12HourCalendarGrid() {
   const times = generate12HourSlots();
   grid.innerHTML = times.map(t => {
     const isSelected = appState.currentCategory.selectedTimes.includes(t);
-    // Exact glowing Gold highlight from Theme_Stayle.mp4 00:04 Calendar!
     const btnStyle = isSelected
       ? 'btn-gold font-extrabold shadow-lg'
       : 'bg-white/5 text-slate-300 border border-white/10 hover:border-yellow-400/50 hover:text-white font-semibold';
@@ -1818,7 +2363,7 @@ async function triggerLiveMeetingNow() {
 }
 
 // ============================================================================
-// REAL ZOOM CHAT PARSER & GLASSY CHAT MODAL (Theme_Stayle.mp4 00:05)
+// REAL ZOOM CHAT PARSER & GLASSY CHAT MODAL
 // ============================================================================
 async function syncRealBackendSessions() {
   try {
@@ -2104,7 +2649,7 @@ function exportSingleSessionCsv() {
 }
 
 // ============================================================================
-// ADMIN CONSOLE RENDERER (DARK GLASSY)
+// ADMIN & AGENCY CONSOLE RENDERER
 // ============================================================================
 function renderAdminPanel() {
   const nodesList = document.getElementById('admin-aws-nodes-list');
@@ -2123,34 +2668,32 @@ function renderAdminPanel() {
     `).join('');
   }
 
-  const clientsTbody = document.getElementById('admin-clients-tbody');
-  if (clientsTbody) {
-    if (appState.clients.length === 0) {
-      clientsTbody.innerHTML = `
-        <tr>
-          <td colspan="6" class="py-6 text-center text-xs text-slate-400">No customers registered yet.</td>
-        </tr>
-      `;
-    } else {
-      clientsTbody.innerHTML = appState.clients.map((c, idx) => `
-        <tr>
-          <td class="py-3.5 px-3">
-            <div class="font-bold text-white">${c.name}</div>
-            <div class="text-slate-400 font-mono text-[11px]">${c.email}</div>
-          </td>
-          <td class="py-3.5 px-3 font-semibold text-yellow-400">${c.plan}</td>
-          <td class="py-3.5 px-3 text-slate-300">${c.categoriesCount || 0} Workflows</td>
-          <td class="py-3.5 px-3 text-slate-300">${c.coHostsCount || 0} Team Members</td>
-          <td class="py-3.5 px-3 text-slate-300">${c.assignedNode}</td>
-          <td class="py-3.5 px-3">
-            <button onclick="toggleClientStatus(${idx})" class="px-2.5 py-1 rounded text-xs font-bold ${c.status === 'Active' ? 'bg-emerald-500/15 text-emerald-400' : 'bg-rose-500/15 text-rose-400'}">
-              ${c.status}
-            </button>
-          </td>
-        </tr>
-      `).join('');
+  const clientRowHtml = appState.clients.map((c, idx) => `
+    <tr>
+      <td class="py-3.5 px-3">
+        <div class="font-bold text-white">${c.name}</div>
+        <div class="text-slate-400 font-mono text-[11px]">${c.email}</div>
+      </td>
+      <td class="py-3.5 px-3 font-semibold text-yellow-400">${c.plan}</td>
+      <td class="py-3.5 px-3 text-slate-300">${c.categoriesCount || 0} Workflows</td>
+      <td class="py-3.5 px-3 text-slate-300">${c.coHostsCount || 0} Team Members</td>
+      <td class="py-3.5 px-3 text-slate-300">${c.assignedNode}</td>
+      <td class="py-3.5 px-3">
+        <button onclick="toggleClientStatus(${idx})" class="px-2.5 py-1 rounded text-xs font-bold ${c.status === 'Active' ? 'bg-emerald-500/15 text-emerald-400' : 'bg-rose-500/15 text-rose-400'}">
+          ${c.status}
+        </button>
+      </td>
+    </tr>
+  `).join('');
+
+  ['admin-clients-tbody', 'agency-clients-tbody'].forEach(id => {
+    const tbody = document.getElementById(id);
+    if (tbody) {
+      tbody.innerHTML = appState.clients.length > 0
+        ? clientRowHtml
+        : `<tr><td colspan="6" class="py-6 text-center text-xs text-slate-400">No customers registered yet.</td></tr>`;
     }
-  }
+  });
 
   const statClients = document.getElementById('admin-stat-clients');
   const statNodes = document.getElementById('admin-stat-nodes');
@@ -2183,12 +2726,15 @@ function addNewAwsNode() {
 }
 
 window.addEventListener('DOMContentLoaded', () => {
+  cleanBrowserUrlHash();
+  renderCmsContentToDOM();
   renderPricingCards();
   syncProfileUI();
   renderCoHostEmails();
   render12HourCalendarGrid();
   renderSavedCategories();
   renderAttendanceSessionsList();
+  renderSupportTicketsUI();
   syncRealBackendSessions();
   renderAdminPanel();
 });
