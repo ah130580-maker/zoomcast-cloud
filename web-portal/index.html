@@ -459,13 +459,28 @@
       </div>
     </section>
 
-    <!-- PRICING SECTION (USD $ ONLY) -->
+    <!-- PRICING SECTION (USD $ + LIVE PKR Rs. EXCHANGE RATE TOGGLE) -->
     <section id="pricing-section" class="py-20 border-b border-white/10">
       <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div class="text-center max-w-2xl mx-auto mb-12">
+        <div class="text-center max-w-2xl mx-auto mb-10">
           <span class="text-xs uppercase tracking-widest text-yellow-400 font-extrabold">Subscription Plans</span>
           <h2 class="text-3xl sm:text-4xl font-extrabold text-white mt-1">Select Your Plan to Get Started</h2>
-          <p class="text-sm text-slate-400 mt-2">All plans are billed monthly in USD ($) and backed by our <strong>7-Day 100% Money-Back Refund Guarantee</strong>.</p>
+          <p class="text-sm text-slate-400 mt-2">Choose USD ($) or Pakistani Rupees (PKR) at the live exchange rate. Backed by our <strong>7-Day 100% Money-Back Refund Guarantee</strong>.</p>
+
+          <!-- Currency Toggle (USD $ vs PKR Rs. at Live Exchange Rate) -->
+          <div class="mt-6 inline-flex flex-col sm:flex-row items-center gap-3 p-2 rounded-2xl glass-card-subtle border border-white/10">
+            <div class="inline-flex items-center gap-1.5">
+              <button type="button" id="curr-btn-usd-landing" onclick="setPricingCurrency('USD')" class="px-4 py-2 rounded-xl text-xs font-extrabold btn-gold transition">
+                🇺🇸 USD ($) — International
+              </button>
+              <button type="button" id="curr-btn-pkr-landing" onclick="setPricingCurrency('PKR')" class="px-4 py-2 rounded-xl text-xs font-bold btn-glass transition">
+                🇵🇰 PKR (Rs.) — Pakistan
+              </button>
+            </div>
+            <span id="live-exchange-rate-badge" class="px-3 py-1 rounded-lg bg-emerald-500/15 border border-emerald-500/30 text-[11px] font-mono font-bold text-emerald-400">
+              Live Rate: $1 USD = Rs. 278.50 PKR
+            </span>
+          </div>
         </div>
 
         <div id="pricing-cards-container" class="grid grid-cols-1 md:grid-cols-3 gap-7"></div>
@@ -912,7 +927,7 @@
       </div>
 
       <!-- ================================================================= -->
-      <!-- STEP B: PLAN SELECTION (GLASSY CARDS)                             -->
+      <!-- STEP B: PLAN SELECTION (GLASSY CARDS WITH USD / PKR TOGGLE)       -->
       <!-- ================================================================= -->
       <div id="auth-step-plan" class="hidden w-full max-w-xl animate-view-enter">
         <div class="hud-frame glass-card-gold p-7 sm:p-8 rounded-[28px] space-y-5">
@@ -921,15 +936,16 @@
           <div class="hud-corner-bl"></div>
           <div class="hud-corner-br"></div>
 
-          <div class="flex items-center justify-between">
+          <div class="flex flex-wrap items-center justify-between gap-2">
             <span class="px-3 py-1 rounded-lg text-xs font-bold bg-yellow-500/15 text-yellow-400 border border-yellow-500/30">STEP 2 OF 3 • SELECT PLAN</span>
-            <button type="button" onclick="scrollToPricingSection()" class="text-xs font-bold text-yellow-400 hover:underline">
-              Compare All Features ↗
-            </button>
+            <div class="inline-flex items-center gap-1 p-1 rounded-xl bg-white/5 border border-white/10">
+              <button type="button" id="curr-btn-usd-modal" onclick="setPricingCurrency('USD')" class="px-3 py-1 rounded-lg text-xs font-extrabold btn-gold">USD ($)</button>
+              <button type="button" id="curr-btn-pkr-modal" onclick="setPricingCurrency('PKR')" class="px-3 py-1 rounded-lg text-xs font-bold btn-glass">PKR (Rs.)</button>
+            </div>
           </div>
           <div>
             <h2 class="text-2xl font-extrabold text-white">Choose Your <span class="text-yellow-400">Subscription Plan</span></h2>
-            <p class="text-xs text-slate-400 mt-1">Select a monthly USD ($) plan below. Backed by our 7-Day 100% Refund Guarantee.</p>
+            <p class="text-xs text-slate-400 mt-1">Select your monthly plan in USD ($) or live PKR (Rs.). Backed by our 7-Day 100% Refund Guarantee.</p>
           </div>
 
           <div id="modal-plan-selector-list" class="space-y-3"></div>
@@ -1057,11 +1073,22 @@
               </div>
             </div>
 
-            <!-- Right Column: Payment Details Form -->
+            <!-- Right Column: Payment Details Form (Dual Gateway: Safepay PKR + Lemon Squeezy USD) -->
             <div id="payment-form-col" class="lg:col-span-6 space-y-4 transition-all duration-500">
-              <div>
-                <h3 class="text-xl font-extrabold text-white">Payment Details</h3>
-                <p class="text-xs text-slate-400 mt-0.5">Complete your subscription with any USD Debit or Credit Card.</p>
+              <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                <div>
+                  <h3 class="text-xl font-extrabold text-white">Payment Details</h3>
+                  <p id="checkout-gateway-subtext" class="text-xs text-slate-400 mt-0.5">International USD Checkout • Powered by Lemon Squeezy</p>
+                </div>
+                <div class="inline-flex items-center gap-1 p-1 rounded-xl bg-white/5 border border-white/10 self-start sm:self-auto">
+                  <button type="button" id="curr-btn-usd-checkout" onclick="setPricingCurrency('USD')" class="px-3 py-1 rounded-lg text-[11px] font-extrabold btn-gold">🇺🇸 USD ($)</button>
+                  <button type="button" id="curr-btn-pkr-checkout" onclick="setPricingCurrency('PKR')" class="px-3 py-1 rounded-lg text-[11px] font-bold btn-glass">🇵🇰 PKR (Rs.)</button>
+                </div>
+              </div>
+
+              <div id="checkout-gateway-pill" class="p-3 rounded-xl bg-white/5 border border-white/10 flex items-center justify-between text-xs">
+                <span id="checkout-gateway-name" class="font-bold text-emerald-400">🌎 Lemon Squeezy (USD International Cards, Wise, Revolut)</span>
+                <span id="checkout-rate-note" class="font-mono text-[11px] text-slate-400">USD Billing</span>
               </div>
 
               <div>
@@ -1157,15 +1184,6 @@
             <span>🛡️</span>
             <span>Security & Integrations</span>
           </button>
-
-          <!-- Master Agency Admin Tab (Visible for amirjupiteradvisers@gmail.com) -->
-          <button onclick="switchDashboardTab('agency')" id="dtab-agency" class="hidden flex items-center justify-between gap-2 px-4 py-3 rounded-2xl text-xs sm:text-sm font-extrabold bg-yellow-500/15 text-yellow-400 border border-yellow-500/40 hover:bg-yellow-500/25 whitespace-nowrap text-left transition mt-2">
-            <span class="flex items-center gap-2.5">
-              <span>⚡</span>
-              <span>Agency Admin View</span>
-            </span>
-            <span id="agency-unread-tickets-badge" class="px-2 py-0.5 rounded-full text-[10px] font-extrabold bg-yellow-400 text-black">0</span>
-          </button>
         </nav>
       </div>
 
@@ -1202,9 +1220,6 @@
           </div>
         </div>
         <div class="flex items-center gap-2.5 shrink-0">
-          <button id="header-agency-btn" onclick="switchDashboardTab('agency')" class="hidden px-3.5 py-2 rounded-xl bg-yellow-500/15 border border-yellow-500/40 text-yellow-400 hover:bg-yellow-500/25 text-xs font-extrabold">
-            ⚡ Agency View
-          </button>
           <span class="hidden md:inline-flex items-center gap-2 px-3 py-1.5 rounded-xl bg-emerald-500/10 border border-emerald-500/25 text-emerald-400 text-xs font-bold">
             <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
             Cloud Bot Ready
@@ -1286,9 +1301,9 @@
             <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-4 border-b border-white/10">
               <div>
                 <h2 class="text-base font-extrabold text-white">Your Scheduled Workflows</h2>
-                <p class="text-xs text-slate-400 mt-0.5">Manage your automated Zoom broadcasts and active/draft schedules.</p>
+                <p class="text-xs text-slate-400 mt-0.5">Manage your automated Zoom meetings, permanent meeting links, and active/draft schedules.</p>
               </div>
-              <button onclick="resetCategoryForm()" class="px-4 py-2 rounded-xl btn-gold text-xs self-start sm:self-auto">
+              <button type="button" onclick="startCreateNewWorkflow()" class="px-4 py-2.5 rounded-xl btn-gold text-xs self-start sm:self-auto">
                 + Create New Workflow
               </button>
             </div>
@@ -1297,41 +1312,38 @@
           </div>
 
           <!-- Workflow Builder -->
-          <div class="glass-card p-5 sm:p-6 rounded-2xl space-y-6">
+          <div id="workflow-builder-card" class="glass-card p-5 sm:p-6 rounded-2xl space-y-6 transition-all duration-300">
             <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-white/10 pb-4">
               <div>
-                <h3 id="cat-form-heading" class="text-base font-extrabold text-white">Workflow Builder</h3>
-                <p class="text-xs text-slate-400 mt-0.5">Configure your workflow name, weekly days, 12-hour AM/PM times, and video playback.</p>
+                <h3 id="cat-form-heading" class="text-base font-extrabold text-white">Workflow Builder (Create Automated Zoom Meeting)</h3>
+                <p class="text-xs text-slate-400 mt-0.5">All 4 steps below (Name, Days, Recorded Video & Broadcast Time) are required before activating a workflow.</p>
               </div>
 
-              <div id="builder-draft-toggle-wrap" class="flex items-center gap-3 glass-card-subtle px-3.5 py-2 rounded-xl self-start sm:self-auto">
-                <span class="text-xs font-bold text-slate-300">Workflow Status:</span>
-                <label class="inline-flex items-center cursor-pointer gap-2">
-                  <input id="cat-status-active" type="checkbox" checked class="w-4 h-4 rounded accent-emerald-400" onchange="updateBuilderStatusLabel()" />
-                  <span id="cat-status-label" class="text-xs font-extrabold text-emerald-400 bg-emerald-500/15 px-2.5 py-0.5 rounded-md border border-emerald-500/30">Active (Live)</span>
-                </label>
+              <div id="builder-readiness-wrap" class="flex items-center gap-2.5 glass-card-subtle px-3.5 py-2 rounded-xl self-start sm:self-auto">
+                <span id="builder-readiness-badge" class="text-xs font-extrabold text-amber-400 bg-amber-500/15 px-2.5 py-1 rounded-md border border-amber-500/30">
+                  ● Fill Required Steps (1–4) to Activate
+                </span>
               </div>
             </div>
 
-            <!-- Step 1: Workflow Name & Session Type -->
-            <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-              <div id="workflow-name-col" class="md:col-span-2">
-                <label class="text-xs font-bold text-slate-300">1. Workflow / Meeting Name</label>
-                <input id="cat-name" type="text" placeholder="e.g. Daily Training Session" class="mt-1.5 w-full px-4 py-2.5 rounded-xl glass-input text-sm" />
+            <!-- Step 1: Workflow Name & Permanent Zoom Meeting Link (No Webinar Dropdown) -->
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <label class="text-xs font-bold text-slate-300">1. Workflow / Zoom Meeting Name <span class="text-yellow-400">*Required</span></label>
+                <input id="cat-name" type="text" oninput="updateBuilderReadinessBadge()" placeholder="e.g. Daily Sales & Training Zoom Meeting" class="mt-1.5 w-full px-4 py-2.5 rounded-xl glass-input text-sm" />
               </div>
-              <div id="session-type-wrap">
-                <label class="text-xs font-bold text-slate-300">Session Type</label>
-                <select id="cat-session-type" class="mt-1.5 w-full px-4 py-2.5 rounded-xl glass-input text-sm">
-                  <option value="Zoom Meeting">Automated Zoom Meeting</option>
-                  <option value="Zoom Webinar">Automated Zoom Webinar</option>
-                </select>
+              <div>
+                <div class="flex items-center justify-between">
+                  <label class="text-xs font-bold text-slate-300">Permanent Zoom Meeting Link <span class="text-emerald-400">(Fixed URL — Never Changes)</span></label>
+                </div>
+                <input id="cat-meeting-link" type="url" placeholder="https://zoom.us/j/... (Leave blank to auto-assign permanent link)" class="mt-1.5 w-full px-4 py-2.5 rounded-xl glass-input text-xs font-mono" />
               </div>
             </div>
 
             <!-- Step 2: Weekly Days -->
             <div>
               <div class="flex items-center justify-between mb-2.5">
-                <label class="text-xs font-bold text-slate-300">2. Select Weekly Days</label>
+                <label class="text-xs font-bold text-slate-300">2. Select Weekly Days <span class="text-yellow-400">*Required</span></label>
                 <button type="button" onclick="toggleAllWeekdays()" class="text-xs font-bold text-yellow-400 hover:underline whitespace-nowrap">
                   Select / Deselect All 7 Days
                 </button>
@@ -1339,31 +1351,31 @@
               <div class="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-7 gap-2.5">
                 <label class="flex items-center justify-between p-3 rounded-xl glass-card-subtle hover:border-yellow-500/40 cursor-pointer transition">
                   <span class="text-xs font-bold text-white">Monday</span>
-                  <input type="checkbox" value="Monday" class="cat-day-chk w-4 h-4 rounded accent-yellow-400" checked />
+                  <input type="checkbox" value="Monday" onchange="updateBuilderReadinessBadge()" class="cat-day-chk w-4 h-4 rounded accent-yellow-400" checked />
                 </label>
                 <label class="flex items-center justify-between p-3 rounded-xl glass-card-subtle hover:border-yellow-500/40 cursor-pointer transition">
                   <span class="text-xs font-bold text-white">Tuesday</span>
-                  <input type="checkbox" value="Tuesday" class="cat-day-chk w-4 h-4 rounded accent-yellow-400" checked />
+                  <input type="checkbox" value="Tuesday" onchange="updateBuilderReadinessBadge()" class="cat-day-chk w-4 h-4 rounded accent-yellow-400" checked />
                 </label>
                 <label class="flex items-center justify-between p-3 rounded-xl glass-card-subtle hover:border-yellow-500/40 cursor-pointer transition">
                   <span class="text-xs font-bold text-white">Wednesday</span>
-                  <input type="checkbox" value="Wednesday" class="cat-day-chk w-4 h-4 rounded accent-yellow-400" checked />
+                  <input type="checkbox" value="Wednesday" onchange="updateBuilderReadinessBadge()" class="cat-day-chk w-4 h-4 rounded accent-yellow-400" checked />
                 </label>
                 <label class="flex items-center justify-between p-3 rounded-xl glass-card-subtle hover:border-yellow-500/40 cursor-pointer transition">
                   <span class="text-xs font-bold text-white">Thursday</span>
-                  <input type="checkbox" value="Thursday" class="cat-day-chk w-4 h-4 rounded accent-yellow-400" checked />
+                  <input type="checkbox" value="Thursday" onchange="updateBuilderReadinessBadge()" class="cat-day-chk w-4 h-4 rounded accent-yellow-400" checked />
                 </label>
                 <label class="flex items-center justify-between p-3 rounded-xl glass-card-subtle hover:border-yellow-500/40 cursor-pointer transition">
                   <span class="text-xs font-bold text-white">Friday</span>
-                  <input type="checkbox" value="Friday" class="cat-day-chk w-4 h-4 rounded accent-yellow-400" checked />
+                  <input type="checkbox" value="Friday" onchange="updateBuilderReadinessBadge()" class="cat-day-chk w-4 h-4 rounded accent-yellow-400" checked />
                 </label>
                 <label class="flex items-center justify-between p-3 rounded-xl glass-card-subtle hover:border-yellow-500/40 cursor-pointer transition">
                   <span class="text-xs font-bold text-white">Saturday</span>
-                  <input type="checkbox" value="Saturday" class="cat-day-chk w-4 h-4 rounded accent-yellow-400" />
+                  <input type="checkbox" value="Saturday" onchange="updateBuilderReadinessBadge()" class="cat-day-chk w-4 h-4 rounded accent-yellow-400" />
                 </label>
                 <label class="flex items-center justify-between p-3 rounded-xl glass-card-subtle hover:border-yellow-500/40 cursor-pointer transition">
                   <span class="text-xs font-bold text-white">Sunday</span>
-                  <input type="checkbox" value="Sunday" class="cat-day-chk w-4 h-4 rounded accent-yellow-400" />
+                  <input type="checkbox" value="Sunday" onchange="updateBuilderReadinessBadge()" class="cat-day-chk w-4 h-4 rounded accent-yellow-400" />
                 </label>
               </div>
             </div>
@@ -1372,15 +1384,15 @@
             <div>
               <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-2">
                 <div>
-                  <label id="video-upload-heading" class="text-xs font-bold text-slate-300">3. Upload Recorded Video(s)</label>
-                  <p id="video-upload-subtext" class="text-[11px] text-slate-400">Select your recorded video file from your computer.</p>
+                  <label id="video-upload-heading" class="text-xs font-bold text-slate-300">3. Upload Recorded Video(s) <span class="text-yellow-400">*Required</span></label>
+                  <p id="video-upload-subtext" class="text-[11px] text-slate-400">Select your recorded video file from your computer (required before activating workflow).</p>
                 </div>
                 <span id="cat-total-duration" class="text-xs font-extrabold text-emerald-400 bg-emerald-500/15 border border-emerald-500/30 px-3 py-1 rounded-lg whitespace-nowrap self-start sm:self-auto">
                   Total Duration: 00:00:00
                 </span>
               </div>
 
-              <label class="mt-2 border-2 border-dashed border-white/15 hover:border-yellow-400 rounded-2xl p-6 flex flex-col items-center justify-center text-center cursor-pointer glass-card-subtle transition">
+              <label id="video-dropzone-label" class="mt-2 border-2 border-dashed border-white/15 hover:border-yellow-400 rounded-2xl p-6 flex flex-col items-center justify-center text-center cursor-pointer glass-card-subtle transition">
                 <span id="video-dropzone-title" class="text-sm font-extrabold text-white">+ Choose Video File(s) From Computer</span>
                 <span class="text-xs text-slate-400 mt-1">Supports MP4, MKV, MOV, AVI, WEBM (Unlimited GB Size)</span>
                 <input id="cat-video-input" type="file" accept="video/*" multiple class="hidden" onchange="handleCategoryVideosSelect(event)" />
@@ -1686,21 +1698,30 @@
             </div>
           </div>
 
-          <div class="glass-card p-6 rounded-2xl">
+          <div class="glass-card p-6 rounded-2xl space-y-4">
             <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
               <div>
                 <div class="flex items-center gap-2.5">
-                  <h2 class="text-base font-extrabold text-white">Zoom Account Integration</h2>
+                  <h2 class="text-base font-extrabold text-white">Zoom Account Integration & Permanent Meeting Room</h2>
                   <span id="zoom-conn-badge" class="px-2.5 py-0.5 rounded-md text-xs font-bold bg-emerald-500/15 text-emerald-400 border border-emerald-500/30 whitespace-nowrap">
                     ● Ready to Connect
                   </span>
                 </div>
                 <p class="text-xs text-slate-400 mt-1">
-                  Connect your Zoom account with Google in one click. Our cloud engine automatically launches and streams your scheduled Zoom meetings.
+                  Connect your normal Zoom account via Google and set your permanent Zoom Meeting link so your meeting link never changes across broadcasts.
                 </p>
               </div>
               <button onclick="reconnectZoomOAuth()" class="px-5 py-2.5 rounded-xl btn-gold text-xs sm:text-sm self-start sm:self-auto">
                 Connect Zoom with Google
+              </button>
+            </div>
+            <div class="pt-3 border-t border-white/10 flex flex-col sm:flex-row gap-2.5 items-stretch sm:items-end">
+              <div class="flex-1">
+                <label class="text-xs font-bold text-slate-300 block mb-1">Your Default Permanent Zoom Meeting Link (Used for all scheduled broadcasts)</label>
+                <input id="prof-zoom-link" type="url" placeholder="https://zoom.us/j/89421756301?pwd=ZoomCastFixed" class="w-full px-4 py-2.5 rounded-xl glass-input text-xs font-mono" />
+              </div>
+              <button type="button" onclick="saveDefaultZoomMeetingLink()" class="px-5 py-2.5 rounded-xl btn-glass text-xs font-bold">
+                Save Permanent Link
               </button>
             </div>
           </div>
@@ -1724,136 +1745,6 @@
             </div>
 
             <div id="cohost-emails-list" class="mt-4 grid grid-cols-1 sm:grid-cols-2 gap-2.5"></div>
-          </div>
-
-        </div>
-
-        <!-- =============================================================== -->
-        <!-- TAB 5: AGENCY ADMIN COMMAND CENTER (For amirjupiteradvisers)    -->
-        <!-- Manage Support Tickets, Edit Hero/Terms/Privacy, OTP & Clients  -->
-        <!-- =============================================================== -->
-        <div id="dash-content-agency" class="hidden space-y-6 animate-view-enter">
-          
-          <div class="glass-card-gold p-5 sm:p-6 rounded-2xl flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-            <div>
-              <span class="px-2.5 py-0.5 rounded-md bg-yellow-400 text-black font-extrabold text-[11px] uppercase">MASTER AGENCY VIEW</span>
-              <h2 class="text-lg font-extrabold text-white mt-1">Agency Command Center — Manage Clients, Tickets & Website Content</h2>
-              <p class="text-xs text-slate-300">Logged in as Master Owner (<code class="text-yellow-400">amirjupiteradvisers@gmail.com</code>).</p>
-            </div>
-            <a href="admin.html" target="_blank" class="px-4 py-2 rounded-xl btn-glass text-xs self-start sm:self-auto">
-              Open Standalone Admin URL ↗
-            </a>
-          </div>
-
-          <!-- 1. AGENCY SUPPORT TICKETS INBOX (Reply directly to clients!) -->
-          <div class="glass-card p-5 sm:p-6 rounded-2xl space-y-4">
-            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pb-3 border-b border-white/10">
-              <div>
-                <h3 class="text-base font-extrabold text-white">📥 Client Support Tickets Inbox</h3>
-                <p class="text-xs text-slate-400">View incoming client tickets (with Priority Low / Normal / High) and send replies directly to their portal.</p>
-              </div>
-              <span id="agency-tickets-count-label" class="px-3 py-1 rounded-full bg-yellow-500/15 border border-yellow-500/30 text-yellow-400 text-xs font-bold">0 Tickets</span>
-            </div>
-
-            <div id="agency-tickets-container" class="space-y-4"></div>
-          </div>
-
-          <!-- 2. WEBSITE, HERO, TERMS (7-DAY REFUND) & PRIVACY POLICY CMS EDITOR -->
-          <div class="glass-card p-5 sm:p-6 rounded-2xl space-y-4">
-            <div class="pb-3 border-b border-white/10">
-              <h3 class="text-base font-extrabold text-white">🎨 Website Content, Terms (7-Day Refund) & Privacy Policy Manager</h3>
-              <p class="text-xs text-slate-400">Edit the landing page Hero text, Support Email, 7-Day 100% Refund Policy, Terms & Conditions, and Privacy Policy live.</p>
-            </div>
-
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div>
-                <label class="text-xs font-bold text-slate-300 block mb-1">Hero Main Headline</label>
-                <input id="cms-edit-hero-title" type="text" class="w-full px-3.5 py-2.5 rounded-xl glass-input text-sm" />
-              </div>
-              <div>
-                <label class="text-xs font-bold text-slate-300 block mb-1">Official Support & Contact Email</label>
-                <input id="cms-edit-support-email" type="email" class="w-full px-3.5 py-2.5 rounded-xl glass-input text-sm" />
-              </div>
-            </div>
-
-            <div>
-              <label class="text-xs font-bold text-slate-300 block mb-1">Hero Subtitle Text</label>
-              <textarea id="cms-edit-hero-subtitle" rows="2" class="w-full px-3.5 py-2.5 rounded-xl glass-input text-sm"></textarea>
-            </div>
-
-            <div>
-              <label class="text-xs font-bold text-emerald-400 block mb-1">7-Day 100% Money-Back Refund Guarantee Box (Shown on Terms Page)</label>
-              <textarea id="cms-edit-refund-policy" rows="3" class="w-full px-3.5 py-2.5 rounded-xl glass-input text-sm"></textarea>
-            </div>
-
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div>
-                <label class="text-xs font-bold text-slate-300 block mb-1">Full Terms & Conditions Content</label>
-                <textarea id="cms-edit-terms-body" rows="6" class="w-full px-3.5 py-2.5 rounded-xl glass-input text-xs leading-relaxed"></textarea>
-              </div>
-              <div>
-                <label class="text-xs font-bold text-slate-300 block mb-1">Full Privacy Policy Content</label>
-                <textarea id="cms-edit-privacy-body" rows="6" class="w-full px-3.5 py-2.5 rounded-xl glass-input text-xs leading-relaxed"></textarea>
-              </div>
-            </div>
-
-            <div class="flex justify-end">
-              <button type="button" onclick="saveAgencyCmsSettings()" class="px-6 py-2.5 rounded-xl btn-gold text-xs sm:text-sm">
-                ✓ Save & Publish Website / Legal Changes
-              </button>
-            </div>
-          </div>
-
-          <!-- 3. CLOUD EMAIL OTP RELAY & GMAIL SMTP CONFIG -->
-          <div class="glass-card p-5 sm:p-6 rounded-2xl space-y-4">
-            <div class="pb-3 border-b border-white/10 flex flex-col sm:flex-row sm:items-center justify-between gap-2">
-              <div>
-                <h3 class="text-base font-extrabold text-white">📧 Cloud Email OTP & Notification Sender Setup</h3>
-                <p class="text-xs text-slate-400">Connect your Google Apps Script Mail Relay URL or Gmail App Password so 4-digit OTP codes arrive in real email inboxes 24/7.</p>
-              </div>
-              <span class="px-2.5 py-1 rounded-md text-xs font-bold bg-emerald-500/15 text-emerald-400 border border-emerald-500/30">● Instant On-Screen + Email OTP Active</span>
-            </div>
-
-            <div class="grid grid-cols-1 md:grid-cols-3 gap-4 items-end">
-              <div>
-                <label class="text-xs font-bold text-slate-300 block mb-1">Google Apps Script Web App URL (Optional Cloud Relay)</label>
-                <input id="cms-otp-webhook-url" type="url" placeholder="https://script.google.com/macros/s/.../exec" class="w-full px-3.5 py-2.5 rounded-xl glass-input text-xs" />
-              </div>
-              <div>
-                <label class="text-xs font-bold text-slate-300 block mb-1">Sender Gmail Address (Local Server SMTP)</label>
-                <input id="smtp-gmail-user" type="email" placeholder="amirjupiteradvisers@gmail.com" class="w-full px-3.5 py-2.5 rounded-xl glass-input text-xs" />
-              </div>
-              <div>
-                <label class="text-xs font-bold text-slate-300 block mb-1">Google 16-Digit App Password</label>
-                <input id="smtp-gmail-pass" type="password" placeholder="xxxx xxxx xxxx xxxx" class="w-full px-3.5 py-2.5 rounded-xl glass-input text-xs font-mono" />
-              </div>
-            </div>
-
-            <div class="flex justify-end">
-              <button type="button" onclick="saveFreeSmtpConfig()" class="px-5 py-2.5 rounded-xl btn-gold text-xs">
-                Save Email OTP Delivery Settings
-              </button>
-            </div>
-          </div>
-
-          <!-- 4. REGISTERED CUSTOMERS & SUBSCRIPTIONS -->
-          <div class="glass-card p-5 sm:p-6 rounded-2xl space-y-4">
-            <h3 class="text-base font-extrabold text-white">👥 Registered Customers & Active Plans</h3>
-            <div class="overflow-x-auto">
-              <table class="w-full text-left border-collapse">
-                <thead>
-                  <tr class="border-b border-white/10 text-[11px] uppercase tracking-wider text-slate-400 font-bold">
-                    <th class="py-3 px-3">Customer</th>
-                    <th class="py-3 px-3">Plan</th>
-                    <th class="py-3 px-3">Workflows</th>
-                    <th class="py-3 px-3">Team Co-Hosts</th>
-                    <th class="py-3 px-3">Assigned Node</th>
-                    <th class="py-3 px-3">Status</th>
-                  </tr>
-                </thead>
-                <tbody id="agency-clients-tbody" class="divide-y divide-white/10 text-xs"></tbody>
-              </table>
-            </div>
           </div>
 
         </div>
