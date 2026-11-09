@@ -25,7 +25,26 @@
     }
 
     /* ===================================================================== */
-    /* LUXURY GOLD RIBBON & OBSIDIAN GLASSY BACKGROUND (EXACT VIDEO THEME)   */
+    /* SMOOTH PAGE & SECTION TRANSITION ANIMATIONS                           */
+    /* ===================================================================== */
+    @keyframes viewFadeSlideIn {
+      0% {
+        opacity: 0;
+        transform: translateY(18px) scale(0.985);
+        filter: blur(4px);
+      }
+      100% {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+        filter: blur(0);
+      }
+    }
+    .animate-view-enter {
+      animation: viewFadeSlideIn 0.42s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+    }
+
+    /* ===================================================================== */
+    /* LUXURY GOLD RIBBON & OBSIDIAN GLASSY BACKGROUND                       */
     /* ===================================================================== */
     .luxury-bg {
       background-color: #07080c;
@@ -78,7 +97,7 @@
       box-shadow: 0 25px 65px rgba(0, 0, 0, 0.8), 0 0 40px rgba(234, 179, 8, 0.08), inset 0 1px 0 rgba(255, 255, 255, 0.16);
     }
 
-    /* Corner HUD Brackets around Auth, OTP & Payment Modals (Exact Video Frame Style) */
+    /* Corner HUD Brackets around Auth, OTP & Payment Modals */
     .hud-frame {
       position: relative;
     }
@@ -135,7 +154,7 @@
       color: #ffffff;
     }
 
-    /* Gold Primary Button (Exact Login/OTP/Payment Video Style) */
+    /* Gold Primary Button */
     .btn-gold {
       background: linear-gradient(180deg, #facc15 0%, #eab308 55%, #ca8a04 100%);
       color: #090a0f;
@@ -167,15 +186,15 @@
       border-color: rgba(234, 179, 8, 0.4);
     }
 
-    /* Glowing Blue Dock Sidebar (Exact Theme_Stayle.mp4 Left Dock) */
+    /* Glowing Blue Dock Sidebar (Fixed Height, Never Scrolls Off-Screen) */
     .dock-sidebar {
-      background: linear-gradient(180deg, rgba(29, 78, 216, 0.22) 0%, rgba(15, 23, 42, 0.88) 40%, rgba(10, 12, 18, 0.95) 100%);
+      background: linear-gradient(180deg, rgba(29, 78, 216, 0.22) 0%, rgba(15, 23, 42, 0.92) 40%, rgba(10, 12, 18, 0.98) 100%);
       border-right: 1px solid rgba(59, 130, 246, 0.22);
       box-shadow: 8px 0 35px -5px rgba(37, 99, 235, 0.25);
     }
 
     /* ===================================================================== */
-    /* LOGIN / SIGNUP 3D DIAMOND FLIP MORPH ANIMATION (sign_up_login.mp4)    */
+    /* LOGIN / SIGNUP 3D DIAMOND FLIP MORPH ANIMATION                        */
     /* ===================================================================== */
     #auth-morph-wrapper {
       transition: all 0.42s cubic-bezier(0.34, 1.56, 0.64, 1);
@@ -192,7 +211,7 @@
     }
 
     /* ===================================================================== */
-    /* OTP 4-BOX DIAMOND ORBIT & CONVERGE ANIMATION (otp.mp4)                */
+    /* OTP 4-BOX DIAMOND ORBIT & CONVERGE ANIMATION                          */
     /* ===================================================================== */
     .otp-digit-box {
       width: 62px;
@@ -212,7 +231,6 @@
       background: rgba(234, 179, 8, 0.08);
       box-shadow: 0 0 22px rgba(234, 179, 8, 0.28);
     }
-    /* Diamond formation + Orbit spin when verifying */
     .otp-stage-orbit {
       animation: otpOrbitSpin 0.95s cubic-bezier(0.45, 0, 0.55, 1) forwards;
     }
@@ -232,10 +250,6 @@
       transform: translate(-114px, 48px) rotate(-180deg) scale(0.88);
       border-color: #eab308;
     }
-    .otp-stage-converge .otp-digit-box {
-      transform: scale(0.1);
-      opacity: 0;
-    }
     @keyframes otpOrbitSpin {
       0% { transform: rotate(0deg); }
       65% { transform: rotate(180deg) scale(0.95); }
@@ -243,7 +257,7 @@
     }
 
     /* ===================================================================== */
-    /* 3D REALISTIC PLATINUM CREDIT CARD FLIP & SUCCESS (Payment_page_.mp4)  */
+    /* 3D REALISTIC PLATINUM CREDIT CARD FLIP & SUCCESS                      */
     /* ===================================================================== */
     .perspective-1000 {
       perspective: 1200px;
@@ -283,7 +297,6 @@
       transform: rotateY(180deg);
       box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.85);
     }
-    /* Shimmer sweep on card during processing */
     .card-shimmer::after {
       content: '';
       position: absolute;
@@ -304,12 +317,38 @@
 <body class="min-h-screen flex flex-col luxury-bg selection:bg-yellow-500 selection:text-black">
 
   <!-- ===================================================================== -->
-  <!-- PUBLIC GLASSY TOP NAVBAR                                              -->
+  <!-- INSTANT OTP EMAIL DELIVERY BANNER (TOP-RIGHT PUSH NOTIFICATION)       -->
+  <!-- Ensures user ALWAYS gets their 4-digit OTP code immediately!          -->
   <!-- ===================================================================== -->
-  <header id="public-header" class="sticky top-0 z-50 border-b border-white/10 bg-[#07080c]/80 backdrop-blur-xl">
+  <div id="instant-email-otp-popup" class="fixed top-5 right-5 z-[90] hidden max-w-sm w-full glass-card-gold p-4 rounded-2xl border border-yellow-400/60 shadow-2xl animate-view-enter">
+    <div class="flex items-start justify-between gap-3">
+      <div class="flex items-center gap-2.5">
+        <div class="w-9 h-9 rounded-xl bg-yellow-400 text-black font-extrabold flex items-center justify-center shrink-0">
+          ✉
+        </div>
+        <div>
+          <span class="text-[10px] font-extrabold uppercase tracking-widest text-yellow-400 block">ZoomCast Security Mail</span>
+          <h4 class="text-xs font-extrabold text-white">Your 4-Digit Verification Code</h4>
+        </div>
+      </div>
+      <button type="button" onclick="document.getElementById('instant-email-otp-popup').classList.add('hidden')" class="text-slate-400 hover:text-white text-xs font-bold">✕</button>
+    </div>
+    <p id="popup-otp-recipient" class="text-[11px] text-slate-300 mt-2"></p>
+    <div class="mt-3 p-2.5 rounded-xl bg-black/50 border border-yellow-500/30 flex items-center justify-between">
+      <span id="popup-otp-digits" class="font-mono-card text-xl font-extrabold tracking-[0.35em] text-yellow-400 pl-2">5482</span>
+      <button type="button" onclick="autoFillOtpFromBanner()" class="px-3 py-1.5 rounded-lg btn-gold text-[11px]">
+        Auto-Fill & Verify →
+      </button>
+    </div>
+  </div>
+
+  <!-- ===================================================================== -->
+  <!-- PUBLIC GLASSY TOP NAVBAR (Logo click refreshes cleanly without #hash) -->
+  <!-- ===================================================================== -->
+  <header id="public-header" class="sticky top-0 z-50 border-b border-white/10 bg-[#07080c]/85 backdrop-blur-xl">
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between gap-3 relative z-10">
-      <div class="flex items-center gap-3 cursor-pointer shrink-0" onclick="switchView('landing')">
-        <div class="w-9 h-9 rounded-xl bg-gradient-to-br from-yellow-400 to-amber-600 flex items-center justify-center font-extrabold text-black text-base shadow-lg shadow-yellow-500/20 shrink-0">
+      <div class="flex items-center gap-3 cursor-pointer shrink-0 group" onclick="refreshPortalHome()" title="Click to refresh Home">
+        <div class="w-9 h-9 rounded-xl bg-gradient-to-br from-yellow-400 to-amber-600 flex items-center justify-center font-extrabold text-black text-base shadow-lg shadow-yellow-500/20 shrink-0 group-hover:rotate-12 transition">
           Z
         </div>
         <div class="flex items-center gap-1.5">
@@ -318,9 +357,12 @@
         </div>
       </div>
 
-      <nav class="hidden md:flex items-center gap-8 text-sm font-semibold text-slate-300">
-        <a href="#features" onclick="switchView('landing')" class="hover:text-yellow-400 whitespace-nowrap transition">Features</a>
-        <a href="#pricing-section" onclick="scrollToPricingSection()" class="hover:text-yellow-400 whitespace-nowrap transition">Pricing Plans</a>
+      <nav class="hidden md:flex items-center gap-7 text-xs sm:text-sm font-semibold text-slate-300">
+        <button type="button" onclick="scrollToFeaturesSection()" class="hover:text-yellow-400 whitespace-nowrap transition">Features</button>
+        <button type="button" onclick="scrollToPricingSection()" class="hover:text-yellow-400 whitespace-nowrap transition">Pricing Plans</button>
+        <button type="button" onclick="switchView('terms')" class="hover:text-yellow-400 whitespace-nowrap transition">Terms & 7-Day Refund</button>
+        <button type="button" onclick="switchView('privacy')" class="hover:text-yellow-400 whitespace-nowrap transition">Privacy Policy</button>
+        <button type="button" onclick="switchView('contact')" class="hover:text-yellow-400 whitespace-nowrap transition">Contact Support</button>
       </nav>
 
       <div class="flex items-center gap-2.5 shrink-0">
@@ -335,32 +377,64 @@
   </header>
 
   <!-- ===================================================================== -->
-  <!-- VIEW 1: 4K GLASSY LANDING PAGE & USD ($) PRICING                      -->
+  <!-- VIEW 1: ENHANCED 4K GLASSY LANDING PAGE & USD ($) PRICING             -->
   <!-- ===================================================================== -->
-  <main id="view-landing" class="flex-1 relative z-10">
-    <section class="py-20 sm:py-28 border-b border-white/10 relative overflow-hidden">
+  <main id="view-landing" class="flex-1 relative z-10 animate-view-enter">
+    <section class="py-16 sm:py-24 border-b border-white/10 relative overflow-hidden">
       <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
-        <div class="inline-flex items-center gap-2.5 px-4 py-1.5 rounded-full bg-yellow-500/10 border border-yellow-500/30 text-yellow-400 text-xs font-bold uppercase tracking-wider mb-6">
-          <span class="w-2 h-2 rounded-full bg-emerald-400 animate-ping"></span>
-          100% Cloud-Hosted Zoom Broadcast & Webinar Automation
-        </div>
-        <h1 class="text-3xl sm:text-5xl lg:text-6xl font-extrabold tracking-tight leading-[1.12] max-w-4xl mx-auto text-white">
+        
+        <!-- Enhanced Hero Headline (Editable via Agency CMS) -->
+        <h1 id="cms-hero-title" class="text-3xl sm:text-5xl lg:text-6xl font-extrabold tracking-tight leading-[1.12] max-w-4xl mx-auto text-white">
           Automate Your Recorded <span class="text-transparent bg-clip-text bg-gradient-to-r from-yellow-300 via-amber-400 to-yellow-500">Zoom Broadcasts</span> On Autopilot
         </h1>
-        <p class="mt-6 text-base sm:text-lg text-slate-300 max-w-2xl mx-auto leading-relaxed font-medium">
+        <p id="cms-hero-subtitle" class="mt-6 text-base sm:text-lg text-slate-300 max-w-2xl mx-auto leading-relaxed font-medium">
           Build automated meeting & webinar workflows, schedule multi-video playlists across any day or 12-hour AM/PM time slot, auto-promote your team to Co-Host, and inspect real Zoom chat messages.
         </p>
 
         <div class="mt-9 flex flex-col sm:flex-row items-center justify-center gap-4">
-          <button onclick="openGetStartedModal()" class="w-full sm:w-auto px-8 py-3.5 rounded-xl btn-gold text-sm sm:text-base">
+          <button onclick="openGetStartedModal()" class="w-full sm:w-auto px-8 py-4 rounded-xl btn-gold text-sm sm:text-base">
             Get Started — Choose Plan →
           </button>
-          <button onclick="scrollToPricingSection()" class="w-full sm:w-auto px-8 py-3.5 rounded-xl btn-glass text-sm sm:text-base">
+          <button onclick="scrollToPricingSection()" class="w-full sm:w-auto px-8 py-4 rounded-xl btn-glass text-sm sm:text-base">
             View Pricing Plans
           </button>
         </div>
 
-        <div id="features" class="mt-20 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5 text-left">
+        <!-- Risk-Free 7-Day 100% Refund Guarantee Trust Strip -->
+        <div class="mt-8 inline-flex flex-wrap items-center justify-center gap-4 px-5 py-2.5 rounded-2xl glass-card-subtle text-xs text-slate-300">
+          <span class="flex items-center gap-1.5 text-emerald-400 font-bold">🛡️ 7-Day 100% Money-Back Guarantee</span>
+          <span class="hidden sm:inline text-white/20">•</span>
+          <span class="flex items-center gap-1.5">⚡ Instant Cloud Setup</span>
+          <span class="hidden sm:inline text-white/20">•</span>
+          <button type="button" onclick="switchView('terms')" class="text-yellow-400 font-bold hover:underline">Read Refund Policy →</button>
+        </div>
+
+        <!-- Interactive Glassy Platform Telemetry Showcase -->
+        <div class="mt-14 p-6 sm:p-8 rounded-3xl glass-card-gold text-left grid grid-cols-1 md:grid-cols-4 gap-6">
+          <div class="p-4 rounded-2xl bg-white/5 border border-white/10">
+            <span class="text-[11px] uppercase tracking-wider text-yellow-400 font-bold">Cloud Execution</span>
+            <div class="text-2xl font-extrabold text-white mt-1">24/7 Autopilot</div>
+            <p class="text-xs text-slate-400 mt-1">Starts Zoom, shares HD video + original audio, and ends on time automatically.</p>
+          </div>
+          <div class="p-4 rounded-2xl bg-white/5 border border-white/10">
+            <span class="text-[11px] uppercase tracking-wider text-blue-400 font-bold">Team Co-Host Engine</span>
+            <div class="text-2xl font-extrabold text-white mt-1">Auto-Promote</div>
+            <p class="text-xs text-slate-400 mt-1">Add your team emails once; anyone joining is promoted to Co-Host within seconds.</p>
+          </div>
+          <div class="p-4 rounded-2xl bg-white/5 border border-white/10">
+            <span class="text-[11px] uppercase tracking-wider text-emerald-400 font-bold">Playlist Streaming</span>
+            <div class="text-2xl font-extrabold text-white mt-1">Zero Size Limit</div>
+            <p class="text-xs text-slate-400 mt-1">Stream single or back-to-back multi-video playlists in 1080p/4K with crystal audio.</p>
+          </div>
+          <div class="p-4 rounded-2xl bg-white/5 border border-white/10">
+            <span class="text-[11px] uppercase tracking-wider text-purple-400 font-bold">Live Chat & Analytics</span>
+            <div class="text-2xl font-extrabold text-white mt-1">100% Captured</div>
+            <p class="text-xs text-slate-400 mt-1">Every attendee's join/leave time and exact in-meeting chat message is saved & exportable.</p>
+          </div>
+        </div>
+
+        <!-- Detailed Features Grid -->
+        <div id="features-section" class="mt-16 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5 text-left">
           <div class="p-6 rounded-2xl glass-card hover:border-yellow-500/40 transition">
             <div class="w-10 h-10 rounded-xl bg-yellow-500/15 border border-yellow-500/30 text-yellow-400 font-extrabold text-sm flex items-center justify-center mb-4">01</div>
             <h3 class="font-bold text-white text-base">Workflows & Draft Mode</h3>
@@ -386,32 +460,193 @@
     </section>
 
     <!-- PRICING SECTION (USD $ ONLY) -->
-    <section id="pricing-section" class="py-20">
+    <section id="pricing-section" class="py-20 border-b border-white/10">
       <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div class="text-center max-w-2xl mx-auto mb-12">
           <span class="text-xs uppercase tracking-widest text-yellow-400 font-extrabold">Subscription Plans</span>
           <h2 class="text-3xl sm:text-4xl font-extrabold text-white mt-1">Select Your Plan to Get Started</h2>
-          <p class="text-sm text-slate-400 mt-2">All plans are billed monthly in USD ($). Choose a plan below to create your account and subscribe.</p>
+          <p class="text-sm text-slate-400 mt-2">All plans are billed monthly in USD ($) and backed by our <strong>7-Day 100% Money-Back Refund Guarantee</strong>.</p>
         </div>
 
         <div id="pricing-cards-container" class="grid grid-cols-1 md:grid-cols-3 gap-7"></div>
       </div>
     </section>
+
+    <!-- PUBLIC FOOTER WITH LEGAL & SUPPORT LINKS -->
+    <footer class="py-12 bg-[#050609]/90">
+      <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col sm:flex-row items-center justify-between gap-6">
+        <div class="flex items-center gap-3 cursor-pointer" onclick="refreshPortalHome()">
+          <div class="w-8 h-8 rounded-xl bg-gradient-to-br from-yellow-400 to-amber-600 flex items-center justify-center font-extrabold text-black text-sm">Z</div>
+          <span class="font-extrabold text-white text-sm">ZoomCast <span class="text-yellow-400">CRM</span></span>
+          <span class="text-xs text-slate-500">© 2026 All Rights Reserved.</span>
+        </div>
+
+        <div class="flex flex-wrap items-center gap-6 text-xs font-semibold text-slate-400">
+          <button type="button" onclick="switchView('terms')" class="hover:text-yellow-400 transition">Terms & Conditions (7-Day Refund)</button>
+          <button type="button" onclick="switchView('privacy')" class="hover:text-yellow-400 transition">Privacy Policy</button>
+          <button type="button" onclick="switchView('contact')" class="hover:text-yellow-400 transition">Contact Us & Support</button>
+        </div>
+      </div>
+    </footer>
   </main>
 
   <!-- ===================================================================== -->
-  <!-- VIEW 2: EXACT VIDEO AUTH (LOGIN V7 + GLASSY OTP + 3D CARD CHECKOUT)   -->
+  <!-- VIEW 4: TERMS & CONDITIONS PAGE (WITH 7-DAY 100% REFUND POLICY)       -->
+  <!-- Editable from Agency View!                                            -->
   <!-- ===================================================================== -->
-  <section id="view-auth" class="hidden flex-1 py-12 sm:py-16 flex items-center justify-center relative z-10 px-4">
+  <section id="view-terms" class="hidden flex-1 py-14 px-4 relative z-10 animate-view-enter">
+    <div class="max-w-4xl mx-auto space-y-6">
+      <div class="hud-frame glass-card-gold p-7 sm:p-10 rounded-3xl space-y-6">
+        <div class="hud-corner-tl"></div>
+        <div class="hud-corner-tr"></div>
+        <div class="hud-corner-bl"></div>
+        <div class="hud-corner-br"></div>
+
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-white/10 pb-5">
+          <div>
+            <span class="text-xs font-extrabold uppercase tracking-widest text-yellow-400">Legal Agreement & Refund Guarantee</span>
+            <h1 class="text-2xl sm:text-4xl font-extrabold text-white mt-1">Terms & Conditions</h1>
+          </div>
+          <button type="button" onclick="switchView('landing')" class="px-4 py-2 rounded-xl btn-glass text-xs self-start sm:self-auto">
+            ← Back to Home
+          </button>
+        </div>
+
+        <!-- Highlighted 7-Day 100% Money-Back Refund Guarantee Box -->
+        <div class="p-5 sm:p-6 rounded-2xl bg-emerald-500/10 border border-emerald-500/35 space-y-2">
+          <div class="flex items-center gap-2.5">
+            <span class="px-2.5 py-1 rounded-lg bg-emerald-500 text-black font-extrabold text-xs">100% REFUND GUARANTEE</span>
+            <h3 class="text-base sm:text-lg font-extrabold text-white">7-Day No-Questions-Asked Money-Back Policy</h3>
+          </div>
+          <p id="cms-refund-policy-display" class="text-xs sm:text-sm text-slate-200 leading-relaxed"></p>
+        </div>
+
+        <div id="cms-terms-body-display" class="space-y-4 text-xs sm:text-sm text-slate-300 leading-relaxed whitespace-pre-line"></div>
+
+        <div class="pt-5 border-t border-white/10 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs text-slate-400">
+          <span>Need assistance or want to request a refund within 7 days? Email us at <strong id="terms-support-email" class="text-yellow-400">amirjupiteradvisers@gmail.com</strong></span>
+          <button type="button" onclick="switchView('contact')" class="px-4 py-2 rounded-xl btn-gold text-xs self-start sm:self-auto">
+            Contact Support →
+          </button>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===================================================================== -->
+  <!-- VIEW 5: PRIVACY POLICY PAGE (Editable from Agency View)               -->
+  <!-- ===================================================================== -->
+  <section id="view-privacy" class="hidden flex-1 py-14 px-4 relative z-10 animate-view-enter">
+    <div class="max-w-4xl mx-auto space-y-6">
+      <div class="hud-frame glass-card-gold p-7 sm:p-10 rounded-3xl space-y-6">
+        <div class="hud-corner-tl"></div>
+        <div class="hud-corner-tr"></div>
+        <div class="hud-corner-bl"></div>
+        <div class="hud-corner-br"></div>
+
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-white/10 pb-5">
+          <div>
+            <span class="text-xs font-extrabold uppercase tracking-widest text-yellow-400">Data Protection & Security</span>
+            <h1 class="text-2xl sm:text-4xl font-extrabold text-white mt-1">Privacy Policy</h1>
+          </div>
+          <button type="button" onclick="switchView('landing')" class="px-4 py-2 rounded-xl btn-glass text-xs self-start sm:self-auto">
+            ← Back to Home
+          </button>
+        </div>
+
+        <div id="cms-privacy-body-display" class="space-y-4 text-xs sm:text-sm text-slate-300 leading-relaxed whitespace-pre-line"></div>
+
+        <div class="pt-5 border-t border-white/10 flex items-center justify-between text-xs text-slate-400">
+          <span>Privacy Officer Contact: <strong id="privacy-support-email" class="text-yellow-400">amirjupiteradvisers@gmail.com</strong></span>
+          <button type="button" onclick="switchView('contact')" class="px-4 py-2 rounded-xl btn-gold text-xs">
+            Contact Us →
+          </button>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===================================================================== -->
+  <!-- VIEW 6: CONTACT US & PUBLIC SUPPORT TICKET PAGE                       -->
+  <!-- ===================================================================== -->
+  <section id="view-contact" class="hidden flex-1 py-14 px-4 relative z-10 animate-view-enter">
+    <div class="max-w-3xl mx-auto">
+      <div class="hud-frame glass-card-gold p-7 sm:p-10 rounded-3xl space-y-6">
+        <div class="hud-corner-tl"></div>
+        <div class="hud-corner-tr"></div>
+        <div class="hud-corner-bl"></div>
+        <div class="hud-corner-br"></div>
+
+        <div class="flex items-center justify-between border-b border-white/10 pb-5">
+          <div>
+            <span class="text-xs font-extrabold uppercase tracking-widest text-yellow-400">24/7 Customer Care</span>
+            <h1 class="text-2xl sm:text-3xl font-extrabold text-white mt-1">Contact Us & Help Desk</h1>
+          </div>
+          <button type="button" onclick="switchView('landing')" class="px-4 py-2 rounded-xl btn-glass text-xs">
+            ← Back
+          </button>
+        </div>
+
+        <div class="p-4 rounded-2xl bg-white/5 border border-white/10 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+          <div>
+            <span class="text-xs text-slate-400 block">Official Support Email (Direct Inquiry / Refund Request)</span>
+            <a id="contact-page-email-link" href="mailto:amirjupiteradvisers@gmail.com" class="text-base font-extrabold text-yellow-400 hover:underline">amirjupiteradvisers@gmail.com</a>
+          </div>
+          <span class="px-3 py-1 rounded-full bg-emerald-500/15 border border-emerald-500/30 text-emerald-400 text-xs font-bold self-start sm:self-auto">
+            ● Typical Response: &lt; 2 Hours
+          </span>
+        </div>
+
+        <div class="space-y-4">
+          <h3 class="text-sm font-extrabold text-white">Or Submit a Support Ticket Directly to Our Agency Team:</h3>
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div>
+              <label class="text-xs font-bold text-slate-300 block mb-1">Your Name</label>
+              <input id="pub-ticket-name" type="text" placeholder="Enter your full name" class="w-full px-4 py-2.5 rounded-xl glass-input text-sm" />
+            </div>
+            <div>
+              <label class="text-xs font-bold text-slate-300 block mb-1">Your Email Address</label>
+              <input id="pub-ticket-email" type="email" placeholder="you@example.com" class="w-full px-4 py-2.5 rounded-xl glass-input text-sm" />
+            </div>
+          </div>
+          <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+            <div class="sm:col-span-2">
+              <label class="text-xs font-bold text-slate-300 block mb-1">Subject / Issue Summary</label>
+              <input id="pub-ticket-subject" type="text" placeholder="e.g. Need help with Zoom schedule or billing" class="w-full px-4 py-2.5 rounded-xl glass-input text-sm" />
+            </div>
+            <div>
+              <label class="text-xs font-bold text-slate-300 block mb-1">Priority Level</label>
+              <select id="pub-ticket-priority" class="w-full px-4 py-2.5 rounded-xl glass-input text-sm font-bold">
+                <option value="Low">Low Priority</option>
+                <option value="Normal" selected>Normal Priority</option>
+                <option value="High">High Priority (Urgent)</option>
+              </select>
+            </div>
+          </div>
+          <div>
+            <label class="text-xs font-bold text-slate-300 block mb-1">Message / Issue Details</label>
+            <textarea id="pub-ticket-message" rows="4" placeholder="Describe your question or issue in detail..." class="w-full px-4 py-2.5 rounded-xl glass-input text-sm"></textarea>
+          </div>
+          <button type="button" onclick="submitPublicSupportTicket()" class="w-full py-3.5 rounded-xl btn-gold text-sm">
+            Submit Support Ticket →
+          </button>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===================================================================== -->
+  <!-- VIEW 2: EXACT VIDEO AUTH (LOGIN V7 + GLASSY OTP + 3D CARD CHECKOUT)   -->
+  <!-- (Apple Button Removed as Requested!)                                  -->
+  <!-- ===================================================================== -->
+  <section id="view-auth" class="hidden flex-1 py-12 sm:py-16 flex items-center justify-center relative z-10 px-4 animate-view-enter">
     <div class="w-full max-w-4xl mx-auto flex flex-col items-center justify-center">
 
       <!-- ================================================================= -->
       <!-- STEP A: LOGIN FORM V7 / CREATE ACCOUNT WITH 3D DIAMOND MORPH      -->
-      <!-- (Exact match to sign_up_login.mp4)                                -->
       <!-- ================================================================= -->
       <div id="auth-step-account" class="w-full max-w-[460px] relative">
         
-        <!-- Center 3D Diamond Morph Overlay (Triggered when switching Login <-> Sign Up) -->
         <div id="auth-diamond-loader" class="opacity-0 scale-50 fixed inset-0 z-30 flex items-center justify-center pointer-events-none">
           <div class="w-24 h-24 rounded-3xl glass-card-gold rotate-45 flex items-center justify-center shadow-2xl border border-yellow-500/40">
             <div class="w-10 h-10 rounded-xl bg-white/10 border border-white/20 -rotate-45 flex items-center justify-center">
@@ -426,7 +661,7 @@
           <div class="hud-corner-bl"></div>
           <div class="hud-corner-br"></div>
 
-          <!-- 1. SIGN IN FORM ("Welcome Back" - Exact Login form V7) -->
+          <!-- 1. SIGN IN FORM ("Welcome Back" - Apple Removed) -->
           <div id="form-signin" class="space-y-5">
             <div class="text-center space-y-1.5">
               <h2 class="text-2xl sm:text-3xl font-extrabold tracking-tight text-white">
@@ -481,16 +716,10 @@
               <div class="flex-grow border-t border-white/10"></div>
             </div>
 
-            <div class="grid grid-cols-2 gap-3">
-              <button type="button" onclick="handleGoogleAuthContinue()" class="py-2.5 px-4 rounded-xl btn-glass text-xs font-bold flex items-center justify-center gap-2">
-                <svg class="w-4 h-4" viewBox="0 0 24 24"><path fill="currentColor" d="M21.35 11.1h-9.17v2.73h6.51c-.33 3.81-3.5 5.44-6.5 5.44C8.36 19.27 5 16.25 5 12c0-4.1 3.2-7.27 7.2-7.27 3.09 0 4.9 1.97 4.9 1.97L19 4.72S16.56 2 12.1 2C6.42 2 2.03 6.8 2.03 12c0 5.05 4.13 10 10.22 10 5.35 0 9.25-3.67 9.25-9.09 0-1.15-.15-1.81-.15-1.81Z"/></svg>
-                <span>Google</span>
-              </button>
-              <button type="button" onclick="handleGoogleAuthContinue()" class="py-2.5 px-4 rounded-xl btn-glass text-xs font-bold flex items-center justify-center gap-2">
-                <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 24 24"><path d="M18.71 19.5c-.83 1.24-1.71 2.45-3.05 2.47-1.34.03-1.77-.79-3.29-.79-1.53 0-2 .77-3.27.82-1.31.05-2.3-1.32-3.14-2.53C4.25 17 2.94 12.45 4.7 9.39c.87-1.52 2.43-2.48 4.12-2.51 1.28-.02 2.5.87 3.29.87.78 0 2.26-1.07 3.81-.91.65.03 2.47.26 3.64 1.98-.09.06-2.17 1.28-2.15 3.81.03 3.02 2.65 4.03 2.68 4.04-.03.07-.42 1.44-1.38 2.83M15.97 6.33c.64-.78 1.08-1.86.96-2.94-.93.04-2.06.62-2.72 1.4-.58.68-1.1 1.79-.96 2.84 1.04.08 2.08-.52 2.72-1.3Z"/></svg>
-                <span>Apple</span>
-              </button>
-            </div>
+            <button type="button" onclick="handleGoogleAuthContinue()" class="w-full py-3 px-4 rounded-xl btn-glass text-xs font-bold flex items-center justify-center gap-2.5">
+              <svg class="w-4 h-4" viewBox="0 0 24 24"><path fill="currentColor" d="M21.35 11.1h-9.17v2.73h6.51c-.33 3.81-3.5 5.44-6.5 5.44C8.36 19.27 5 16.25 5 12c0-4.1 3.2-7.27 7.2-7.27 3.09 0 4.9 1.97 4.9 1.97L19 4.72S16.56 2 12.1 2C6.42 2 2.03 6.8 2.03 12c0 5.05 4.13 10 10.22 10 5.35 0 9.25-3.67 9.25-9.09 0-1.15-.15-1.81-.15-1.81Z"/></svg>
+              <span>Continue with Google</span>
+            </button>
 
             <p class="text-center text-xs text-slate-400 pt-1">
               Don't have an account?
@@ -498,7 +727,7 @@
             </p>
           </div>
 
-          <!-- 2. SIGN UP FORM ("Create Account" - Exact Login form V7) -->
+          <!-- 2. SIGN UP FORM ("Create Account" - Apple Removed) -->
           <div id="form-signup" class="hidden space-y-4">
             <div class="text-center space-y-1">
               <h2 class="text-2xl sm:text-3xl font-extrabold tracking-tight text-white">
@@ -549,13 +778,18 @@
                 </div>
               </div>
 
-              <label class="flex items-center gap-2 cursor-pointer text-xs text-slate-300 pt-0.5 select-none">
-                <input id="signup-terms-chk" type="checkbox" checked class="w-4 h-4 rounded accent-yellow-400" />
-                <span>I agree to the <u class="text-slate-200">Terms</u> & <u class="text-slate-200">Privacy Policy</u></span>
-              </label>
+              <div class="flex items-center gap-2 text-xs text-slate-300 pt-0.5">
+                <input id="signup-terms-chk" type="checkbox" checked class="w-4 h-4 rounded accent-yellow-400 cursor-pointer" />
+                <span>
+                  I agree to the
+                  <button type="button" onclick="switchView('terms')" class="underline text-yellow-400 font-semibold">Terms & 7-Day Refund</button>
+                  &
+                  <button type="button" onclick="switchView('privacy')" class="underline text-yellow-400 font-semibold">Privacy Policy</button>
+                </span>
+              </div>
 
               <button type="button" onclick="startSignUpOtpVerification()" class="w-full py-3.5 rounded-xl btn-gold text-sm flex items-center justify-center gap-2">
-                <span>Create Account</span>
+                <span>Create Account & Send 4-Digit OTP</span>
                 <span>→</span>
               </button>
             </div>
@@ -566,16 +800,10 @@
               <div class="flex-grow border-t border-white/10"></div>
             </div>
 
-            <div class="grid grid-cols-2 gap-3">
-              <button type="button" onclick="handleGoogleAuthContinue()" class="py-2.5 px-4 rounded-xl btn-glass text-xs font-bold flex items-center justify-center gap-2">
-                <svg class="w-4 h-4" viewBox="0 0 24 24"><path fill="currentColor" d="M21.35 11.1h-9.17v2.73h6.51c-.33 3.81-3.5 5.44-6.5 5.44C8.36 19.27 5 16.25 5 12c0-4.1 3.2-7.27 7.2-7.27 3.09 0 4.9 1.97 4.9 1.97L19 4.72S16.56 2 12.1 2C6.42 2 2.03 6.8 2.03 12c0 5.05 4.13 10 10.22 10 5.35 0 9.25-3.67 9.25-9.09 0-1.15-.15-1.81-.15-1.81Z"/></svg>
-                <span>Google</span>
-              </button>
-              <button type="button" onclick="handleGoogleAuthContinue()" class="py-2.5 px-4 rounded-xl btn-glass text-xs font-bold flex items-center justify-center gap-2">
-                <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 24 24"><path d="M18.71 19.5c-.83 1.24-1.71 2.45-3.05 2.47-1.34.03-1.77-.79-3.29-.79-1.53 0-2 .77-3.27.82-1.31.05-2.3-1.32-3.14-2.53C4.25 17 2.94 12.45 4.7 9.39c.87-1.52 2.43-2.48 4.12-2.51 1.28-.02 2.5.87 3.29.87.78 0 2.26-1.07 3.81-.91.65.03 2.47.26 3.64 1.98-.09.06-2.17 1.28-2.15 3.81.03 3.02 2.65 4.03 2.68 4.04-.03.07-.42 1.44-1.38 2.83M15.97 6.33c.64-.78 1.08-1.86.96-2.94-.93.04-2.06.62-2.72 1.4-.58.68-1.1 1.79-.96 2.84 1.04.08 2.08-.52 2.72-1.3Z"/></svg>
-                <span>Apple</span>
-              </button>
-            </div>
+            <button type="button" onclick="handleGoogleAuthContinue()" class="w-full py-3 px-4 rounded-xl btn-glass text-xs font-bold flex items-center justify-center gap-2.5">
+              <svg class="w-4 h-4" viewBox="0 0 24 24"><path fill="currentColor" d="M21.35 11.1h-9.17v2.73h6.51c-.33 3.81-3.5 5.44-6.5 5.44C8.36 19.27 5 16.25 5 12c0-4.1 3.2-7.27 7.2-7.27 3.09 0 4.9 1.97 4.9 1.97L19 4.72S16.56 2 12.1 2C6.42 2 2.03 6.8 2.03 12c0 5.05 4.13 10 10.22 10 5.35 0 9.25-3.67 9.25-9.09 0-1.15-.15-1.81-.15-1.81Z"/></svg>
+              <span>Sign Up with Google</span>
+            </button>
 
             <p class="text-center text-xs text-slate-400 pt-1">
               Already have an account?
@@ -583,13 +811,13 @@
             </p>
           </div>
 
-          <!-- 3. FORGOT PASSWORD FORM (Triggers Glassy OTP Animation) -->
+          <!-- 3. FORGOT PASSWORD FORM (Consistent 4-Digit OTP Wording) -->
           <div id="form-forgot" class="hidden space-y-4">
             <div class="text-center space-y-1">
               <h2 class="text-2xl sm:text-3xl font-extrabold tracking-tight text-white">
                 Reset <span class="text-yellow-400">Password</span>
               </h2>
-              <p class="text-xs text-slate-400">Enter your registered email and new password to verify via OTP</p>
+              <p class="text-xs text-slate-400">We will send a 4-digit security OTP code to verify your email</p>
             </div>
 
             <div class="space-y-3.5 pt-2">
@@ -604,12 +832,12 @@
               </div>
 
               <div>
-                <label class="text-xs font-semibold text-slate-300 block mb-1">New Password</label>
+                <label class="text-xs font-semibold text-slate-300 block mb-1">Create New Password</label>
                 <div class="relative">
                   <span class="absolute inset-y-0 left-0 pl-3.5 flex items-center text-slate-400 pointer-events-none">
                     <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/></svg>
                   </span>
-                  <input id="forgot-new-password" type="password" placeholder="Minimum 6 characters" class="w-full pl-10 pr-4 py-3 rounded-xl glass-input text-sm" />
+                  <input id="forgot-new-password" type="password" placeholder="Enter your new password" class="w-full pl-10 pr-4 py-3 rounded-xl glass-input text-sm" />
                 </div>
               </div>
 
@@ -631,14 +859,13 @@
       <!-- ================================================================= -->
       <!-- STEP A2: EXACT GLASSY OTP ANIMATION CARD (otp.mp4)                -->
       <!-- ================================================================= -->
-      <div id="auth-step-otp" class="hidden w-full max-w-[440px]">
+      <div id="auth-step-otp" class="hidden w-full max-w-[440px] animate-view-enter">
         <div class="hud-frame glass-card-gold rounded-[28px] p-7 sm:p-9 text-center">
           <div class="hud-corner-tl"></div>
           <div class="hud-corner-tr"></div>
           <div class="hud-corner-bl"></div>
           <div class="hud-corner-br"></div>
 
-          <!-- Top Key Icon -> Morphs to Green Shield on Verified -->
           <div id="otp-top-icon-wrap" class="w-14 h-14 mx-auto rounded-full bg-yellow-500/10 border border-yellow-500/30 flex items-center justify-center text-yellow-400 mb-4 transition-all duration-500">
             <svg id="otp-icon-key" class="w-6 h-6" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z"/>
@@ -652,11 +879,11 @@
             Verify <span class="text-yellow-400">OTP</span>
           </h2>
           <p id="otp-subtitle-text" class="text-xs text-slate-400 mt-1.5">
-            Enter the 4-digit security code sent to your device
+            Enter the 4-digit security code sent to your email
           </p>
-          <div id="otp-live-code-pill" class="mt-2 inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-yellow-500/10 border border-yellow-500/25 text-[11px] font-mono font-bold text-yellow-300"></div>
+          <div id="otp-live-code-pill" class="mt-2.5 inline-flex items-center gap-2 px-3.5 py-1 rounded-full bg-yellow-500/15 border border-yellow-500/35 text-xs font-mono font-bold text-yellow-300"></div>
 
-          <!-- 4-Digit Boxes Stage (Transforms into Orbiting Diamond -> Green Check Box) -->
+          <!-- 4-Digit Boxes Stage -->
           <div class="my-8 relative h-24 flex items-center justify-center">
             <div id="otp-boxes-row" class="flex items-center justify-center gap-3.5 transition-all duration-500">
               <input id="otp-d0" type="text" maxlength="1" inputmode="numeric" class="otp-digit-box otp-box-0" oninput="handleOtpDigitInput(0, event)" onkeydown="handleOtpDigitKeydown(0, event)" />
@@ -665,7 +892,6 @@
               <input id="otp-d3" type="text" maxlength="1" inputmode="numeric" class="otp-digit-box otp-box-3" oninput="handleOtpDigitInput(3, event)" onkeydown="handleOtpDigitKeydown(3, event)" />
             </div>
 
-            <!-- Center Merged Box (Appears at 00:03 -> Turns Green Check at 00:04) -->
             <div id="otp-merged-box" class="hidden w-16 h-16 rounded-2xl border-2 border-yellow-400 bg-yellow-500/10 flex items-center justify-center shadow-2xl transition-all duration-500">
               <svg id="otp-merged-check" class="w-8 h-8 text-emerald-400 hidden" fill="none" stroke="currentColor" stroke-width="3" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/>
@@ -688,7 +914,7 @@
       <!-- ================================================================= -->
       <!-- STEP B: PLAN SELECTION (GLASSY CARDS)                             -->
       <!-- ================================================================= -->
-      <div id="auth-step-plan" class="hidden w-full max-w-xl">
+      <div id="auth-step-plan" class="hidden w-full max-w-xl animate-view-enter">
         <div class="hud-frame glass-card-gold p-7 sm:p-8 rounded-[28px] space-y-5">
           <div class="hud-corner-tl"></div>
           <div class="hud-corner-tr"></div>
@@ -703,7 +929,7 @@
           </div>
           <div>
             <h2 class="text-2xl font-extrabold text-white">Choose Your <span class="text-yellow-400">Subscription Plan</span></h2>
-            <p class="text-xs text-slate-400 mt-1">Select a monthly USD ($) plan below to proceed to secure card checkout.</p>
+            <p class="text-xs text-slate-400 mt-1">Select a monthly USD ($) plan below. Backed by our 7-Day 100% Refund Guarantee.</p>
           </div>
 
           <div id="modal-plan-selector-list" class="space-y-3"></div>
@@ -713,14 +939,13 @@
       <!-- ================================================================= -->
       <!-- STEP C: GLASSY PAYMENT CHECKOUT (Exact match to Payment_page_.mp4)-->
       <!-- ================================================================= -->
-      <div id="auth-step-payment" class="hidden w-full max-w-4xl">
+      <div id="auth-step-payment" class="hidden w-full max-w-4xl animate-view-enter">
         <div class="hud-frame glass-card-gold rounded-[30px] p-6 sm:p-9 relative overflow-hidden">
           <div class="hud-corner-tl"></div>
           <div class="hud-corner-tr"></div>
           <div class="hud-corner-bl"></div>
           <div class="hud-corner-br"></div>
 
-          <!-- Top Checkout Header Bar -->
           <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-6 border-b border-white/10">
             <div class="flex items-center gap-3">
               <div class="w-8 h-8 rounded-full bg-yellow-500/20 border border-yellow-500/40 flex items-center justify-center text-yellow-400 font-extrabold text-xs">
@@ -747,10 +972,9 @@
             </div>
           </div>
 
-          <!-- Checkout Stage: 2-Column Split -> Animates to Centered Card on Pay -->
           <div id="payment-split-stage" class="mt-8 grid grid-cols-1 lg:grid-cols-12 gap-8 items-center transition-all duration-500">
             
-            <!-- Left Column: 3D Realistic Platinum Card (Flips on CVV focus, turns green on success) -->
+            <!-- Left Column: 3D Realistic Platinum Card -->
             <div id="payment-card-col" class="lg:col-span-6 flex flex-col items-center justify-center transition-all duration-700">
               <div class="w-full max-w-[380px] perspective-1000">
                 <div id="credit-card-3d" class="card-3d-inner">
@@ -759,11 +983,9 @@
                   <div id="credit-card-front" class="card-face card-face-front p-6 flex flex-col justify-between">
                     <div class="flex items-center justify-between">
                       <div class="flex items-center gap-3">
-                        <!-- Realistic Gold EMV Chip -->
                         <div class="w-11 h-8 rounded-md bg-gradient-to-br from-yellow-300 via-amber-400 to-yellow-600 border border-yellow-200/50 flex items-center justify-center shadow-inner">
                           <div class="w-7 h-5 border border-black/25 rounded-sm grid grid-cols-2 gap-px"></div>
                         </div>
-                        <!-- Contactless Waves Icon -->
                         <svg class="w-5 h-5 text-slate-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
                           <path stroke-linecap="round" stroke-linejoin="round" d="M8.111 16.404a5.5 5.5 0 017.778 0M12 20h.01m-7.08-7.071c3.904-3.905 10.236-3.905 14.141 0M1.394 9.393c5.857-5.857 15.355-5.857 21.213 0"/>
                         </svg>
@@ -792,7 +1014,7 @@
                     </div>
                   </div>
 
-                  <!-- BACK OF 3D PLATINUM CARD (Shown when typing CVV) -->
+                  <!-- BACK OF 3D PLATINUM CARD -->
                   <div class="card-face card-face-back flex flex-col justify-between py-5">
                     <div class="w-full h-11 bg-black/90 mt-1"></div>
                     <div class="px-6">
@@ -813,13 +1035,12 @@
                 </div>
               </div>
 
-              <!-- Security Badges under 3D Card (Hidden during processing) -->
               <div id="card-security-badges" class="mt-5 flex items-center justify-center gap-6 text-[11px] text-slate-400 font-semibold">
                 <span class="flex items-center gap-1.5">🔒 256-Bit SSL Encrypted</span>
-                <span class="flex items-center gap-1.5">🛡️ PCI-DSS Compliant</span>
+                <span class="flex items-center gap-1.5">🛡️ 7-Day 100% Refund Guarantee</span>
               </div>
 
-              <!-- Processing & Success Status Area (Shown when PAY NOW is clicked - Frame 00:02 -> 00:05) -->
+              <!-- Processing & Success Status Area -->
               <div id="payment-processing-status" class="hidden mt-7 w-full max-w-xs text-center space-y-3">
                 <div id="payment-progress-bar-wrap" class="w-full h-1.5 rounded-full bg-white/10 overflow-hidden">
                   <div id="payment-progress-fill" class="h-full bg-yellow-400 w-0 transition-all duration-1000"></div>
@@ -881,7 +1102,7 @@
               </button>
 
               <p class="text-center text-[11px] text-slate-400">
-                🔒 Instant Cloud Activation • Cancel Anytime
+                🔒 7-Day 100% Money-Back Refund Guarantee • Cancel Anytime
               </p>
             </div>
 
@@ -893,16 +1114,16 @@
   </section>
 
   <!-- ===================================================================== -->
-  <!-- VIEW 3: GLASSY DASHBOARD (Exact match to Theme_Stayle.mp4)            -->
+  <!-- VIEW 3: GLASSY DASHBOARD (Fixed Sidebar + Independent Scroll Content) -->
   <!-- ===================================================================== -->
-  <div id="view-dashboard" class="hidden flex-1 flex flex-col lg:flex-row min-h-screen dashboard-glass-bg relative z-10">
+  <div id="view-dashboard" class="hidden flex-1 flex flex-col lg:flex-row lg:h-screen lg:overflow-hidden dashboard-glass-bg relative z-10 animate-view-enter">
 
-    <!-- LEFT GLOWING GLASS SIDEBAR DOCK -->
-    <aside class="dock-sidebar w-full lg:w-64 shrink-0 flex flex-col justify-between">
+    <!-- LEFT GLOWING GLASS SIDEBAR DOCK (FIXED 100vh ON DESKTOP - NEVER SCROLLS AWAY!) -->
+    <aside class="dock-sidebar w-full lg:w-64 lg:h-screen lg:sticky lg:top-0 shrink-0 flex flex-col justify-between z-20">
       <div>
         <div class="h-16 px-5 flex items-center justify-between border-b border-white/10">
-          <div class="flex items-center gap-3">
-            <div class="w-9 h-9 rounded-xl bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center font-extrabold text-white text-sm shadow-lg shadow-blue-500/30 shrink-0">
+          <div class="flex items-center gap-3 cursor-pointer group" onclick="refreshDashboardView()" title="Click to refresh Portal">
+            <div class="w-9 h-9 rounded-xl bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center font-extrabold text-white text-sm shadow-lg shadow-blue-500/30 shrink-0 group-hover:rotate-12 transition">
               Z
             </div>
             <div>
@@ -910,9 +1131,10 @@
               <span class="text-[10px] font-bold text-blue-400 uppercase tracking-widest">Glassy OS</span>
             </div>
           </div>
-          <button onclick="switchDashboardTab('profile')" class="lg:hidden px-3 py-1.5 rounded-xl btn-glass text-xs">
-            Settings
-          </button>
+          <div class="flex items-center gap-2 lg:hidden">
+            <button onclick="switchDashboardTab('support')" class="px-2.5 py-1.5 rounded-xl btn-glass text-xs">Support</button>
+            <button onclick="logoutClient()" class="px-2.5 py-1.5 rounded-xl bg-rose-500/20 text-rose-300 text-xs font-bold">Sign Out</button>
+          </div>
         </div>
 
         <nav class="p-3.5 flex lg:flex-col gap-2 overflow-x-auto">
@@ -924,15 +1146,31 @@
             <span>📊</span>
             <span id="dtab-attendance-label">Attendance & Chat Logs</span>
           </button>
+          <button onclick="switchDashboardTab('support')" id="dtab-support" class="flex items-center justify-between gap-3 px-4 py-3 rounded-2xl text-xs sm:text-sm font-semibold text-slate-300 hover:bg-white/5 hover:text-white whitespace-nowrap text-left transition">
+            <span class="flex items-center gap-3">
+              <span>💬</span>
+              <span>Support & Tickets</span>
+            </span>
+            <span id="sidebar-ticket-badge" class="px-2 py-0.5 rounded-full text-[10px] font-extrabold bg-yellow-500/20 text-yellow-400 border border-yellow-500/30">24/7</span>
+          </button>
           <button onclick="switchDashboardTab('profile')" id="dtab-profile" class="flex items-center gap-3 px-4 py-3 rounded-2xl text-xs sm:text-sm font-semibold text-slate-300 hover:bg-white/5 hover:text-white whitespace-nowrap text-left transition">
             <span>🛡️</span>
             <span>Security & Integrations</span>
           </button>
+
+          <!-- Master Agency Admin Tab (Visible for amirjupiteradvisers@gmail.com) -->
+          <button onclick="switchDashboardTab('agency')" id="dtab-agency" class="hidden flex items-center justify-between gap-2 px-4 py-3 rounded-2xl text-xs sm:text-sm font-extrabold bg-yellow-500/15 text-yellow-400 border border-yellow-500/40 hover:bg-yellow-500/25 whitespace-nowrap text-left transition mt-2">
+            <span class="flex items-center gap-2.5">
+              <span>⚡</span>
+              <span>Agency Admin View</span>
+            </span>
+            <span id="agency-unread-tickets-badge" class="px-2 py-0.5 rounded-full text-[10px] font-extrabold bg-yellow-400 text-black">0</span>
+          </button>
         </nav>
       </div>
 
-      <!-- Sidebar Footer: Active Plan (No Upgrade Button on 3rd Enterprise Plan!) -->
-      <div class="hidden lg:block p-4 border-t border-white/10 space-y-3">
+      <!-- Fixed Bottom Account & Active Plan Card (Always Pinned at Bottom of Sidebar!) -->
+      <div class="hidden lg:block p-4 border-t border-white/10 space-y-3 bg-[#090b12]/90">
         <div class="p-3.5 rounded-2xl glass-card-subtle">
           <span class="text-[10px] uppercase tracking-widest text-slate-400 font-bold block">Active Plan</span>
           <div class="flex items-center justify-between mt-1">
@@ -945,25 +1183,28 @@
             <div id="sidebar-user-name" class="text-xs font-bold text-white truncate">Amir Hayat</div>
             <div id="sidebar-user-email" class="text-[11px] text-slate-400 truncate">amirjupiteradvisers@gmail.com</div>
           </div>
-          <button onclick="logoutClient()" class="px-3 py-1.5 rounded-xl btn-glass text-[11px] text-rose-300 hover:border-rose-500/40">
+          <button onclick="logoutClient()" class="px-3 py-1.5 rounded-xl btn-glass text-[11px] text-rose-300 hover:border-rose-500/40 shrink-0">
             Sign Out
           </button>
         </div>
       </div>
     </aside>
 
-    <!-- MAIN GLASSY BENTO WORKSPACE -->
-    <div class="flex-1 flex flex-col min-w-0">
+    <!-- RIGHT MAIN GLASSY WORKSPACE (SCROLLS INDEPENDENTLY) -->
+    <div id="dashboard-main-scroll" class="flex-1 flex flex-col min-w-0 lg:h-screen lg:overflow-y-auto">
       
-      <!-- Top Glassy Workspace Header (Exact match to Theme_Stayle.mp4 00:00) -->
-      <header class="h-16 px-4 sm:px-8 border-b border-white/10 bg-[#08090f]/75 backdrop-blur-xl flex items-center justify-between gap-3">
+      <!-- Sticky Top Workspace Header -->
+      <header class="sticky top-0 z-30 h-16 px-4 sm:px-8 border-b border-white/10 bg-[#08090f]/85 backdrop-blur-xl flex items-center justify-between gap-3 shrink-0">
         <div class="flex items-center gap-3 truncate">
           <div>
             <h1 id="workspace-page-title" class="text-sm sm:text-base font-extrabold text-white truncate">Hi, Amir Hayat 👋</h1>
             <p class="text-[11px] text-slate-400 hidden sm:block">Cloud Broadcast Command Center & Automated Scheduler</p>
           </div>
         </div>
-        <div class="flex items-center gap-3 shrink-0">
+        <div class="flex items-center gap-2.5 shrink-0">
+          <button id="header-agency-btn" onclick="switchDashboardTab('agency')" class="hidden px-3.5 py-2 rounded-xl bg-yellow-500/15 border border-yellow-500/40 text-yellow-400 hover:bg-yellow-500/25 text-xs font-extrabold">
+            ⚡ Agency View
+          </button>
           <span class="hidden md:inline-flex items-center gap-2 px-3 py-1.5 rounded-xl bg-emerald-500/10 border border-emerald-500/25 text-emerald-400 text-xs font-bold">
             <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
             Cloud Bot Ready
@@ -974,23 +1215,22 @@
         </div>
       </header>
 
-      <div class="p-4 sm:p-8 max-w-6xl w-full mx-auto space-y-6">
+      <div class="p-4 sm:p-8 max-w-6xl w-full mx-auto space-y-6 pb-16">
 
-        <!-- TOP BENTO STATS ROW (Exact match to Theme_Stayle.mp4 Radial Rings & Progress Bars) -->
-        <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+        <!-- TOP BENTO STATS ROW (Detailed Telemetry) -->
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
           <div class="glass-card p-5 rounded-2xl flex items-center justify-between">
             <div>
               <span class="text-xs text-slate-400 font-semibold">Scheduled Workflows</span>
-              <div id="bento-stat-workflows" class="text-2xl font-extrabold text-white mt-1">0 Active</div>
+              <div id="bento-stat-workflows" class="text-2xl font-extrabold text-white mt-1">0 Workflows</div>
               <span class="text-[11px] text-emerald-400 font-semibold flex items-center gap-1 mt-1">↗ 100% Cloud Sync</span>
             </div>
-            <!-- Radial SVG Gauge -->
-            <div class="relative w-14 h-14 flex items-center justify-center">
-              <svg class="w-14 h-14 -rotate-90" viewBox="0 0 36 36">
+            <div class="relative w-12 h-12 flex items-center justify-center shrink-0">
+              <svg class="w-12 h-12 -rotate-90" viewBox="0 0 36 36">
                 <path class="text-white/10" stroke="currentColor" stroke-width="3.5" fill="none" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"/>
                 <path class="text-yellow-400" stroke="currentColor" stroke-width="3.5" stroke-dasharray="85, 100" stroke-linecap="round" fill="none" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"/>
               </svg>
-              <span class="absolute text-[11px] font-extrabold text-yellow-400">Auto</span>
+              <span class="absolute text-[10px] font-extrabold text-yellow-400">Auto</span>
             </div>
           </div>
 
@@ -1000,12 +1240,12 @@
               <div id="bento-stat-cohosts" class="text-2xl font-extrabold text-white mt-1">0 Members</div>
               <span class="text-[11px] text-blue-400 font-semibold flex items-center gap-1 mt-1">⚡ Auto-Role Promotion</span>
             </div>
-            <div class="relative w-14 h-14 flex items-center justify-center">
-              <svg class="w-14 h-14 -rotate-90" viewBox="0 0 36 36">
+            <div class="relative w-12 h-12 flex items-center justify-center shrink-0">
+              <svg class="w-12 h-12 -rotate-90" viewBox="0 0 36 36">
                 <path class="text-white/10" stroke="currentColor" stroke-width="3.5" fill="none" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"/>
                 <path class="text-blue-400" stroke="currentColor" stroke-width="3.5" stroke-dasharray="92, 100" stroke-linecap="round" fill="none" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"/>
               </svg>
-              <span class="absolute text-[11px] font-extrabold text-blue-400">VIP</span>
+              <span class="absolute text-[10px] font-extrabold text-blue-400">VIP</span>
             </div>
           </div>
 
@@ -1015,12 +1255,23 @@
               <div id="bento-stat-sessions" class="text-2xl font-extrabold text-white mt-1">0 Sessions</div>
               <span class="text-[11px] text-emerald-400 font-semibold flex items-center gap-1 mt-1">💬 Real Chat Capture</span>
             </div>
-            <div class="relative w-14 h-14 flex items-center justify-center">
-              <svg class="w-14 h-14 -rotate-90" viewBox="0 0 36 36">
+            <div class="relative w-12 h-12 flex items-center justify-center shrink-0">
+              <svg class="w-12 h-12 -rotate-90" viewBox="0 0 36 36">
                 <path class="text-white/10" stroke="currentColor" stroke-width="3.5" fill="none" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"/>
                 <path class="text-emerald-400" stroke="currentColor" stroke-width="3.5" stroke-dasharray="100, 100" stroke-linecap="round" fill="none" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"/>
               </svg>
-              <span class="absolute text-[11px] font-extrabold text-emerald-400">100%</span>
+              <span class="absolute text-[10px] font-extrabold text-emerald-400">100%</span>
+            </div>
+          </div>
+
+          <div class="glass-card p-5 rounded-2xl flex items-center justify-between cursor-pointer hover:border-yellow-500/40 transition" onclick="switchDashboardTab('support')">
+            <div>
+              <span class="text-xs text-slate-400 font-semibold">Support Tickets</span>
+              <div id="bento-stat-tickets" class="text-2xl font-extrabold text-white mt-1">0 Open</div>
+              <span class="text-[11px] text-yellow-400 font-semibold flex items-center gap-1 mt-1">📩 Click for Help Desk</span>
+            </div>
+            <div class="w-11 h-11 rounded-2xl bg-yellow-500/15 border border-yellow-500/30 flex items-center justify-center text-yellow-400 font-extrabold text-base shrink-0">
+              💬
             </div>
           </div>
         </div>
@@ -1028,7 +1279,7 @@
         <!-- =============================================================== -->
         <!-- TAB 1: WORKFLOWS & GLASSY CALENDAR SCHEDULER                    -->
         <!-- =============================================================== -->
-        <div id="dash-content-categories" class="space-y-6">
+        <div id="dash-content-categories" class="space-y-6 animate-view-enter">
 
           <!-- Saved Workflows List -->
           <div class="glass-card p-5 sm:p-6 rounded-2xl">
@@ -1138,7 +1389,7 @@
               <div id="cat-videos-list" class="mt-3 space-y-2"></div>
             </div>
 
-            <!-- Step 4: Glassy 12-Hour (AM / PM) Calendar Grid (Exact Theme_Stayle.mp4 00:04 Gold Slot Highlight) -->
+            <!-- Step 4: Glassy 12-Hour (AM / PM) Calendar Grid -->
             <div>
               <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-3 mb-3">
                 <div>
@@ -1227,9 +1478,8 @@
         <!-- =============================================================== -->
         <!-- TAB 2: ATTENDANCE & REAL GLASSY ZOOM CHAT VIEWER                -->
         <!-- =============================================================== -->
-        <div id="dash-content-attendance" class="hidden space-y-6">
+        <div id="dash-content-attendance" class="hidden space-y-6 animate-view-enter">
           
-          <!-- LEVEL 1: COMPLETED MEETINGS SUMMARY TABLE -->
           <div id="attendance-meetings-list-card" class="glass-card p-5 sm:p-6 rounded-2xl">
             <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-4 border-b border-white/10">
               <div>
@@ -1264,7 +1514,6 @@
             </div>
           </div>
 
-          <!-- LEVEL 2: SELECTED MEETING PARTICIPANTS & REAL CHAT DRAWER -->
           <div id="attendance-session-detail-card" class="hidden glass-card p-5 sm:p-6 rounded-2xl space-y-6">
             <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-4 border-b border-white/10">
               <div>
@@ -1308,9 +1557,74 @@
         </div>
 
         <!-- =============================================================== -->
-        <!-- TAB 3: SECURITY & ACTIVE WORKSPACE SESSIONS (Theme_Stayle 00:01)-->
+        <!-- TAB 3: CLIENT SUPPORT & TICKETS (Low / Normal / High Priority)  -->
+        <!-- Automatic greeting + Agency Reply right inside Portal!          -->
         <!-- =============================================================== -->
-        <div id="dash-content-profile" class="hidden space-y-6">
+        <div id="dash-content-support" class="hidden space-y-6 animate-view-enter">
+          
+          <!-- Direct Contact Banner -->
+          <div class="glass-card p-5 sm:p-6 rounded-2xl flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+            <div>
+              <div class="flex items-center gap-2">
+                <span class="px-2.5 py-0.5 rounded-md bg-yellow-500/15 text-yellow-400 border border-yellow-500/30 text-xs font-extrabold">24/7 PRIORITY DESK</span>
+                <h2 class="text-base font-extrabold text-white">Customer Support & Ticket Center</h2>
+              </div>
+              <p class="text-xs text-slate-400 mt-1">
+                Open a support ticket below or email us directly at
+                <a id="portal-support-email-link" href="mailto:amirjupiteradvisers@gmail.com" class="text-yellow-400 font-bold hover:underline">amirjupiteradvisers@gmail.com</a>
+              </p>
+            </div>
+            <button type="button" onclick="switchView('terms')" class="px-4 py-2 rounded-xl btn-glass text-xs self-start sm:self-auto">
+              🛡️ 7-Day 100% Refund Policy
+            </button>
+          </div>
+
+          <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+            <!-- Left: Open New Ticket Form -->
+            <div class="lg:col-span-5 glass-card p-5 sm:p-6 rounded-2xl space-y-4 self-start">
+              <h3 class="text-sm font-extrabold text-white border-b border-white/10 pb-3">+ Open a New Support Ticket</h3>
+
+              <div>
+                <label class="text-xs font-bold text-slate-300 block mb-1">Ticket Subject</label>
+                <input id="client-ticket-subject" type="text" placeholder="e.g. Zoom link setup or billing help" class="w-full px-3.5 py-2.5 rounded-xl glass-input text-sm" />
+              </div>
+
+              <div>
+                <label class="text-xs font-bold text-slate-300 block mb-1">Priority Level</label>
+                <select id="client-ticket-priority" class="w-full px-3.5 py-2.5 rounded-xl glass-input text-sm font-bold">
+                  <option value="Low">🟢 Low Priority (General Question)</option>
+                  <option value="Normal" selected>🟡 Normal Priority (Standard Support)</option>
+                  <option value="High">🔴 High Priority (Urgent Broadcast Issue)</option>
+                </select>
+              </div>
+
+              <div>
+                <label class="text-xs font-bold text-slate-300 block mb-1">Describe Your Issue</label>
+                <textarea id="client-ticket-message" rows="4" placeholder="Write your message here... Our team will reply directly in this portal." class="w-full px-3.5 py-2.5 rounded-xl glass-input text-sm"></textarea>
+              </div>
+
+              <button type="button" onclick="createClientSupportTicket()" class="w-full py-3 rounded-xl btn-gold text-xs sm:text-sm">
+                Submit Ticket & Start Chat →
+              </button>
+            </div>
+
+            <!-- Right: Client's Active Tickets & Live Conversation Thread -->
+            <div class="lg:col-span-7 glass-card p-5 sm:p-6 rounded-2xl space-y-4">
+              <div class="flex items-center justify-between border-b border-white/10 pb-3">
+                <h3 class="text-sm font-extrabold text-white">Your Support Tickets & Agency Replies</h3>
+                <span class="text-[11px] text-slate-400">Live Two-Way Portal Inbox</span>
+              </div>
+
+              <div id="client-tickets-list" class="space-y-4 max-h-[540px] overflow-y-auto pr-1"></div>
+            </div>
+          </div>
+
+        </div>
+
+        <!-- =============================================================== -->
+        <!-- TAB 4: SECURITY & ACTIVE WORKSPACE SESSIONS                     -->
+        <!-- =============================================================== -->
+        <div id="dash-content-profile" class="hidden space-y-6 animate-view-enter">
           
           <div class="glass-card p-6 rounded-2xl">
             <div class="flex items-center justify-between pb-4 border-b border-white/10">
@@ -1339,7 +1653,7 @@
               </button>
             </div>
 
-            <!-- Forgot / Reset Password via OTP inside Profile -->
+            <!-- Forgot / Reset Password via 4-Digit OTP inside Profile -->
             <div class="mt-6 pt-5 border-t border-white/10">
               <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-3">
                 <div>
@@ -1347,7 +1661,7 @@
                   <p class="text-xs text-slate-400">Request a 4-digit security code on your email to update your account password.</p>
                 </div>
                 <button type="button" onclick="sendProfilePasswordResetOtp()" class="px-4 py-2 rounded-xl btn-glass text-xs self-start sm:self-auto">
-                  Send Reset OTP to Email
+                  Send 4-Digit OTP to Email
                 </button>
               </div>
 
@@ -1414,16 +1728,146 @@
 
         </div>
 
+        <!-- =============================================================== -->
+        <!-- TAB 5: AGENCY ADMIN COMMAND CENTER (For amirjupiteradvisers)    -->
+        <!-- Manage Support Tickets, Edit Hero/Terms/Privacy, OTP & Clients  -->
+        <!-- =============================================================== -->
+        <div id="dash-content-agency" class="hidden space-y-6 animate-view-enter">
+          
+          <div class="glass-card-gold p-5 sm:p-6 rounded-2xl flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+            <div>
+              <span class="px-2.5 py-0.5 rounded-md bg-yellow-400 text-black font-extrabold text-[11px] uppercase">MASTER AGENCY VIEW</span>
+              <h2 class="text-lg font-extrabold text-white mt-1">Agency Command Center — Manage Clients, Tickets & Website Content</h2>
+              <p class="text-xs text-slate-300">Logged in as Master Owner (<code class="text-yellow-400">amirjupiteradvisers@gmail.com</code>).</p>
+            </div>
+            <a href="admin.html" target="_blank" class="px-4 py-2 rounded-xl btn-glass text-xs self-start sm:self-auto">
+              Open Standalone Admin URL ↗
+            </a>
+          </div>
+
+          <!-- 1. AGENCY SUPPORT TICKETS INBOX (Reply directly to clients!) -->
+          <div class="glass-card p-5 sm:p-6 rounded-2xl space-y-4">
+            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pb-3 border-b border-white/10">
+              <div>
+                <h3 class="text-base font-extrabold text-white">📥 Client Support Tickets Inbox</h3>
+                <p class="text-xs text-slate-400">View incoming client tickets (with Priority Low / Normal / High) and send replies directly to their portal.</p>
+              </div>
+              <span id="agency-tickets-count-label" class="px-3 py-1 rounded-full bg-yellow-500/15 border border-yellow-500/30 text-yellow-400 text-xs font-bold">0 Tickets</span>
+            </div>
+
+            <div id="agency-tickets-container" class="space-y-4"></div>
+          </div>
+
+          <!-- 2. WEBSITE, HERO, TERMS (7-DAY REFUND) & PRIVACY POLICY CMS EDITOR -->
+          <div class="glass-card p-5 sm:p-6 rounded-2xl space-y-4">
+            <div class="pb-3 border-b border-white/10">
+              <h3 class="text-base font-extrabold text-white">🎨 Website Content, Terms (7-Day Refund) & Privacy Policy Manager</h3>
+              <p class="text-xs text-slate-400">Edit the landing page Hero text, Support Email, 7-Day 100% Refund Policy, Terms & Conditions, and Privacy Policy live.</p>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <label class="text-xs font-bold text-slate-300 block mb-1">Hero Main Headline</label>
+                <input id="cms-edit-hero-title" type="text" class="w-full px-3.5 py-2.5 rounded-xl glass-input text-sm" />
+              </div>
+              <div>
+                <label class="text-xs font-bold text-slate-300 block mb-1">Official Support & Contact Email</label>
+                <input id="cms-edit-support-email" type="email" class="w-full px-3.5 py-2.5 rounded-xl glass-input text-sm" />
+              </div>
+            </div>
+
+            <div>
+              <label class="text-xs font-bold text-slate-300 block mb-1">Hero Subtitle Text</label>
+              <textarea id="cms-edit-hero-subtitle" rows="2" class="w-full px-3.5 py-2.5 rounded-xl glass-input text-sm"></textarea>
+            </div>
+
+            <div>
+              <label class="text-xs font-bold text-emerald-400 block mb-1">7-Day 100% Money-Back Refund Guarantee Box (Shown on Terms Page)</label>
+              <textarea id="cms-edit-refund-policy" rows="3" class="w-full px-3.5 py-2.5 rounded-xl glass-input text-sm"></textarea>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <label class="text-xs font-bold text-slate-300 block mb-1">Full Terms & Conditions Content</label>
+                <textarea id="cms-edit-terms-body" rows="6" class="w-full px-3.5 py-2.5 rounded-xl glass-input text-xs leading-relaxed"></textarea>
+              </div>
+              <div>
+                <label class="text-xs font-bold text-slate-300 block mb-1">Full Privacy Policy Content</label>
+                <textarea id="cms-edit-privacy-body" rows="6" class="w-full px-3.5 py-2.5 rounded-xl glass-input text-xs leading-relaxed"></textarea>
+              </div>
+            </div>
+
+            <div class="flex justify-end">
+              <button type="button" onclick="saveAgencyCmsSettings()" class="px-6 py-2.5 rounded-xl btn-gold text-xs sm:text-sm">
+                ✓ Save & Publish Website / Legal Changes
+              </button>
+            </div>
+          </div>
+
+          <!-- 3. CLOUD EMAIL OTP RELAY & GMAIL SMTP CONFIG -->
+          <div class="glass-card p-5 sm:p-6 rounded-2xl space-y-4">
+            <div class="pb-3 border-b border-white/10 flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+              <div>
+                <h3 class="text-base font-extrabold text-white">📧 Cloud Email OTP & Notification Sender Setup</h3>
+                <p class="text-xs text-slate-400">Connect your Google Apps Script Mail Relay URL or Gmail App Password so 4-digit OTP codes arrive in real email inboxes 24/7.</p>
+              </div>
+              <span class="px-2.5 py-1 rounded-md text-xs font-bold bg-emerald-500/15 text-emerald-400 border border-emerald-500/30">● Instant On-Screen + Email OTP Active</span>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-4 items-end">
+              <div>
+                <label class="text-xs font-bold text-slate-300 block mb-1">Google Apps Script Web App URL (Optional Cloud Relay)</label>
+                <input id="cms-otp-webhook-url" type="url" placeholder="https://script.google.com/macros/s/.../exec" class="w-full px-3.5 py-2.5 rounded-xl glass-input text-xs" />
+              </div>
+              <div>
+                <label class="text-xs font-bold text-slate-300 block mb-1">Sender Gmail Address (Local Server SMTP)</label>
+                <input id="smtp-gmail-user" type="email" placeholder="amirjupiteradvisers@gmail.com" class="w-full px-3.5 py-2.5 rounded-xl glass-input text-xs" />
+              </div>
+              <div>
+                <label class="text-xs font-bold text-slate-300 block mb-1">Google 16-Digit App Password</label>
+                <input id="smtp-gmail-pass" type="password" placeholder="xxxx xxxx xxxx xxxx" class="w-full px-3.5 py-2.5 rounded-xl glass-input text-xs font-mono" />
+              </div>
+            </div>
+
+            <div class="flex justify-end">
+              <button type="button" onclick="saveFreeSmtpConfig()" class="px-5 py-2.5 rounded-xl btn-gold text-xs">
+                Save Email OTP Delivery Settings
+              </button>
+            </div>
+          </div>
+
+          <!-- 4. REGISTERED CUSTOMERS & SUBSCRIPTIONS -->
+          <div class="glass-card p-5 sm:p-6 rounded-2xl space-y-4">
+            <h3 class="text-base font-extrabold text-white">👥 Registered Customers & Active Plans</h3>
+            <div class="overflow-x-auto">
+              <table class="w-full text-left border-collapse">
+                <thead>
+                  <tr class="border-b border-white/10 text-[11px] uppercase tracking-wider text-slate-400 font-bold">
+                    <th class="py-3 px-3">Customer</th>
+                    <th class="py-3 px-3">Plan</th>
+                    <th class="py-3 px-3">Workflows</th>
+                    <th class="py-3 px-3">Team Co-Hosts</th>
+                    <th class="py-3 px-3">Assigned Node</th>
+                    <th class="py-3 px-3">Status</th>
+                  </tr>
+                </thead>
+                <tbody id="agency-clients-tbody" class="divide-y divide-white/10 text-xs"></tbody>
+              </table>
+            </div>
+          </div>
+
+        </div>
+
       </div>
     </div>
 
   </div>
 
   <!-- ===================================================================== -->
-  <!-- REAL ZOOM IN-MEETING GLASSY CHAT VIEWER MODAL (Theme_Stayle 00:05)    -->
+  <!-- REAL ZOOM IN-MEETING GLASSY CHAT VIEWER MODAL                         -->
   <!-- ===================================================================== -->
   <div id="chat-viewer-modal" class="fixed inset-0 z-50 hidden bg-black/75 backdrop-blur-md flex items-center justify-center p-4">
-    <div class="hud-frame glass-card-gold rounded-3xl max-w-lg w-full flex flex-col max-h-[82vh]">
+    <div class="hud-frame glass-card-gold rounded-3xl max-w-lg w-full flex flex-col max-h-[82vh] animate-view-enter">
       <div class="hud-corner-tl"></div>
       <div class="hud-corner-tr"></div>
       <div class="hud-corner-bl"></div>
