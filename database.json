@@ -1,0 +1,54 @@
+{
+  "plans": [
+    {
+      "id": "starter",
+      "name": "Starter",
+      "pricePkr": 4500,
+      "priceUsd": 19,
+      "dailyMeetings": 2,
+      "maxVideoMinutes": 60,
+      "coHostEmails": 1,
+      "features": [
+        "2 Automated Zoom Broadcasts / Day",
+        "Up to 60 Min HD Video Playback",
+        "Automatic Participant Admission",
+        "1 Auto Co-Host Email Assignment",
+        "Participant Attendance Tracking"
+      ]
+    },
+    {
+      "id": "pro",
+      "name": "Business Pro",
+      "popular": true,
+      "pricePkr": 8500,
+      "priceUsd": 35,
+      "dailyMeetings": 3,
+      "maxVideoMinutes": 180,
+      "coHostEmails": 2,
+      "features": [
+        "3 Automated Zoom Broadcasts / Day",
+        "Up to 3 Hours Full HD Video & Audio",
+        "2 Auto Co-Host Email Assignments",
+        "Attendance Analytics & CSV Export",
+        "Dedicated Cloud Worker Priority",
+        "Auto-End Meeting on Video Completion"
+      ]
+    },
+    {
+      "id": "enterprise",
+      "name": "Enterprise",
+      "pricePkr": 16500,
+      "priceUsd": 65,
+      "dailyMeetings": 6,
+      "maxVideoMinutes": 300,
+      "coHostEmails": 2,
+      "features": [
+        "Up to 6 Automated Broadcasts / Day",
+        "Dedicated Cloud Broadcast Instance",
+        "2 Auto Co-Host Emails per Session",
+        "Real-Time Attendance Reports",
+        "24/7 Priority Account Support"
+      ]
+    }
+  ]
+}
