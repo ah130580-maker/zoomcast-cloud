@@ -9,7 +9,12 @@ const MASTER_ADMIN_USER = {
 
 let appState = {
   authMode: 'signin',
+  otpPurpose: 'signup', // 'signup' or 'forgot'
   generatedOtp: null,
+  otpTimerInterval: null,
+  otpSecondsRemaining: 38,
+  pendingSignupUser: null,
+  pendingForgotData: null,
   selectedPlan: null,
   activeSessionDetailId: null,
   profile: {
@@ -155,7 +160,6 @@ try {
   }
   const masterIdx = appState.usersDb.findIndex(u => u.email.toLowerCase() === MASTER_ADMIN_USER.email.toLowerCase());
   if (masterIdx >= 0) {
-    // Keep any updated password if the user reset it via OTP, otherwise default to MASTER_ADMIN_USER
     appState.usersDb[masterIdx] = {
       ...MASTER_ADMIN_USER,
       password: appState.usersDb[masterIdx].password || MASTER_ADMIN_USER.password
@@ -199,8 +203,13 @@ function showToast(msg) {
   setTimeout(() => box.classList.add('hidden'), 3600);
 }
 
+function togglePasswordVisibility(inputId) {
+  const inp = document.getElementById(inputId);
+  if (!inp) return;
+  inp.type = inp.type === 'password' ? 'text' : 'password';
+}
+
 function switchView(viewName) {
-  // Strict access check: cannot open dashboard without authToken and hasActivePlan
   if (viewName === 'dashboard') {
     if (!appState.profile.authToken || !appState.profile.hasActivePlan) {
       openAuthMode('signin');
@@ -231,12 +240,21 @@ function scrollToPricingSection() {
 }
 
 // ============================================================================
-// PLAN FEATURE GATING ENGINE (STRICT VISIBILITY PER PLAN)
+// PLAN FEATURE GATING ENGINE & BENTO STATS
 // ============================================================================
 function getActivePlanPermissions() {
   const planName = appState.profile.planName || 'Starter Plan';
   const plan = appState.plans.find(p => p.name === planName) || appState.plans[0];
   return plan.permissions;
+}
+
+function updateBentoStats() {
+  const wfStat = document.getElementById('bento-stat-workflows');
+  const chStat = document.getElementById('bento-stat-cohosts');
+  const sesStat = document.getElementById('bento-stat-sessions');
+  if (wfStat) wfStat.textContent = `${appState.categories.length} Workflows`;
+  if (chStat) chStat.textContent = `${appState.coHostEmails.length} Members`;
+  if (sesStat) sesStat.textContent = `${appState.attendanceSessions.length} Sessions`;
 }
 
 function applyPlanFeatureRestrictions() {
@@ -246,13 +264,13 @@ function applyPlanFeatureRestrictions() {
   const sbPlan = document.getElementById('sidebar-plan-badge');
   if (sbPlan) sbPlan.textContent = planName;
 
-  // Hide Upgrade button on the highest (3rd) plan (Enterprise)
+  // Hide Upgrade button on the 3rd/last plan (Enterprise)
   const sbUpgradeBtn = document.getElementById('sidebar-upgrade-btn');
   if (sbUpgradeBtn) {
     sbUpgradeBtn.classList.toggle('hidden', planName === 'Enterprise');
   }
 
-  // 1. Attendance Tab Visibility (Hidden completely on Starter Plan)
+  // 1. Attendance Tab Visibility (Hidden on Starter Plan)
   const attTabBtn = document.getElementById('dtab-attendance');
   const attTabLabel = document.getElementById('dtab-attendance-label');
   if (attTabBtn) {
@@ -266,7 +284,7 @@ function applyPlanFeatureRestrictions() {
     switchDashboardTab('categories');
   }
 
-  // 2. Draft Mode Toggle & Save as Draft Button (Hidden on Starter Plan)
+  // 2. Draft Mode Toggle & Save as Draft Button
   const draftToggleWrap = document.getElementById('builder-draft-toggle-wrap');
   const btnSaveDraft = document.getElementById('btn-save-draft');
   if (draftToggleWrap) draftToggleWrap.classList.toggle('hidden', !perms.allowDraftMode);
@@ -280,13 +298,13 @@ function applyPlanFeatureRestrictions() {
     wfNameCol.className = perms.allowWebinars ? 'md:col-span-2' : 'md:col-span-3';
   }
 
-  // 4. Custom Hour/Minute Time Picker (Hidden on Starter Plan)
+  // 4. Custom Hour/Minute Time Picker
   const customTimeWrap = document.getElementById('custom-time-picker-wrap');
   const timeSlotsSub = document.getElementById('time-slots-subtext');
   if (customTimeWrap) customTimeWrap.classList.toggle('hidden', !perms.allowCustomTime);
   if (timeSlotsSub) {
     timeSlotsSub.textContent = perms.maxDailyTimes >= 99
-      ? 'Select unlimited 12-hour AM/PM times or add custom hour & minute slots.'
+      ? 'Select unlimited 12-hour AM/PM times or add custom hour & minute slots (highlighted in Gold).'
       : `Your ${planName} allows up to ${perms.maxDailyTimes} broadcast times per day.`;
   }
 
@@ -354,6 +372,7 @@ function applyPlanFeatureRestrictions() {
     }
   }
 
+  updateBentoStats();
   render12HourCalendarGrid();
   renderSavedCategories();
   renderCoHostEmails();
@@ -364,10 +383,10 @@ function applyPlanFeatureRestrictions() {
 }
 
 // ============================================================================
-// STRICT AUTHENTICATION: ONLY REGISTERED PAID USERS OR MASTER USER
+// AUTHENTICATION V7 WITH 3D DIAMOND FLIP MORPH (sign_up_login.mp4)
 // ============================================================================
 function showAuthStep(stepName) {
-  const steps = ['account', 'plan', 'payment'];
+  const steps = ['account', 'otp', 'plan', 'payment'];
   steps.forEach(s => {
     const el = document.getElementById('auth-step-' + s);
     if (el) el.classList.toggle('hidden', s !== stepName);
@@ -375,41 +394,57 @@ function showAuthStep(stepName) {
   if (stepName === 'plan') {
     renderModalPlanSelector();
   }
+  if (stepName === 'payment') {
+    resetPaymentCheckoutUI();
+  }
 }
 
 function openAuthMode(mode) {
+  const alreadyInAuth = !document.getElementById('view-auth')?.classList.contains('hidden') &&
+                        !document.getElementById('auth-step-account')?.classList.contains('hidden');
+  const modeChanged = appState.authMode !== mode;
   appState.authMode = mode;
+
   switchView('auth');
   showAuthStep('account');
 
-  const isSignIn = mode === 'signin';
-  const isSignUp = mode === 'signup';
-  const isForgot = mode === 'forgot';
-  const formSignIn = document.getElementById('form-signin');
-  const formSignUp = document.getElementById('form-signup');
-  const formForgot = document.getElementById('form-forgot');
-  const btnSignIn = document.getElementById('tab-btn-signin');
-  const btnSignUp = document.getElementById('tab-btn-signup');
+  const wrapper = document.getElementById('auth-morph-wrapper');
+  const loader = document.getElementById('auth-diamond-loader');
 
-  if (formSignIn) formSignIn.classList.toggle('hidden', !isSignIn);
-  if (formSignUp) formSignUp.classList.toggle('hidden', !isSignUp);
-  if (formForgot) formForgot.classList.toggle('hidden', !isForgot);
+  const applyFormToggle = () => {
+    const isSignIn = mode === 'signin';
+    const isSignUp = mode === 'signup';
+    const isForgot = mode === 'forgot';
+    document.getElementById('form-signin')?.classList.toggle('hidden', !isSignIn);
+    document.getElementById('form-signup')?.classList.toggle('hidden', !isSignUp);
+    document.getElementById('form-forgot')?.classList.toggle('hidden', !isForgot);
 
-  if (isForgot) {
-    const signInEmail = (document.getElementById('signin-email')?.value || '').trim();
-    const forgotEmailInp = document.getElementById('forgot-email');
-    if (signInEmail && forgotEmailInp && !forgotEmailInp.value) {
-      forgotEmailInp.value = signInEmail;
+    if (isForgot) {
+      const signInEmail = (document.getElementById('signin-email')?.value || '').trim();
+      const forgotEmailInp = document.getElementById('forgot-email');
+      if (signInEmail && forgotEmailInp && !forgotEmailInp.value) {
+        forgotEmailInp.value = signInEmail;
+      }
     }
-  }
+  };
 
-  if (btnSignIn && btnSignUp) {
-    btnSignIn.className = (isSignIn || isForgot)
-      ? 'py-2.5 rounded-lg text-xs sm:text-sm font-bold bg-white text-slate-900 shadow-sm whitespace-nowrap'
-      : 'py-2.5 rounded-lg text-xs sm:text-sm font-bold text-slate-600 hover:text-slate-900 whitespace-nowrap';
-    btnSignUp.className = isSignUp
-      ? 'py-2.5 rounded-lg text-xs sm:text-sm font-bold bg-white text-slate-900 shadow-sm whitespace-nowrap'
-      : 'py-2.5 rounded-lg text-xs sm:text-sm font-bold text-slate-600 hover:text-slate-900 whitespace-nowrap';
+  // Run the exact 3D Diamond Flip Morph animation when switching between Login & Sign Up
+  if (alreadyInAuth && modeChanged && wrapper && loader) {
+    wrapper.classList.add('morph-diamond-active');
+    loader.classList.remove('opacity-0', 'scale-50');
+    loader.classList.add('opacity-100', 'scale-100');
+
+    setTimeout(() => {
+      applyFormToggle();
+    }, 210);
+
+    setTimeout(() => {
+      wrapper.classList.remove('morph-diamond-active');
+      loader.classList.remove('opacity-100', 'scale-100');
+      loader.classList.add('opacity-0', 'scale-50');
+    }, 430);
+  } else {
+    applyFormToggle();
   }
 }
 
@@ -424,21 +459,86 @@ function openGetStartedModal() {
   }
 }
 
-async function sendEmailOtpCode() {
-  const emailInp = document.getElementById('signup-email');
-  const email = emailInp ? emailInp.value.trim() : '';
-  if (!email || !email.includes('@')) {
-    showToast('Please enter a valid email address first');
-    return;
+// ============================================================================
+// EXACT GLASSY 4-DIGIT OTP ANIMATION ENGINE (otp.mp4)
+// ============================================================================
+function startOtpCountdownTimer() {
+  if (appState.otpTimerInterval) clearInterval(appState.otpTimerInterval);
+  appState.otpSecondsRemaining = 38;
+  const timerBtn = document.getElementById('otp-resend-timer');
+  const updateLabel = () => {
+    if (!timerBtn) return;
+    if (appState.otpSecondsRemaining > 0) {
+      const s = String(appState.otpSecondsRemaining).padStart(2, '0');
+      timerBtn.textContent = `Resend in 00:${s}`;
+    } else {
+      timerBtn.textContent = `Resend Code Now`;
+    }
+  };
+  updateLabel();
+  appState.otpTimerInterval = setInterval(() => {
+    if (appState.otpSecondsRemaining > 0) {
+      appState.otpSecondsRemaining--;
+      updateLabel();
+    } else {
+      clearInterval(appState.otpTimerInterval);
+    }
+  }, 1000);
+}
+
+function resetGlassyOtpStageUI() {
+  const row = document.getElementById('otp-boxes-row');
+  const merged = document.getElementById('otp-merged-box');
+  const mergedCheck = document.getElementById('otp-merged-check');
+  const topWrap = document.getElementById('otp-top-icon-wrap');
+  const iconKey = document.getElementById('otp-icon-key');
+  const iconShield = document.getElementById('otp-icon-shield');
+  const titleEl = document.getElementById('otp-title-heading');
+  const subEl = document.getElementById('otp-subtitle-text');
+  const btn = document.getElementById('otp-submit-btn');
+
+  if (row) {
+    row.classList.remove('hidden', 'otp-stage-orbit', 'otp-stage-converge');
+  }
+  if (merged) {
+    merged.classList.add('hidden');
+    merged.className = 'hidden w-16 h-16 rounded-2xl border-2 border-yellow-400 bg-yellow-500/10 flex items-center justify-center shadow-2xl transition-all duration-500';
+  }
+  if (mergedCheck) mergedCheck.classList.add('hidden');
+
+  if (topWrap) {
+    topWrap.className = 'w-14 h-14 mx-auto rounded-full bg-yellow-500/10 border border-yellow-500/30 flex items-center justify-center text-yellow-400 mb-4 transition-all duration-500';
+  }
+  if (iconKey) iconKey.classList.remove('hidden');
+  if (iconShield) iconShield.classList.add('hidden');
+
+  if (titleEl) titleEl.innerHTML = `Verify <span class="text-yellow-400">OTP</span>`;
+  if (subEl) subEl.textContent = `Enter the 4-digit security code sent to your device`;
+
+  if (btn) {
+    btn.className = 'w-full py-3.5 rounded-xl btn-gold text-sm flex items-center justify-center gap-2';
+    btn.innerHTML = `<span>Verify & Proceed</span><span>→</span>`;
   }
 
-  const otp = String(Math.floor(100000 + Math.random() * 900000));
+  for (let i = 0; i < 4; i++) {
+    const box = document.getElementById(`otp-d${i}`);
+    if (box) {
+      box.value = '';
+      box.classList.remove('filled');
+    }
+  }
+}
+
+async function launchGlassyOtpScreen(email, purpose) {
+  appState.otpPurpose = purpose;
+  const otp = String(Math.floor(1000 + Math.random() * 9000)); // 4-digit security code matching otp.mp4
   appState.generatedOtp = otp;
 
-  const box = document.getElementById('otp-verification-box');
-  const hint = document.getElementById('otp-hint-badge');
-  if (box) box.classList.remove('hidden');
+  resetGlassyOtpStageUI();
+  showAuthStep('otp');
+  startOtpCountdownTimer();
 
+  const codePill = document.getElementById('otp-live-code-pill');
   let sentViaSmtp = false;
   try {
     const res = await fetch('/api/send-otp', {
@@ -448,19 +548,217 @@ async function sendEmailOtpCode() {
     });
     if (res.ok) {
       const data = await res.json();
-      if (data.sentEmail) {
-        sentViaSmtp = true;
-      }
+      if (data.sentEmail) sentViaSmtp = true;
     }
   } catch (e) {}
 
-  if (sentViaSmtp) {
-    if (hint) hint.textContent = `Sent to ${email}`;
-    showToast(`✓ 6-Digit OTP sent to your email (${email})!`);
-  } else {
-    if (hint) hint.textContent = `Code: ${otp}`;
-    showToast(`Verification OTP sent for ${email}`);
+  if (codePill) {
+    codePill.textContent = sentViaSmtp
+      ? `Sent to ${email} • Security Code: ${otp}`
+      : `Security Code for ${email}: ${otp}`;
   }
+
+  setTimeout(() => {
+    document.getElementById('otp-d0')?.focus();
+  }, 120);
+}
+
+function resendGlassyOtp() {
+  const email = appState.otpPurpose === 'forgot'
+    ? (appState.pendingForgotData?.email || '')
+    : (appState.pendingSignupUser?.email || '');
+  if (email) {
+    launchGlassyOtpScreen(email, appState.otpPurpose);
+    showToast(`✓ New 4-Digit Security OTP sent to ${email}`);
+  }
+}
+
+function handleOtpDigitInput(idx, event) {
+  const inp = event.target;
+  const val = inp.value.replace(/\D/g, '');
+  inp.value = val ? val[val.length - 1] : '';
+  inp.classList.toggle('filled', Boolean(inp.value));
+
+  if (inp.value && idx < 3) {
+    document.getElementById(`otp-d${idx + 1}`)?.focus();
+  }
+}
+
+function handleOtpDigitKeydown(idx, event) {
+  if (event.key === 'Backspace' && !event.target.value && idx > 0) {
+    const prev = document.getElementById(`otp-d${idx - 1}`);
+    if (prev) {
+      prev.focus();
+      prev.value = '';
+      prev.classList.remove('filled');
+    }
+  }
+  if (event.key === 'Enter') {
+    triggerGlassyOtpVerifyAnimation();
+  }
+}
+
+function triggerGlassyOtpVerifyAnimation() {
+  const entered = [0, 1, 2, 3].map(i => (document.getElementById(`otp-d${i}`)?.value || '').trim()).join('');
+  if (entered.length < 4) {
+    showToast('Please enter all 4 digits of the security OTP code.');
+    return;
+  }
+  if (entered !== appState.generatedOtp) {
+    showToast('Invalid 4-digit OTP code. Please check the security code shown above.');
+    return;
+  }
+
+  const row = document.getElementById('otp-boxes-row');
+  const merged = document.getElementById('otp-merged-box');
+  const mergedCheck = document.getElementById('otp-merged-check');
+  const topWrap = document.getElementById('otp-top-icon-wrap');
+  const iconKey = document.getElementById('otp-icon-key');
+  const iconShield = document.getElementById('otp-icon-shield');
+  const titleEl = document.getElementById('otp-title-heading');
+  const subEl = document.getElementById('otp-subtitle-text');
+  const btn = document.getElementById('otp-submit-btn');
+
+  // Phase 1 (00:01 - 00:02): Button shows "Verifying Code..." + 4 Boxes form Rotating Diamond Orbit
+  if (btn) {
+    btn.innerHTML = `<span class="inline-block w-4 h-4 border-2 border-black border-t-transparent rounded-full animate-spin"></span><span>Verifying Code...</span>`;
+  }
+  if (row) {
+    row.classList.add('otp-stage-orbit');
+  }
+
+  // Phase 2 (00:03): Converge into single center glowing square
+  setTimeout(() => {
+    if (row) row.classList.add('hidden');
+    if (merged) merged.classList.remove('hidden');
+  }, 850);
+
+  // Phase 3 (00:04): Morph to Emerald Green Checkmark + "Verified Successfully" + "Verified & Secured"
+  setTimeout(() => {
+    if (merged) {
+      merged.className = 'w-16 h-16 rounded-2xl border-2 border-emerald-400 bg-emerald-500/20 flex items-center justify-center shadow-2xl shadow-emerald-500/30 transition-all duration-500 scale-105';
+    }
+    if (mergedCheck) mergedCheck.classList.remove('hidden');
+
+    if (topWrap) {
+      topWrap.className = 'w-14 h-14 mx-auto rounded-full bg-emerald-500/15 border border-emerald-500/40 flex items-center justify-center text-emerald-400 mb-4 transition-all duration-500';
+    }
+    if (iconKey) iconKey.classList.add('hidden');
+    if (iconShield) iconShield.classList.remove('hidden');
+
+    if (titleEl) titleEl.innerHTML = `Verified <span class="text-emerald-400">Successfully</span>`;
+    if (subEl) subEl.textContent = `Your security verification code has been confirmed.`;
+
+    if (btn) {
+      btn.className = 'w-full py-3.5 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-black font-extrabold text-sm flex items-center justify-center gap-2 shadow-lg shadow-emerald-500/30 transition';
+      btn.innerHTML = `<span>✓ Verified & Secured</span>`;
+    }
+  }, 1350);
+
+  // Phase 4: Complete action after user sees "Verified Successfully"
+  setTimeout(() => {
+    if (appState.otpPurpose === 'forgot' && appState.pendingForgotData) {
+      const { email, newPass } = appState.pendingForgotData;
+      const uIdx = appState.usersDb.findIndex(u => u.email.toLowerCase() === email);
+      if (uIdx >= 0) {
+        appState.usersDb[uIdx].password = newPass;
+      }
+      if (email === MASTER_ADMIN_USER.email.toLowerCase()) {
+        MASTER_ADMIN_USER.password = newPass;
+      }
+      appState.pendingForgotData = null;
+      persistState();
+
+      const signInEmailInp = document.getElementById('signin-email');
+      const signInPassInp = document.getElementById('signin-password');
+      if (signInEmailInp) signInEmailInp.value = email;
+      if (signInPassInp) signInPassInp.value = '';
+
+      openAuthMode('signin');
+      showToast('✓ Password reset verified & saved! Please sign in with your new password.');
+    } else if (appState.pendingSignupUser) {
+      const userObj = appState.pendingSignupUser;
+      const idx = appState.usersDb.findIndex(u => u.email.toLowerCase() === userObj.email);
+      if (idx >= 0) {
+        appState.usersDb[idx] = userObj;
+      } else {
+        appState.usersDb.push(userObj);
+      }
+
+      appState.profile = {
+        name: userObj.name,
+        email: userObj.email,
+        authToken: userObj.authToken,
+        hasActivePlan: false,
+        planName: '',
+        zoomConnected: false
+      };
+
+      appState.pendingSignupUser = null;
+      persistState();
+      syncProfileUI();
+
+      if (appState.selectedPlan) {
+        proceedToCardPayment(appState.selectedPlan.id);
+      } else {
+        showAuthStep('plan');
+      }
+    }
+  }, 2400);
+}
+
+function startSignUpOtpVerification() {
+  const name = (document.getElementById('signup-name')?.value || '').trim();
+  const email = (document.getElementById('signup-email')?.value || '').trim().toLowerCase();
+  const password = (document.getElementById('signup-password')?.value || '').trim();
+  const confirmPassword = (document.getElementById('signup-confirm-password')?.value || '').trim();
+
+  if (!name || !email || !password) {
+    showToast('Please fill in your Full Name, Email Address, and Password.');
+    return;
+  }
+  if (password.length < 6) {
+    showToast('Password must be at least 6 characters.');
+    return;
+  }
+  if (confirmPassword && password !== confirmPassword) {
+    showToast('Passwords do not match. Please check Confirm Password.');
+    return;
+  }
+
+  const token = 'tok_' + Date.now() + '_' + Math.random().toString(36).substring(2, 10);
+  appState.pendingSignupUser = {
+    name,
+    email,
+    password,
+    authToken: token,
+    hasActivePlan: false,
+    planName: ''
+  };
+
+  launchGlassyOtpScreen(email, 'signup');
+}
+
+function startForgotPasswordOtpFlow() {
+  const email = (document.getElementById('forgot-email')?.value || '').trim().toLowerCase();
+  const newPass = (document.getElementById('forgot-new-password')?.value || '').trim();
+
+  if (!email || !email.includes('@')) {
+    showToast('Please enter your registered email address.');
+    return;
+  }
+  const existingUser = appState.usersDb.find(u => u.email.toLowerCase() === email);
+  if (!existingUser) {
+    showToast('No registered account found with this email address.');
+    return;
+  }
+  if (!newPass || newPass.length < 6) {
+    showToast('Please enter a new password (minimum 6 characters).');
+    return;
+  }
+
+  appState.pendingForgotData = { email, newPass };
+  launchGlassyOtpScreen(email, 'forgot');
 }
 
 async function saveFreeSmtpConfig() {
@@ -480,65 +778,6 @@ async function saveFreeSmtpConfig() {
   showToast('✓ Free Gmail SMTP OTP Sender Activated!');
 }
 
-function handleEmailSignUp() {
-  const name = (document.getElementById('signup-name')?.value || '').trim();
-  const email = (document.getElementById('signup-email')?.value || '').trim().toLowerCase();
-  const password = (document.getElementById('signup-password')?.value || '').trim();
-  const otpEntered = (document.getElementById('signup-otp-input')?.value || '').trim();
-
-  if (!name || !email || !password) {
-    showToast('Please fill in your Full Name, Email, and Password');
-    return;
-  }
-
-  if (!appState.generatedOtp) {
-    sendEmailOtpCode();
-    showToast('Please enter the 6-digit OTP code sent to your email.');
-    return;
-  }
-
-  if (otpEntered !== appState.generatedOtp) {
-    showToast('Invalid OTP code. Please enter the correct 6-digit OTP.');
-    return;
-  }
-
-  const token = 'tok_' + Date.now() + '_' + Math.random().toString(36).substring(2, 10);
-  const userObj = {
-    name,
-    email,
-    password,
-    authToken: token,
-    hasActivePlan: false,
-    planName: ''
-  };
-
-  const idx = appState.usersDb.findIndex(u => u.email.toLowerCase() === email);
-  if (idx >= 0) {
-    appState.usersDb[idx] = userObj;
-  } else {
-    appState.usersDb.push(userObj);
-  }
-
-  appState.profile = {
-    name,
-    email,
-    authToken: token,
-    hasActivePlan: false,
-    planName: '',
-    zoomConnected: false
-  };
-
-  persistState();
-  syncProfileUI();
-  showToast('✓ Account Created! Please complete plan selection & payment to unlock access.');
-
-  if (appState.selectedPlan) {
-    proceedToCardPayment(appState.selectedPlan.id);
-  } else {
-    showAuthStep('plan');
-  }
-}
-
 function handleEmailSignIn() {
   const email = (document.getElementById('signin-email')?.value || '').trim().toLowerCase();
   const password = (document.getElementById('signin-password')?.value || '').trim();
@@ -548,7 +787,6 @@ function handleEmailSignIn() {
     return;
   }
 
-  // Strictly match against registered users in usersDb (including amirjupiteradvisers@gmail.com / Amir5748@)
   const existingUser = appState.usersDb.find(
     u => u.email.toLowerCase() === email && u.password === password
   );
@@ -589,7 +827,7 @@ function handleGoogleAuthContinue() {
   if (appState.authMode === 'signin') {
     const matchedUser = appState.usersDb.find(u => u.email.toLowerCase() === enteredEmail && u.hasActivePlan);
     if (!matchedUser) {
-      showToast('No active paid subscription found for this Google account. Please Sign Up and subscribe first.');
+      showToast('No active paid subscription found for this account. Please Sign Up and subscribe first.');
       openAuthMode('signup');
       return;
     }
@@ -606,7 +844,6 @@ function handleGoogleAuthContinue() {
     switchView('dashboard');
     showToast(`✓ Signed in as ${matchedUser.email}`);
   } else {
-    // Sign Up via Google -> Must still select plan & pay!
     const nameInp = document.getElementById('signup-name');
     const email = enteredEmail || 'new.subscriber@gmail.com';
     const name = (nameInp && nameInp.value.trim()) ? nameInp.value.trim() : 'New Subscriber';
@@ -620,7 +857,7 @@ function handleGoogleAuthContinue() {
     };
     persistState();
     showAuthStep('plan');
-    showToast('Google account linked. Please select a plan and complete payment to unlock access.');
+    showToast('Account linked. Please select a plan and complete payment to unlock access.');
   }
 }
 
@@ -631,17 +868,17 @@ function renderModalPlanSelector() {
   container.innerHTML = appState.plans.map(plan => {
     const priceStr = `$${plan.priceUsd}`;
     return `
-      <div onclick="proceedToCardPayment('${plan.id}')" class="p-4 rounded-xl border ${plan.popular ? 'border-2 border-blue-600 bg-blue-50/30' : 'border-slate-200 bg-white'} hover:border-blue-600 cursor-pointer flex items-center justify-between transition">
+      <div onclick="proceedToCardPayment('${plan.id}')" class="p-4 rounded-2xl border ${plan.popular ? 'border-yellow-400 bg-yellow-500/10' : 'border-white/10 bg-white/5'} hover:border-yellow-400 cursor-pointer flex items-center justify-between transition">
         <div>
           <div class="flex items-center gap-2">
-            <h4 class="font-extrabold text-slate-900 text-sm sm:text-base">${plan.name}</h4>
-            ${plan.popular ? '<span class="px-2 py-0.5 rounded text-[10px] font-bold bg-blue-600 text-white">POPULAR</span>' : ''}
+            <h4 class="font-extrabold text-white text-sm sm:text-base">${plan.name}</h4>
+            ${plan.popular ? '<span class="px-2 py-0.5 rounded text-[10px] font-extrabold bg-yellow-400 text-black">POPULAR</span>' : ''}
           </div>
-          <p class="text-xs text-slate-500 mt-0.5">${plan.features[0]} • ${plan.features[1]}</p>
+          <p class="text-xs text-slate-400 mt-0.5">${plan.features[0]} • ${plan.features[1]}</p>
         </div>
         <div class="text-right shrink-0 ml-3">
-          <span class="text-base sm:text-lg font-extrabold text-slate-900 block">${priceStr}/mo</span>
-          <span class="text-xs font-bold text-blue-600">Select Plan →</span>
+          <span class="text-base sm:text-lg font-extrabold text-yellow-400 block">${priceStr}.00/mo</span>
+          <span class="text-xs font-bold text-white">Select Plan →</span>
         </div>
       </div>
     `;
@@ -653,11 +890,77 @@ function selectPlanForCheckout(planId) {
   appState.selectedPlan = plan;
   if (!appState.profile.authToken) {
     openAuthMode('signup');
-    showToast(`Selected ${plan.name} ($${plan.priceUsd}/mo). Create your account first to proceed to payment.`);
+    showToast(`Selected ${plan.name} ($${plan.priceUsd}.00/mo). Create your account first to proceed to payment.`);
   } else {
     switchView('auth');
     proceedToCardPayment(plan.id);
   }
+}
+
+// ============================================================================
+// 3D REALISTIC PLATINUM CREDIT CARD & PAYMENT ANIMATION (Payment_page_.mp4)
+// ============================================================================
+function flip3DCard(showBack) {
+  const card = document.getElementById('credit-card-3d');
+  if (!card) return;
+  card.classList.toggle('flipped', Boolean(showBack));
+}
+
+function formatAndSyncCardNumber(input) {
+  let digits = input.value.replace(/\D/g, '').substring(0, 16);
+  let formatted = digits.replace(/(\d{4})(?=\d)/g, '$1 ');
+  input.value = formatted;
+  updateLive3DCard();
+}
+
+function formatAndSyncExpiry(input) {
+  let digits = input.value.replace(/\D/g, '').substring(0, 4);
+  if (digits.length >= 3) {
+    input.value = digits.substring(0, 2) + '/' + digits.substring(2, 4);
+  } else {
+    input.value = digits;
+  }
+  updateLive3DCard();
+}
+
+function updateLive3DCard() {
+  const holder = (document.getElementById('card-holder')?.value || '').trim().toUpperCase();
+  const number = (document.getElementById('card-number')?.value || '').trim();
+  const expiry = (document.getElementById('card-expiry')?.value || '').trim();
+  const cvc = (document.getElementById('card-cvc')?.value || '').trim();
+
+  const liveHolder = document.getElementById('live-card-holder');
+  const liveNumber = document.getElementById('live-card-number');
+  const liveExpiry = document.getElementById('live-card-expiry');
+  const liveCvc = document.getElementById('live-card-cvc');
+
+  if (liveHolder) liveHolder.textContent = holder || 'AMIR HAYAT';
+  if (liveNumber) liveNumber.textContent = number ? number.replace(/\s/g, '  ') : '5412  7534  8910  3414';
+  if (liveExpiry) liveExpiry.textContent = expiry || '09/28';
+  if (liveCvc) liveCvc.textContent = cvc || '842';
+}
+
+function resetPaymentCheckoutUI() {
+  const cardCol = document.getElementById('payment-card-col');
+  const formCol = document.getElementById('payment-form-col');
+  const cardFront = document.getElementById('credit-card-front');
+  const badges = document.getElementById('card-security-badges');
+  const procStatus = document.getElementById('payment-processing-status');
+  const progWrap = document.getElementById('payment-progress-bar-wrap');
+  const progFill = document.getElementById('payment-progress-fill');
+  const statusLbl = document.getElementById('payment-status-label');
+  const successBadge = document.getElementById('payment-success-badge');
+
+  flip3DCard(false);
+  if (cardCol) cardCol.className = 'lg:col-span-6 flex flex-col items-center justify-center transition-all duration-700';
+  if (formCol) formCol.classList.remove('hidden', 'opacity-0');
+  if (cardFront) cardFront.classList.remove('card-emerald-success', 'card-shimmer');
+  if (badges) badges.classList.remove('hidden');
+  if (procStatus) procStatus.classList.add('hidden');
+  if (progWrap) progWrap.classList.remove('hidden');
+  if (progFill) progFill.style.width = '0%';
+  if (statusLbl) statusLbl.classList.remove('hidden');
+  if (successBadge) successBadge.classList.add('hidden');
 }
 
 function proceedToCardPayment(planId) {
@@ -665,8 +968,17 @@ function proceedToCardPayment(planId) {
   appState.selectedPlan = plan;
   const nameEl = document.getElementById('checkout-plan-name');
   const priceEl = document.getElementById('checkout-plan-price');
-  if (nameEl) nameEl.textContent = plan.name;
-  if (priceEl) priceEl.textContent = `$${plan.priceUsd}`;
+  const btnTextEl = document.getElementById('btn-pay-now-text');
+
+  if (nameEl) nameEl.textContent = `${plan.name} (Monthly)`;
+  if (priceEl) priceEl.textContent = `$${plan.priceUsd}.00`;
+  if (btnTextEl) btnTextEl.textContent = `PAY $${plan.priceUsd}.00 NOW`;
+
+  const holderInp = document.getElementById('card-holder');
+  if (holderInp && !holderInp.value && appState.profile.name) {
+    holderInp.value = appState.profile.name.toUpperCase();
+  }
+  updateLive3DCard();
   showAuthStep('payment');
 }
 
@@ -677,41 +989,78 @@ function completeSubscriptionAndLogin() {
   const cvc = (document.getElementById('card-cvc')?.value || '').trim();
 
   if (!holder || number.length < 12 || !expiry || cvc.length < 3) {
-    showToast('Please enter valid Cardholder Name, Card Number, Expiry Date, and CVC to complete payment.');
+    showToast('Please enter valid Cardholder Name, 16-Digit Card Number, Expiry Date, and CVV.');
     return;
   }
 
-  const planName = document.getElementById('checkout-plan-name')?.textContent || 'Business Pro';
-  appState.profile.hasActivePlan = true;
-  appState.profile.planName = planName;
+  // Exact Video Animation (Payment_page_.mp4 00:02 -> 00:05):
+  // 1. Flip card to front, hide right form, center the 3D card, sweep gold shimmer & fill progress bar
+  flip3DCard(false);
+  const cardCol = document.getElementById('payment-card-col');
+  const formCol = document.getElementById('payment-form-col');
+  const cardFront = document.getElementById('credit-card-front');
+  const badges = document.getElementById('card-security-badges');
+  const procStatus = document.getElementById('payment-processing-status');
+  const progWrap = document.getElementById('payment-progress-bar-wrap');
+  const progFill = document.getElementById('payment-progress-fill');
+  const statusLbl = document.getElementById('payment-status-label');
+  const successBadge = document.getElementById('payment-success-badge');
 
-  const uIdx = appState.usersDb.findIndex(u => u.email.toLowerCase() === appState.profile.email.toLowerCase());
-  if (uIdx >= 0) {
-    appState.usersDb[uIdx].hasActivePlan = true;
-    appState.usersDb[uIdx].planName = planName;
-  }
+  if (formCol) formCol.classList.add('hidden');
+  if (cardCol) cardCol.className = 'lg:col-span-12 flex flex-col items-center justify-center py-6 transition-all duration-700';
+  if (badges) badges.classList.add('hidden');
+  if (cardFront) cardFront.classList.add('card-shimmer');
+  if (procStatus) procStatus.classList.remove('hidden');
 
-  const existingIdx = appState.clients.findIndex(c => c.email.toLowerCase() === appState.profile.email.toLowerCase());
-  const clientRecord = {
-    id: 'USR-' + Math.floor(100 + Math.random() * 900),
-    name: appState.profile.name || holder,
-    email: appState.profile.email,
-    plan: planName,
-    categoriesCount: appState.categories.length,
-    coHostsCount: appState.coHostEmails.length,
-    assignedNode: 'AWS EC2 Node #1 (8GB)',
-    status: 'Active'
-  };
-  if (existingIdx >= 0) {
-    appState.clients[existingIdx] = clientRecord;
-  } else {
-    appState.clients.unshift(clientRecord);
-  }
+  setTimeout(() => {
+    if (progFill) progFill.style.width = '100%';
+  }, 80);
 
-  persistState();
-  syncProfileUI();
-  switchView('dashboard');
-  showToast(`🎉 Payment Successful! ${planName} is now active.`);
+  // 2. At 1.3s (Frame 00:04): Morph 3D Card into Emerald Green Platinum Card + Show "Payment Successful!"
+  setTimeout(() => {
+    if (cardFront) {
+      cardFront.classList.remove('card-shimmer');
+      cardFront.classList.add('card-emerald-success');
+    }
+    if (progWrap) progWrap.classList.add('hidden');
+    if (statusLbl) statusLbl.classList.add('hidden');
+    if (successBadge) successBadge.classList.remove('hidden');
+  }, 1300);
+
+  // 3. Activate Plan & Open Glassy Dashboard
+  setTimeout(() => {
+    const planName = appState.selectedPlan ? appState.selectedPlan.name : 'Business Pro';
+    appState.profile.hasActivePlan = true;
+    appState.profile.planName = planName;
+
+    const uIdx = appState.usersDb.findIndex(u => u.email.toLowerCase() === appState.profile.email.toLowerCase());
+    if (uIdx >= 0) {
+      appState.usersDb[uIdx].hasActivePlan = true;
+      appState.usersDb[uIdx].planName = planName;
+    }
+
+    const existingIdx = appState.clients.findIndex(c => c.email.toLowerCase() === appState.profile.email.toLowerCase());
+    const clientRecord = {
+      id: 'USR-' + Math.floor(100 + Math.random() * 900),
+      name: appState.profile.name || holder,
+      email: appState.profile.email,
+      plan: planName,
+      categoriesCount: appState.categories.length,
+      coHostsCount: appState.coHostEmails.length,
+      assignedNode: 'AWS EC2 Node #1 (8GB)',
+      status: 'Active'
+    };
+    if (existingIdx >= 0) {
+      appState.clients[existingIdx] = clientRecord;
+    } else {
+      appState.clients.unshift(clientRecord);
+    }
+
+    persistState();
+    syncProfileUI();
+    switchView('dashboard');
+    showToast(`🎉 Payment Successful! ${planName} is now active.`);
+  }, 2600);
 }
 
 function logoutClient() {
@@ -736,18 +1085,19 @@ function switchDashboardTab(tab) {
     if (content) content.classList.toggle('hidden', t !== tab);
     if (btn) {
       btn.className = t === tab
-        ? 'flex items-center gap-2.5 px-3.5 py-2.5 rounded-xl text-xs sm:text-sm font-bold bg-blue-600 text-white whitespace-nowrap text-left'
-        : 'flex items-center gap-2.5 px-3.5 py-2.5 rounded-xl text-xs sm:text-sm font-semibold text-slate-300 hover:bg-slate-800 hover:text-white whitespace-nowrap text-left';
+        ? 'flex items-center gap-3 px-4 py-3 rounded-2xl text-xs sm:text-sm font-bold bg-gradient-to-r from-blue-600/90 to-indigo-600/80 text-white shadow-lg shadow-blue-600/25 border border-blue-400/30 whitespace-nowrap text-left transition'
+        : 'flex items-center gap-3 px-4 py-3 rounded-2xl text-xs sm:text-sm font-semibold text-slate-300 hover:bg-white/5 hover:text-white whitespace-nowrap text-left transition';
       if (t === 'attendance' && !perms.allowAttendanceTab) {
         btn.classList.add('hidden');
       }
     }
   });
 
+  const userName = appState.profile.name || 'Amir Hayat';
   const titles = {
-    categories: 'Meeting Workflows',
+    categories: `Hi, ${userName} 👋 — Meeting Workflows`,
     attendance: perms.allowChatLogs ? 'Broadcast Attendance & Live Chat Logs' : 'Broadcast Attendance Report',
-    profile: 'Profile, Zoom Integration & Team Co-Hosts'
+    profile: 'Security & Active Workspace Sessions'
   };
   const titleEl = document.getElementById('workspace-page-title');
   if (titleEl && titles[tab]) titleEl.textContent = titles[tab];
@@ -758,33 +1108,33 @@ function renderPricingCards() {
   if (!container) return;
   container.innerHTML = appState.plans.map(plan => {
     const priceStr = `$${plan.priceUsd}`;
-    const borderClass = plan.popular
-      ? 'border-2 border-blue-600 shadow-xl relative'
-      : 'border border-slate-200';
+    const cardClass = plan.popular
+      ? 'glass-card-gold border-2 border-yellow-400/70 relative'
+      : 'glass-card';
     const badge = plan.popular
-      ? `<span class="absolute -top-3 left-1/2 -translate-x-1/2 px-3.5 py-0.5 rounded-full text-[11px] font-extrabold bg-blue-600 text-white whitespace-nowrap">MOST POPULAR</span>`
+      ? `<span class="absolute -top-3.5 left-1/2 -translate-x-1/2 px-4 py-1 rounded-full text-[10px] font-extrabold bg-gradient-to-r from-yellow-400 to-amber-500 text-black whitespace-nowrap shadow-lg">MOST POPULAR</span>`
       : '';
     const featuresHtml = plan.features.map(f => `
-      <li class="flex items-start gap-2.5 text-xs sm:text-sm text-slate-700 font-medium">
-        <span class="text-blue-600 font-extrabold">✓</span>
+      <li class="flex items-start gap-2.5 text-xs sm:text-sm text-slate-300 font-medium">
+        <span class="text-yellow-400 font-extrabold">✓</span>
         <span>${f}</span>
       </li>
     `).join('');
 
     return `
-      <div class="ghl-card p-6 sm:p-8 rounded-2xl flex flex-col justify-between ${borderClass}">
+      <div class="${cardClass} p-6 sm:p-8 rounded-3xl flex flex-col justify-between">
         ${badge}
         <div>
-          <h3 class="text-lg font-extrabold text-slate-900">${plan.name}</h3>
+          <h3 class="text-lg font-extrabold text-white">${plan.name}</h3>
           <div class="mt-3 flex items-baseline gap-1">
-            <span class="text-3xl sm:text-4xl font-extrabold text-slate-900">${priceStr}</span>
-            <span class="text-xs text-slate-500 font-semibold">/ month</span>
+            <span class="text-3xl sm:text-4xl font-extrabold text-yellow-400">${priceStr}</span>
+            <span class="text-xs text-slate-400 font-semibold">/ month</span>
           </div>
-          <ul class="mt-6 space-y-3 border-t border-slate-200 pt-5">
+          <ul class="mt-6 space-y-3 border-t border-white/10 pt-5">
             ${featuresHtml}
           </ul>
         </div>
-        <button onclick="selectPlanForCheckout('${plan.id}')" class="mt-7 w-full py-3 px-4 rounded-xl font-bold text-xs sm:text-sm ${plan.popular ? 'ghl-btn-primary' : 'ghl-btn-secondary'}">
+        <button onclick="selectPlanForCheckout('${plan.id}')" class="mt-7 w-full py-3.5 px-4 rounded-xl font-bold text-xs sm:text-sm ${plan.popular ? 'btn-gold' : 'btn-glass'}">
           Choose ${plan.name} ($${plan.priceUsd}/mo) →
         </button>
       </div>
@@ -798,11 +1148,15 @@ function syncProfileUI() {
   const pName = document.getElementById('prof-name');
   const pEmail = document.getElementById('prof-email');
   const badge = document.getElementById('zoom-conn-badge');
+  const titleEl = document.getElementById('workspace-page-title');
 
-  if (sName) sName.textContent = appState.profile.name || 'Workspace User';
-  if (sEmail) sEmail.textContent = appState.profile.email || 'Active Session';
+  if (sName) sName.textContent = appState.profile.name || 'Amir Hayat';
+  if (sEmail) sEmail.textContent = appState.profile.email || 'amirjupiteradvisers@gmail.com';
   if (pName) pName.value = appState.profile.name || '';
   if (pEmail) pEmail.value = appState.profile.email || '';
+  if (titleEl && appState.profile.name) {
+    titleEl.textContent = `Hi, ${appState.profile.name} 👋`;
+  }
   if (badge && appState.profile.zoomConnected) {
     badge.textContent = '● Zoom Connected via Google';
   }
@@ -819,101 +1173,6 @@ function saveProfileDetails() {
   showToast('✓ Profile settings updated');
 }
 
-// ============================================================================
-// FORGOT PASSWORD & PROFILE PASSWORD RESET VIA EMAIL OTP
-// ============================================================================
-async function sendForgotOtpCode() {
-  const emailInp = document.getElementById('forgot-email');
-  const email = emailInp ? emailInp.value.trim().toLowerCase() : '';
-  if (!email || !email.includes('@')) {
-    showToast('Please enter your registered email address first.');
-    return;
-  }
-
-  const existingUser = appState.usersDb.find(u => u.email.toLowerCase() === email);
-  if (!existingUser) {
-    showToast('No registered account found with this email address.');
-    return;
-  }
-
-  const otp = String(Math.floor(100000 + Math.random() * 900000));
-  appState.forgotGeneratedOtp = otp;
-  appState.forgotTargetEmail = email;
-
-  const box = document.getElementById('forgot-otp-box');
-  const hint = document.getElementById('forgot-otp-hint');
-  if (box) box.classList.remove('hidden');
-
-  let sentViaSmtp = false;
-  try {
-    const res = await fetch('/api/send-otp', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ email, otp })
-    });
-    if (res.ok) {
-      const data = await res.json();
-      if (data.sentEmail) sentViaSmtp = true;
-    }
-  } catch (e) {}
-
-  if (sentViaSmtp) {
-    if (hint) hint.textContent = `Sent to ${email}`;
-    showToast(`✓ 6-Digit Password Reset OTP sent to ${email}`);
-  } else {
-    if (hint) hint.textContent = `OTP Code: ${otp}`;
-    showToast(`✓ Password Reset OTP generated for ${email}`);
-  }
-}
-
-function handleForgotPasswordReset() {
-  const email = (document.getElementById('forgot-email')?.value || '').trim().toLowerCase();
-  const otpEntered = (document.getElementById('forgot-otp-input')?.value || '').trim();
-  const newPass = (document.getElementById('forgot-new-password')?.value || '').trim();
-
-  if (!email || !newPass) {
-    showToast('Please enter your registered Email and a New Password.');
-    return;
-  }
-
-  if (newPass.length < 6) {
-    showToast('New password must be at least 6 characters long.');
-    return;
-  }
-
-  if (!appState.forgotGeneratedOtp || appState.forgotTargetEmail !== email) {
-    sendForgotOtpCode();
-    showToast('Please click Send OTP and enter the 6-digit verification code.');
-    return;
-  }
-
-  if (otpEntered !== appState.forgotGeneratedOtp) {
-    showToast('Invalid OTP code. Please enter the exact 6-digit OTP.');
-    return;
-  }
-
-  const uIdx = appState.usersDb.findIndex(u => u.email.toLowerCase() === email);
-  if (uIdx < 0) {
-    showToast('Account not found.');
-    return;
-  }
-
-  appState.usersDb[uIdx].password = newPass;
-  if (email === MASTER_ADMIN_USER.email.toLowerCase()) {
-    MASTER_ADMIN_USER.password = newPass;
-  }
-  appState.forgotGeneratedOtp = null;
-  persistState();
-
-  const signInEmailInp = document.getElementById('signin-email');
-  const signInPassInp = document.getElementById('signin-password');
-  if (signInEmailInp) signInEmailInp.value = email;
-  if (signInPassInp) signInPassInp.value = '';
-
-  openAuthMode('signin');
-  showToast('✓ Password reset successfully! Please sign in with your new password.');
-}
-
 async function sendProfilePasswordResetOtp() {
   const email = (appState.profile.email || document.getElementById('prof-email')?.value || '').trim().toLowerCase();
   if (!email) {
@@ -921,7 +1180,7 @@ async function sendProfilePasswordResetOtp() {
     return;
   }
 
-  const otp = String(Math.floor(100000 + Math.random() * 900000));
+  const otp = String(Math.floor(1000 + Math.random() * 9000));
   appState.profileResetOtp = otp;
 
   const hint = document.getElementById('prof-otp-hint');
@@ -939,11 +1198,11 @@ async function sendProfilePasswordResetOtp() {
   } catch (e) {}
 
   if (sentViaSmtp) {
-    if (hint) hint.textContent = `Sent to ${email}`;
-    showToast(`✓ 6-Digit Reset OTP sent to ${email}`);
+    if (hint) hint.textContent = `Sent to ${email} (${otp})`;
+    showToast(`✓ 4-Digit Reset OTP sent to ${email}`);
   } else {
     if (hint) hint.textContent = `OTP: ${otp}`;
-    showToast(`✓ 6-Digit Reset OTP generated for ${email}`);
+    showToast(`✓ 4-Digit Reset OTP generated for ${email}`);
   }
 }
 
@@ -954,12 +1213,12 @@ function confirmProfilePasswordReset() {
 
   if (!appState.profileResetOtp) {
     sendProfilePasswordResetOtp();
-    showToast('Please enter the 6-digit OTP code sent to your email.');
+    showToast('Please enter the 4-digit OTP code sent to your email.');
     return;
   }
 
   if (otpEntered !== appState.profileResetOtp) {
-    showToast('Invalid OTP code. Please enter the correct 6-digit OTP.');
+    showToast('Invalid OTP code. Please enter the correct 4-digit OTP.');
     return;
   }
 
@@ -985,7 +1244,7 @@ function confirmProfilePasswordReset() {
   if (hint) hint.textContent = '';
 
   persistState();
-  showToast('✓ Your password has been updated successfully!');
+  showToast('✓ Your password has been updated & secured!');
 }
 
 function reconnectZoomOAuth() {
@@ -1018,6 +1277,7 @@ function addCoHostEmail() {
     appState.coHostEmails.push(email);
     persistState();
     renderCoHostEmails();
+    updateBentoStats();
     syncBackendConfig();
     showToast(`✓ Added ${email} to Team Co-Hosts`);
   }
@@ -1028,6 +1288,7 @@ function removeCoHostEmail(idx) {
   const removed = appState.coHostEmails.splice(idx, 1);
   persistState();
   renderCoHostEmails();
+  updateBentoStats();
   syncBackendConfig();
   showToast(`Removed ${removed[0]}`);
 }
@@ -1044,7 +1305,7 @@ function renderCoHostEmails() {
 
   if (appState.coHostEmails.length === 0) {
     listEl.innerHTML = `
-      <div class="col-span-full p-4 rounded-xl bg-slate-50 border border-slate-200 text-xs text-slate-500 text-center">
+      <div class="col-span-full p-4 rounded-xl glass-card-subtle text-xs text-slate-400 text-center">
         No Co-Host emails added yet. Add your team member email above so they automatically become Co-Host when joining.
       </div>
     `;
@@ -1052,12 +1313,12 @@ function renderCoHostEmails() {
   }
 
   listEl.innerHTML = appState.coHostEmails.map((email, idx) => `
-    <div class="flex items-center justify-between px-3.5 py-2.5 rounded-xl bg-slate-50 border border-slate-200">
-      <div class="flex items-center gap-2 truncate">
-        <span class="w-2 h-2 rounded-full bg-emerald-500 shrink-0"></span>
-        <span class="text-xs font-mono font-bold text-slate-800 truncate">${email}</span>
+    <div class="flex items-center justify-between px-4 py-3 rounded-xl glass-card-subtle">
+      <div class="flex items-center gap-2.5 truncate">
+        <span class="w-2 h-2 rounded-full bg-emerald-400 shrink-0"></span>
+        <span class="text-xs font-mono font-bold text-white truncate">${email}</span>
       </div>
-      <button type="button" onclick="removeCoHostEmail(${idx})" class="ml-2 px-2.5 py-1 rounded-lg text-xs font-bold text-rose-600 hover:bg-rose-50 whitespace-nowrap">
+      <button type="button" onclick="removeCoHostEmail(${idx})" class="ml-2 px-2.5 py-1 rounded-lg text-xs font-bold text-rose-400 hover:bg-rose-500/15 whitespace-nowrap">
         Delete
       </button>
     </div>
@@ -1065,7 +1326,7 @@ function renderCoHostEmails() {
 }
 
 // ============================================================================
-// 12-HOUR (AM / PM) CALENDAR & WORKFLOW BUILDER
+// GLASSY 12-HOUR (AM / PM) CALENDAR & WORKFLOW BUILDER
 // ============================================================================
 function formatSecondsToHHMMSS(sec) {
   const hrs = Math.floor(sec / 3600);
@@ -1092,10 +1353,10 @@ function updateBuilderStatusLabel() {
   if (!chk || !lbl) return;
   if (chk.checked) {
     lbl.textContent = 'Active (Live)';
-    lbl.className = 'text-xs font-extrabold text-emerald-700 bg-emerald-50 px-2.5 py-0.5 rounded-md border border-emerald-200';
+    lbl.className = 'text-xs font-extrabold text-emerald-400 bg-emerald-500/15 px-2.5 py-0.5 rounded-md border border-emerald-500/30';
   } else {
     lbl.textContent = 'Draft (Paused)';
-    lbl.className = 'text-xs font-extrabold text-amber-700 bg-amber-50 px-2.5 py-0.5 rounded-md border border-amber-200';
+    lbl.className = 'text-xs font-extrabold text-yellow-400 bg-yellow-500/15 px-2.5 py-0.5 rounded-md border border-yellow-500/30';
   }
 }
 
@@ -1127,11 +1388,12 @@ function render12HourCalendarGrid() {
   const times = generate12HourSlots();
   grid.innerHTML = times.map(t => {
     const isSelected = appState.currentCategory.selectedTimes.includes(t);
+    // Exact glowing Gold highlight from Theme_Stayle.mp4 00:04 Calendar!
     const btnStyle = isSelected
-      ? 'bg-blue-600 text-white border-blue-600 font-extrabold shadow-sm'
-      : 'bg-white text-slate-700 border-slate-200 hover:border-blue-600 font-semibold';
+      ? 'btn-gold font-extrabold shadow-lg'
+      : 'bg-white/5 text-slate-300 border border-white/10 hover:border-yellow-400/50 hover:text-white font-semibold';
     return `
-      <button type="button" onclick="toggleTimeSlot('${t}')" class="py-1.5 px-2 rounded-lg border text-xs whitespace-nowrap transition ${btnStyle}">
+      <button type="button" onclick="toggleTimeSlot('${t}')" class="py-2 px-2 rounded-xl text-xs whitespace-nowrap transition ${btnStyle}">
         ${t}
       </button>
     `;
@@ -1237,13 +1499,13 @@ function renderCategoryVideosList() {
   }
 
   container.innerHTML = appState.currentCategory.videos.map((v, idx) => `
-    <div class="flex items-center justify-between p-3 rounded-xl bg-slate-50 border border-slate-200">
+    <div class="flex items-center justify-between p-3.5 rounded-xl glass-card-subtle">
       <div class="flex items-center gap-2.5 truncate">
-        <span class="px-2.5 py-0.5 rounded-md bg-blue-50 text-blue-700 font-extrabold text-xs shrink-0">Video #${idx + 1}</span>
-        <span class="text-xs font-bold text-slate-800 truncate">${v.name}</span>
-        <span class="text-[11px] text-slate-500 whitespace-nowrap">(${v.sizeMB} MB • ${v.formattedDuration})</span>
+        <span class="px-2.5 py-0.5 rounded-md bg-yellow-500/15 text-yellow-400 border border-yellow-500/30 font-extrabold text-xs shrink-0">Video #${idx + 1}</span>
+        <span class="text-xs font-bold text-white truncate">${v.name}</span>
+        <span class="text-[11px] text-slate-400 whitespace-nowrap">(${v.sizeMB} MB • ${v.formattedDuration})</span>
       </div>
-      <button type="button" onclick="removeCategoryVideo(${idx})" class="ml-2 text-xs font-bold text-rose-600 hover:underline whitespace-nowrap">
+      <button type="button" onclick="removeCategoryVideo(${idx})" class="ml-2 text-xs font-bold text-rose-400 hover:underline whitespace-nowrap">
         Remove
       </button>
     </div>
@@ -1257,7 +1519,7 @@ function renderSelectedTimesAssignment() {
 
   if (appState.currentCategory.selectedTimes.length === 0) {
     container.innerHTML = `
-      <div class="p-3.5 rounded-xl bg-slate-50 border border-slate-200 text-xs text-slate-500 text-center">
+      <div class="p-4 rounded-xl glass-card-subtle text-xs text-slate-400 text-center">
         No broadcast times selected yet. Click any AM/PM time above.
       </div>
     `;
@@ -1277,17 +1539,17 @@ function renderSelectedTimesAssignment() {
     ].join('');
 
     const selectorHtml = perms.allowMultiVideo
-      ? `<select onchange="updateSlotVideoChoice('${timeStr}', this.value)" class="px-3 py-1.5 rounded-lg ghl-input text-xs font-semibold">${videoOptions}</select>`
-      : `<span class="text-xs font-semibold text-slate-600">Plays Uploaded Video</span>`;
+      ? `<select onchange="updateSlotVideoChoice('${timeStr}', this.value)" class="px-3 py-1.5 rounded-lg glass-input text-xs font-semibold">${videoOptions}</select>`
+      : `<span class="text-xs font-semibold text-slate-300">Plays Uploaded Video</span>`;
 
     return `
-      <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 p-3 rounded-xl bg-white border border-slate-200">
+      <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 p-3.5 rounded-xl glass-card-subtle">
         <div class="flex items-center gap-2.5">
-          <span class="px-3 py-1 rounded-lg bg-blue-50 text-blue-700 font-extrabold text-xs whitespace-nowrap">🕒 ${timeStr}</span>
+          <span class="px-3 py-1 rounded-lg bg-yellow-500/15 text-yellow-400 border border-yellow-500/30 font-extrabold text-xs whitespace-nowrap">🕒 ${timeStr}</span>
         </div>
         <div class="flex items-center gap-2">
           ${selectorHtml}
-          <button type="button" onclick="toggleTimeSlot('${timeStr}')" class="px-2.5 py-1 text-xs font-bold text-rose-600 hover:bg-rose-50 rounded-lg whitespace-nowrap">
+          <button type="button" onclick="toggleTimeSlot('${timeStr}')" class="px-2.5 py-1 text-xs font-bold text-rose-400 hover:bg-rose-500/15 rounded-lg whitespace-nowrap">
             Remove
           </button>
         </div>
@@ -1374,6 +1636,7 @@ async function saveMeetingCategory(forcedStatus) {
 
   persistState();
   renderSavedCategories();
+  updateBentoStats();
   await syncBackendConfig();
   resetCategoryForm();
   showToast(status === 'Draft' ? `Saved "${catName}" as Draft` : `✓ Workflow "${catName}" Published & Active!`);
@@ -1395,6 +1658,7 @@ function deleteCategory(catId) {
   appState.categories = appState.categories.filter(c => c.id !== catId);
   persistState();
   renderSavedCategories();
+  updateBentoStats();
   syncBackendConfig();
   showToast('Workflow deleted');
 }
@@ -1449,7 +1713,7 @@ function renderSavedCategories() {
 
   if (appState.categories.length === 0) {
     listEl.innerHTML = `
-      <div class="p-5 rounded-xl bg-slate-50 border border-slate-200 text-center text-xs text-slate-500">
+      <div class="p-5 rounded-xl glass-card-subtle text-center text-xs text-slate-400">
         No workflows created yet. Use the Workflow Builder below to create your automated schedule.
       </div>
     `;
@@ -1459,45 +1723,45 @@ function renderSavedCategories() {
   listEl.innerHTML = appState.categories.map(cat => {
     const isActive = cat.status === 'Active';
     const badgeClass = isActive
-      ? 'bg-emerald-50 text-emerald-700 border-emerald-200'
-      : 'bg-amber-50 text-amber-700 border-amber-200';
+      ? 'bg-emerald-500/15 text-emerald-400 border-emerald-500/30'
+      : 'bg-yellow-500/15 text-yellow-400 border-yellow-500/30';
     const videosLabel = cat.videos.length > 0
       ? cat.videos.map((v, i) => `#${i + 1} ${v.name}`).join(' → ')
       : 'No video attached yet';
 
     const draftBtnHtml = perms.allowDraftMode
-      ? `<button type="button" onclick="toggleWorkflowStatus('${cat.id}')" class="px-3 py-1.5 rounded-lg text-xs font-bold border whitespace-nowrap ${isActive ? 'bg-amber-50 text-amber-700 border-amber-200 hover:bg-amber-100' : 'bg-emerald-600 text-white border-emerald-600 hover:bg-emerald-500'}">${isActive ? 'Switch to Draft' : 'Activate Workflow'}</button>`
+      ? `<button type="button" onclick="toggleWorkflowStatus('${cat.id}')" class="px-3 py-1.5 rounded-xl text-xs font-bold border whitespace-nowrap ${isActive ? 'bg-yellow-500/15 text-yellow-400 border-yellow-500/30 hover:bg-yellow-500/25' : 'bg-emerald-500 text-black border-emerald-400'}">${isActive ? 'Switch to Draft' : 'Activate Workflow'}</button>`
       : '';
 
     return `
-      <div class="p-4 rounded-xl bg-slate-50 border border-slate-200 flex flex-col md:flex-row md:items-center justify-between gap-4">
+      <div class="p-4 rounded-2xl glass-card-subtle flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div class="space-y-1">
           <div class="flex items-center gap-2 flex-wrap">
-            <span class="font-extrabold text-slate-900 text-sm">${cat.name}</span>
-            <span class="px-2 py-0.5 rounded text-[11px] font-bold bg-blue-50 text-blue-700">${cat.sessionType || 'Zoom Meeting'}</span>
+            <span class="font-extrabold text-white text-sm">${cat.name}</span>
+            <span class="px-2 py-0.5 rounded text-[11px] font-bold bg-blue-500/15 text-blue-400 border border-blue-500/30">${cat.sessionType || 'Zoom Meeting'}</span>
             <span class="px-2.5 py-0.5 rounded text-[11px] font-extrabold border ${badgeClass}">● ${cat.status}</span>
-            <span class="text-xs text-slate-500 font-medium">• ${cat.videos.length} Video(s) (${cat.formattedTotalDuration})</span>
+            <span class="text-xs text-slate-400 font-medium">• ${cat.videos.length} Video(s) (${cat.formattedTotalDuration})</span>
           </div>
-          <div class="text-xs text-slate-600">
+          <div class="text-xs text-slate-300">
             <strong>Days:</strong> ${cat.days.join(', ')}
           </div>
-          <div class="text-xs text-slate-600">
-            <strong>Broadcast Times:</strong> ${cat.times.join(' • ')}
+          <div class="text-xs text-slate-300">
+            <strong>Broadcast Times:</strong> <span class="text-yellow-400 font-semibold">${cat.times.join(' • ')}</span>
           </div>
-          <div class="text-[11px] text-slate-500">
+          <div class="text-[11px] text-slate-400">
             <strong>Video(s):</strong> ${videosLabel}
           </div>
         </div>
 
         <div class="flex flex-wrap items-center gap-2 shrink-0">
           ${draftBtnHtml}
-          <button type="button" onclick="editCategory('${cat.id}')" class="px-3 py-1.5 rounded-lg ghl-btn-secondary text-xs font-bold">
+          <button type="button" onclick="editCategory('${cat.id}')" class="px-3 py-1.5 rounded-xl btn-glass text-xs">
             Edit
           </button>
-          <button type="button" onclick="triggerLiveMeetingNow('${cat.id}')" class="px-3.5 py-1.5 rounded-lg ghl-btn-primary text-xs font-bold">
+          <button type="button" onclick="triggerLiveMeetingNow('${cat.id}')" class="px-3.5 py-1.5 rounded-xl btn-gold text-xs">
             ▶ Run Now
           </button>
-          <button type="button" onclick="deleteCategory('${cat.id}')" class="px-3 py-1.5 rounded-lg bg-white border border-rose-200 text-rose-600 hover:bg-rose-50 text-xs font-bold whitespace-nowrap">
+          <button type="button" onclick="deleteCategory('${cat.id}')" class="px-3 py-1.5 rounded-xl bg-rose-500/15 border border-rose-500/30 text-rose-400 hover:bg-rose-500/25 text-xs font-bold whitespace-nowrap">
             Delete
           </button>
         </div>
@@ -1554,7 +1818,7 @@ async function triggerLiveMeetingNow() {
 }
 
 // ============================================================================
-// REAL ZOOM CHAT PARSER & DEDICATED CHAT TRANSCRIPT MODAL VIEWER
+// REAL ZOOM CHAT PARSER & GLASSY CHAT MODAL (Theme_Stayle.mp4 00:05)
 // ============================================================================
 async function syncRealBackendSessions() {
   try {
@@ -1565,6 +1829,7 @@ async function syncRealBackendSessions() {
         appState.attendanceSessions = serverSessions;
         persistState();
         renderAttendanceSessionsList();
+        updateBentoStats();
       }
     }
   } catch (e) {}
@@ -1582,8 +1847,6 @@ function handleRealZoomChatUpload(event) {
     const allChatMessages = [];
 
     lines.forEach(line => {
-      // Standard Zoom meeting_saved_chat.txt format:
-      // 10:12:05 From Client Name to Everyone : Exact message written by client
       const match = line.match(/^(\d{2}:\d{2}:\d{2})\s+From\s+(.+?)(?:\s+to\s+.+?)?\s*:\s*(.+)$/i);
       if (match) {
         const msgTime = match[1];
@@ -1623,6 +1886,7 @@ function handleRealZoomChatUpload(event) {
     appState.attendanceSessions.unshift(newSession);
     persistState();
     renderAttendanceSessionsList();
+    updateBentoStats();
     openSessionDetails(newSession.sessionId);
     showToast(`✓ Imported ${allChatMessages.length} real chat message(s) from Zoom chat file!`);
   };
@@ -1637,8 +1901,8 @@ function renderAttendanceSessionsList() {
   if (appState.attendanceSessions.length === 0) {
     tbody.innerHTML = `
       <tr>
-        <td colspan="6" class="py-8 text-center text-xs text-slate-500">
-          No completed broadcast sessions yet. Real Zoom meetings and uploaded <code>meeting_saved_chat.txt</code> logs appear here automatically.
+        <td colspan="6" class="py-8 text-center text-xs text-slate-400">
+          No completed broadcast sessions yet. Real Zoom meetings and uploaded <code class="text-yellow-400">meeting_saved_chat.txt</code> logs appear here automatically.
         </td>
       </tr>
     `;
@@ -1648,16 +1912,16 @@ function renderAttendanceSessionsList() {
   const btnLabel = perms.allowChatLogs ? 'View Participants & Chat →' : 'View Participants →';
 
   tbody.innerHTML = appState.attendanceSessions.map(ses => `
-    <tr onclick="openSessionDetails('${ses.sessionId}')" class="hover:bg-blue-50/50 cursor-pointer transition">
-      <td class="py-3.5 px-4 font-extrabold text-slate-900">${ses.meetingName}</td>
-      <td class="py-3.5 px-4 text-slate-600 font-medium">${ses.date}</td>
+    <tr onclick="openSessionDetails('${ses.sessionId}')" class="hover:bg-white/5 cursor-pointer transition">
+      <td class="py-3.5 px-4 font-extrabold text-white">${ses.meetingName}</td>
+      <td class="py-3.5 px-4 text-slate-300 font-medium">${ses.date}</td>
       <td class="py-3.5 px-4">
-        <span class="px-2.5 py-1 rounded-md bg-blue-50 text-blue-700 font-bold text-xs whitespace-nowrap">${ses.time}</span>
+        <span class="px-2.5 py-1 rounded-md bg-yellow-500/15 text-yellow-400 border border-yellow-500/30 font-bold text-xs whitespace-nowrap">${ses.time}</span>
       </td>
-      <td class="py-3.5 px-4 font-bold text-emerald-700">${ses.participants.length} Attendees</td>
-      <td class="py-3.5 px-4 font-mono text-xs text-slate-700">${ses.duration}</td>
+      <td class="py-3.5 px-4 font-bold text-emerald-400">${ses.participants.length} Attendees</td>
+      <td class="py-3.5 px-4 font-mono text-xs text-slate-300">${ses.duration}</td>
       <td class="py-3.5 px-4 text-right">
-        <button type="button" class="px-3 py-1.5 rounded-lg ghl-btn-primary text-xs font-bold">
+        <button type="button" class="px-3.5 py-1.5 rounded-xl btn-gold text-xs">
           ${btnLabel}
         </button>
       </td>
@@ -1685,12 +1949,12 @@ function openSessionDetails(sessionId) {
   tbody.innerHTML = ses.participants.map((p, idx) => {
     const msgCount = (p.messages || []).length;
     const roleStyle = p.role.includes('Co-Host')
-      ? 'bg-amber-50 text-amber-700 border border-amber-200'
-      : 'bg-emerald-50 text-emerald-700 border border-emerald-200';
+      ? 'bg-yellow-500/15 text-yellow-400 border border-yellow-500/30'
+      : 'bg-emerald-500/15 text-emerald-400 border border-emerald-500/30';
 
     const chatCellHtml = perms.allowChatLogs
       ? `<td class="py-3.5 px-3 text-right">
-          <button type="button" onclick="openChatTranscriptModal(${idx})" class="px-3 py-1.5 rounded-lg ${msgCount > 0 ? 'ghl-btn-primary' : 'ghl-btn-secondary'} text-xs font-bold">
+          <button type="button" onclick="openChatTranscriptModal(${idx})" class="px-3.5 py-1.5 rounded-xl ${msgCount > 0 ? 'btn-gold' : 'btn-glass'} text-xs">
             💬 Open Chat (${msgCount})
           </button>
         </td>`
@@ -1698,12 +1962,12 @@ function openSessionDetails(sessionId) {
 
     return `
       <tr>
-        <td class="py-3.5 px-3 font-extrabold text-slate-900 whitespace-nowrap">${p.name}</td>
-        <td class="py-3.5 px-3 font-mono text-xs text-slate-600">${p.email}</td>
-        <td class="py-3.5 px-3"><span class="px-2 py-0.5 rounded text-xs font-bold whitespace-nowrap ${roleStyle}">${p.role}</span></td>
-        <td class="py-3.5 px-3 text-slate-700 whitespace-nowrap">${p.joinTime}</td>
-        <td class="py-3.5 px-3 text-slate-700 whitespace-nowrap">${p.leaveTime}</td>
-        <td class="py-3.5 px-3 font-bold text-slate-900 whitespace-nowrap">${p.durationMins} mins</td>
+        <td class="py-3.5 px-3 font-extrabold text-white whitespace-nowrap">${p.name}</td>
+        <td class="py-3.5 px-3 font-mono text-xs text-slate-300">${p.email}</td>
+        <td class="py-3.5 px-3"><span class="px-2.5 py-0.5 rounded text-xs font-bold whitespace-nowrap ${roleStyle}">${p.role}</span></td>
+        <td class="py-3.5 px-3 text-slate-300 whitespace-nowrap">${p.joinTime}</td>
+        <td class="py-3.5 px-3 text-slate-300 whitespace-nowrap">${p.leaveTime}</td>
+        <td class="py-3.5 px-3 font-bold text-white whitespace-nowrap">${p.durationMins} mins</td>
         ${chatCellHtml}
       </tr>
     `;
@@ -1743,18 +2007,18 @@ function openChatTranscriptModal(participantIndexOrAll) {
 
   if (messagesToDisplay.length === 0) {
     bodyEl.innerHTML = `
-      <div class="p-6 text-center text-xs text-slate-500">
+      <div class="p-6 text-center text-xs text-slate-400">
         No chat messages were written by this participant during the meeting.
       </div>
     `;
   } else {
     bodyEl.innerHTML = messagesToDisplay.map(m => `
-      <div class="p-3.5 rounded-2xl bg-white border border-slate-200 shadow-sm">
-        <div class="flex items-center justify-between mb-1">
-          <span class="text-xs font-extrabold text-blue-700">${m.sender}</span>
+      <div class="p-4 rounded-2xl glass-card-subtle">
+        <div class="flex items-center justify-between mb-1.5">
+          <span class="text-xs font-extrabold text-yellow-400">${m.sender}</span>
           <span class="text-[11px] font-mono text-slate-400">${m.time}</span>
         </div>
-        <p class="text-sm font-semibold text-slate-900 break-words">${m.text}</p>
+        <p class="text-sm font-semibold text-white break-words">${m.text}</p>
       </div>
     `).join('');
   }
@@ -1840,20 +2104,20 @@ function exportSingleSessionCsv() {
 }
 
 // ============================================================================
-// ADMIN CONSOLE RENDERER
+// ADMIN CONSOLE RENDERER (DARK GLASSY)
 // ============================================================================
 function renderAdminPanel() {
   const nodesList = document.getElementById('admin-aws-nodes-list');
   if (nodesList) {
     nodesList.innerHTML = appState.awsNodes.map(node => `
-      <div class="p-4 rounded-xl bg-slate-50 border border-slate-200 flex flex-col justify-between">
+      <div class="p-4 rounded-xl bg-white/5 border border-white/10 flex flex-col justify-between">
         <div>
           <div class="flex items-center justify-between">
-            <h4 class="font-bold text-slate-900 text-sm">${node.name}</h4>
-            <span class="px-2 py-0.5 rounded text-[11px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200">● ${node.status}</span>
+            <h4 class="font-bold text-white text-sm">${node.name}</h4>
+            <span class="px-2 py-0.5 rounded text-[11px] font-bold bg-emerald-500/15 text-emerald-400 border border-emerald-500/30">● ${node.status}</span>
           </div>
-          <p class="text-xs text-slate-500 mt-1">IP: <code class="text-blue-600">${node.ip}</code> • Region: ${node.region}</p>
-          <p class="text-[11px] text-emerald-700 mt-2 font-medium">✓ ${node.authMode}</p>
+          <p class="text-xs text-slate-400 mt-1">IP: <code class="text-yellow-400">${node.ip}</code> • Region: ${node.region}</p>
+          <p class="text-[11px] text-emerald-400 mt-2 font-medium">✓ ${node.authMode}</p>
         </div>
       </div>
     `).join('');
@@ -1864,22 +2128,22 @@ function renderAdminPanel() {
     if (appState.clients.length === 0) {
       clientsTbody.innerHTML = `
         <tr>
-          <td colspan="6" class="py-6 text-center text-xs text-slate-500">No customers registered yet.</td>
+          <td colspan="6" class="py-6 text-center text-xs text-slate-400">No customers registered yet.</td>
         </tr>
       `;
     } else {
       clientsTbody.innerHTML = appState.clients.map((c, idx) => `
         <tr>
           <td class="py-3.5 px-3">
-            <div class="font-bold text-slate-900">${c.name}</div>
-            <div class="text-slate-500 font-mono text-[11px]">${c.email}</div>
+            <div class="font-bold text-white">${c.name}</div>
+            <div class="text-slate-400 font-mono text-[11px]">${c.email}</div>
           </td>
-          <td class="py-3.5 px-3 font-semibold text-blue-600">${c.plan}</td>
-          <td class="py-3.5 px-3 text-slate-700">${c.categoriesCount || 0} Workflows</td>
-          <td class="py-3 px-3 text-slate-700">${c.coHostsCount || 0} Team Members</td>
-          <td class="py-3 px-3 text-slate-700">${c.assignedNode}</td>
+          <td class="py-3.5 px-3 font-semibold text-yellow-400">${c.plan}</td>
+          <td class="py-3.5 px-3 text-slate-300">${c.categoriesCount || 0} Workflows</td>
+          <td class="py-3.5 px-3 text-slate-300">${c.coHostsCount || 0} Team Members</td>
+          <td class="py-3.5 px-3 text-slate-300">${c.assignedNode}</td>
           <td class="py-3.5 px-3">
-            <button onclick="toggleClientStatus(${idx})" class="px-2.5 py-1 rounded text-xs font-bold ${c.status === 'Active' ? 'bg-emerald-50 text-emerald-700' : 'bg-rose-50 text-rose-700'}">
+            <button onclick="toggleClientStatus(${idx})" class="px-2.5 py-1 rounded text-xs font-bold ${c.status === 'Active' ? 'bg-emerald-500/15 text-emerald-400' : 'bg-rose-500/15 text-rose-400'}">
               ${c.status}
             </button>
           </td>
