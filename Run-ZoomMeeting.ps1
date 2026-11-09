@@ -493,19 +493,70 @@ if (-not $DryRun) {
     Start-Sleep -Seconds 2
 }
 
-# 8. Parse Zoom Saved Chat Log (meeting_saved_chat.txt) if available for exact Q1/12 message logging
+# 8. Parse Zoom Saved Chat Log (meeting_saved_chat.txt) into logs/sessions.json
 try {
+    $SessionsFile = Join-Path $LogDir "sessions.json"
+    $ExistingSessions = @()
+    if (Test-Path $SessionsFile) {
+        $RawS = Get-Content $SessionsFile -Raw | ConvertFrom-Json
+        if ($RawS) { $ExistingSessions = @($RawS) }
+    }
+
+    $ParsedMessages = @()
+    $ParticipantsMap = @{}
+
     $ZoomDocs = Join-Path ([Environment]::GetFolderPath("MyDocuments")) "Zoom"
     if (Test-Path $ZoomDocs) {
         $LatestChat = Get-ChildItem -Path $ZoomDocs -Filter "meeting_saved_chat.txt" -Recurse -ErrorAction SilentlyContinue |
             Sort-Object LastWriteTime -Descending | Select-Object -First 1
         if ($LatestChat -and ((Get-Date) - $LatestChat.LastWriteTime).TotalMinutes -le 180) {
             Write-AutomationLog "Captured in-meeting chat log from: $($LatestChat.FullName)"
-            $ChatArchive = Join-Path $LogDir ("chat_" + (Get-Date -Format "yyyyMMdd_HHmmss") + ".txt")
-            Copy-Item $LatestChat.FullName $ChatArchive -Force
+            $ChatLines = Get-Content $LatestChat.FullName
+            foreach ($Line in $ChatLines) {
+                if ($Line -match "^(\d{2}:\d{2}:\d{2})\s+From\s+(.+?)\s+to\s+.+?:\s*(.*)$") {
+                    $MsgTime = $Matches[1]
+                    $Sender  = $Matches[2].Trim()
+                    $MsgText = $Matches[3].Trim()
+                    $ParsedMessages += @{
+                        sender = $Sender
+                        time   = $MsgTime
+                        text   = $MsgText
+                    }
+                    if (-not $ParticipantsMap.ContainsKey($Sender)) {
+                        $ParticipantsMap[$Sender] = @{
+                            name         = $Sender
+                            email        = ""
+                            role         = "Participant"
+                            joinTime     = $Script:StartTime.ToString("hh:mm:ss tt")
+                            leaveTime    = (Get-Date).ToString("hh:mm:ss tt")
+                            durationMins = [math]::Max(1, [int](((Get-Date) - $Script:StartTime).TotalMinutes))
+                            messages     = @()
+                        }
+                    }
+                    $ParticipantsMap[$Sender].messages += @{
+                        time = $MsgTime
+                        text = $MsgText
+                    }
+                }
+            }
         }
     }
-} catch {}
+
+    $NewSessionRecord = @{
+        sessionId    = "SES-" + (Get-Date -Format "yyyyMMddHHmmss")
+        meetingName  = if ($Config.Categories -and $Config.Categories.Count -gt 0) { $Config.Categories[0].name } else { "Scheduled Zoom Broadcast" }
+        date         = (Get-Date -Format "yyyy-MM-dd")
+        time         = $Script:StartTime.ToString("hh:mm tt")
+        duration     = [TimeSpan]::FromSeconds($VideoDuration).ToString("hh\:mm\:ss")
+        participants = @($ParticipantsMap.Values)
+        chatMessages = $ParsedMessages
+    }
+
+    $ExistingSessions = @($NewSessionRecord) + $ExistingSessions
+    $ExistingSessions | ConvertTo-Json -Depth 6 | Set-Content -Path $SessionsFile -Encoding UTF8
+} catch {
+    Write-AutomationLog "Could not write session chat history: $_" "WARN"
+}
 
 Write-AutomationLog "Zoom Meeting ended successfully. Session complete!"
 Write-AutomationLog "=========================================================="
