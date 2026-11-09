@@ -68,14 +68,10 @@
   <main class="flex-1 py-8">
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-6">
       
-      <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
         <div class="glass-card p-5 rounded-2xl">
-          <span class="text-xs text-slate-400 uppercase font-bold">Registered Customers</span>
-          <div id="admin-stat-clients" class="text-2xl font-extrabold text-white mt-1">1 Clients</div>
-        </div>
-        <div class="glass-card p-5 rounded-2xl">
-          <span class="text-xs text-slate-400 uppercase font-bold">Cloud Worker Nodes (8GB)</span>
-          <div id="admin-stat-nodes" class="text-2xl font-extrabold text-yellow-400 mt-1">2 Online</div>
+          <span class="text-xs text-slate-400 uppercase font-bold">Paid Subscribers</span>
+          <div id="admin-stat-clients" class="text-2xl font-extrabold text-white mt-1">1 Active User</div>
         </div>
         <div class="glass-card p-5 rounded-2xl">
           <span class="text-xs text-slate-400 uppercase font-bold">Support Tickets</span>
@@ -175,25 +171,11 @@
         </div>
       </div>
 
-      <!-- 4. AWS 8GB Worker Nodes -->
-      <div class="glass-card p-5 sm:p-6 rounded-2xl">
-        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-4 border-b border-white/10">
-          <div>
-            <h3 class="text-base font-extrabold text-white">☁️ AWS Cloud Broadcast Nodes (8GB RAM Instances)</h3>
-            <p class="text-xs text-slate-400 mt-0.5">Manage virtual machines executing scheduled Zoom broadcasts via OAuth ZAK tokens.</p>
-          </div>
-          <button onclick="addNewAwsNode()" class="px-4 py-2 rounded-xl btn-gold text-xs font-bold self-start sm:self-auto">
-            + Add AWS Worker Node
-          </button>
-        </div>
-        <div id="admin-aws-nodes-list" class="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4"></div>
-      </div>
-
-      <!-- 5. Customer Subscriptions -->
+      <!-- 4. Customer Subscriptions -->
       <div class="glass-card p-5 sm:p-6 rounded-2xl">
         <div class="pb-4 border-b border-white/10">
-          <h3 class="text-base font-extrabold text-white">👥 Customer Subscriptions</h3>
-          <p class="text-xs text-slate-400 mt-0.5">Customers registered on the portal and their active plan.</p>
+          <h3 class="text-base font-extrabold text-white">👥 Paid Customer Subscriptions</h3>
+          <p class="text-xs text-slate-400 mt-0.5">Active paid subscribers on the portal.</p>
         </div>
 
         <div class="overflow-x-auto mt-4">
@@ -204,7 +186,6 @@
                 <th class="py-3 px-3">Plan</th>
                 <th class="py-3 px-3">Workflows</th>
                 <th class="py-3 px-3">Team Co-Hosts</th>
-                <th class="py-3 px-3">Assigned Node</th>
                 <th class="py-3 px-3">Status</th>
               </tr>
             </thead>
