@@ -5,29 +5,35 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>ZoomCast CRM — Admin Console</title>
   <script src="https://cdn.tailwindcss.com"></script>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
   <style>
+    * {
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
+    }
     body {
-      font-family: 'Inter', sans-serif;
-      background-color: #f4f6f8;
-      color: #101828;
+      font-family: 'Plus Jakarta Sans', sans-serif;
+      background-color: #f8fafc;
+      color: #0f172a;
     }
     .ghl-nav {
-      background-color: #101828;
-      border-bottom: 1px solid #1d2939;
+      background: linear-gradient(180deg, #0f172a 0%, #111827 100%);
+      border-bottom: 1px solid #1e293b;
     }
     .ghl-card {
       background-color: #ffffff;
-      border: 1px solid #e4e7ec;
-      box-shadow: 0 1px 3px rgba(16, 24, 40, 0.06);
+      border: 1px solid #e2e8f0;
+      box-shadow: 0 4px 20px -2px rgba(15, 23, 42, 0.05);
     }
     .ghl-btn-primary {
-      background-color: #155eef;
+      background: linear-gradient(180deg, #2563eb 0%, #1d4ed8 100%);
       color: #ffffff;
       white-space: nowrap;
     }
-    .ghl-btn-primary:hover {
-      background-color: #004eeb;
+    .ghl-input {
+      background-color: #ffffff;
+      border: 1px solid #cbd5e1;
+      color: #0f172a;
     }
   </style>
 </head>
@@ -37,10 +43,10 @@
   <header class="sticky top-0 z-50 ghl-nav text-white">
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between gap-2">
       <div class="flex items-center gap-2.5">
-        <div class="w-8 h-8 rounded-lg bg-[#155eef] flex items-center justify-center font-bold text-white text-sm shrink-0">
+        <div class="w-8 h-8 rounded-lg bg-blue-600 flex items-center justify-center font-extrabold text-white text-sm shrink-0">
           A
         </div>
-        <span class="font-bold text-base sm:text-lg tracking-tight text-white whitespace-nowrap">ZoomCast Admin Console</span>
+        <span class="font-extrabold text-base sm:text-lg tracking-tight text-white whitespace-nowrap">ZoomCast Admin Console</span>
       </div>
 
       <a href="index.html" class="px-3.5 py-2 rounded-lg bg-slate-800 hover:bg-slate-700 text-xs font-semibold text-white border border-slate-700 whitespace-nowrap transition">
@@ -53,46 +59,77 @@
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-6">
       
       <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
-        <div class="ghl-card p-5 rounded-xl">
-          <span class="text-xs text-slate-500 uppercase font-semibold">Registered Customers</span>
-          <div id="admin-stat-clients" class="text-2xl font-bold text-slate-900 mt-1">0 Clients</div>
+        <div class="ghl-card p-5 rounded-2xl">
+          <span class="text-xs text-slate-500 uppercase font-bold">Registered Customers</span>
+          <div id="admin-stat-clients" class="text-2xl font-extrabold text-slate-900 mt-1">0 Clients</div>
         </div>
-        <div class="ghl-card p-5 rounded-xl">
-          <span class="text-xs text-slate-500 uppercase font-semibold">Cloud Worker Nodes (8GB)</span>
-          <div id="admin-stat-nodes" class="text-2xl font-bold text-[#155eef] mt-1">2 Online</div>
+        <div class="ghl-card p-5 rounded-2xl">
+          <span class="text-xs text-slate-500 uppercase font-bold">Cloud Worker Nodes (8GB)</span>
+          <div id="admin-stat-nodes" class="text-2xl font-extrabold text-blue-600 mt-1">2 Online</div>
         </div>
-        <div class="ghl-card p-5 rounded-xl">
-          <span class="text-xs text-slate-500 uppercase font-semibold">System Status</span>
-          <div class="text-2xl font-bold text-emerald-600 mt-1">Active</div>
+        <div class="ghl-card p-5 rounded-2xl">
+          <span class="text-xs text-slate-500 uppercase font-bold">Free Email OTP Service</span>
+          <div class="text-2xl font-extrabold text-emerald-600 mt-1">Active (Free SMTP)</div>
         </div>
       </div>
 
-      <div class="ghl-card p-5 sm:p-6 rounded-xl">
+      <!-- Free Email OTP Configuration (100% Free Gmail SMTP / EmailJS) -->
+      <div class="ghl-card p-5 sm:p-6 rounded-2xl">
+        <div class="pb-4 border-b border-slate-200 flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+          <div>
+            <h3 class="text-base font-extrabold text-slate-900">Free Email OTP Sender Setup (Gmail Free SMTP — 500 Emails/Day Free)</h3>
+            <p class="text-xs text-slate-500 mt-0.5">Enter your Gmail address and Google 16-digit App Password to send real OTP codes to customers for free.</p>
+          </div>
+          <span class="px-2.5 py-1 rounded-md text-xs font-bold bg-emerald-50 text-emerald-700 border border-emerald-200 whitespace-nowrap self-start sm:self-auto">
+            ● Instant OTP Enabled
+          </span>
+        </div>
+
+        <div class="mt-4 grid grid-cols-1 md:grid-cols-3 gap-4 items-end">
+          <div>
+            <label class="text-xs font-bold text-slate-700">Sender Gmail Address</label>
+            <input id="smtp-gmail-user" type="email" placeholder="yourbusiness@gmail.com" class="mt-1 w-full px-3.5 py-2.5 rounded-xl ghl-input text-sm" />
+          </div>
+          <div>
+            <label class="text-xs font-bold text-slate-700">Google 16-Digit App Password</label>
+            <input id="smtp-gmail-pass" type="password" placeholder="xxxx xxxx xxxx xxxx" class="mt-1 w-full px-3.5 py-2.5 rounded-xl ghl-input text-sm font-mono" />
+          </div>
+          <div>
+            <button type="button" onclick="saveFreeSmtpConfig()" class="w-full py-2.5 px-4 rounded-xl ghl-btn-primary text-xs sm:text-sm font-bold">
+              Save Free Email OTP Settings
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- AWS 8GB Worker Nodes -->
+      <div class="ghl-card p-5 sm:p-6 rounded-2xl">
         <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-4 border-b border-slate-200">
           <div>
-            <h3 class="text-base font-bold text-slate-900">AWS Cloud Broadcast Nodes (8GB RAM Instances)</h3>
+            <h3 class="text-base font-extrabold text-slate-900">AWS Cloud Broadcast Nodes (8GB RAM Instances)</h3>
             <p class="text-xs text-slate-500 mt-0.5">Manage virtual machines executing scheduled Zoom broadcasts via OAuth ZAK tokens.</p>
           </div>
-          <button onclick="addNewAwsNode()" class="px-4 py-2 rounded-lg ghl-btn-primary text-xs font-semibold self-start sm:self-auto">
+          <button onclick="addNewAwsNode()" class="px-4 py-2 rounded-xl ghl-btn-primary text-xs font-bold self-start sm:self-auto">
             + Add AWS Worker Node
           </button>
         </div>
         <div id="admin-aws-nodes-list" class="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4"></div>
       </div>
 
-      <div class="ghl-card p-5 sm:p-6 rounded-xl">
+      <!-- Customer Subscriptions -->
+      <div class="ghl-card p-5 sm:p-6 rounded-2xl">
         <div class="pb-4 border-b border-slate-200">
-          <h3 class="text-base font-bold text-slate-900">Customer Subscriptions</h3>
-          <p class="text-xs text-slate-500 mt-0.5">Customers who registered on the portal.</p>
+          <h3 class="text-base font-extrabold text-slate-900">Customer Subscriptions</h3>
+          <p class="text-xs text-slate-500 mt-0.5">Customers registered on the portal and their active plan.</p>
         </div>
 
         <div class="overflow-x-auto mt-4">
           <table class="w-full text-left border-collapse">
             <thead>
-              <tr class="border-b border-slate-200 text-[11px] uppercase tracking-wider text-slate-500">
+              <tr class="border-b border-slate-200 text-[11px] uppercase tracking-wider text-slate-500 font-bold">
                 <th class="py-3 px-3">Customer</th>
                 <th class="py-3 px-3">Plan</th>
-                <th class="py-3 px-3">Categories</th>
+                <th class="py-3 px-3">Workflows</th>
                 <th class="py-3 px-3">Team Co-Hosts</th>
                 <th class="py-3 px-3">Assigned Node</th>
                 <th class="py-3 px-3">Status</th>
@@ -106,7 +143,7 @@
     </div>
   </main>
 
-  <div id="toast-box" class="fixed bottom-5 right-5 z-50 hidden px-4 py-3 rounded-lg bg-slate-900 text-white font-semibold text-xs sm:text-sm shadow-xl"></div>
+  <div id="toast-box" class="fixed bottom-5 right-5 z-50 hidden px-4 py-3 rounded-xl bg-slate-900 text-white font-bold text-xs sm:text-sm shadow-xl"></div>
 
   <script src="app.js"></script>
 </body>
