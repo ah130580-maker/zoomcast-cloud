@@ -99,7 +99,7 @@
   </header>
 
   <!-- ===================================================================== -->
-  <!-- VIEW 1: 4K LANDING PAGE & 3-TIER PRICING                              -->
+  <!-- VIEW 1: 4K LANDING PAGE & USD ($) PRICING                             -->
   <!-- ===================================================================== -->
   <main id="view-landing" class="flex-1">
     <section class="bg-[#090d16] text-white py-20 sm:py-28 border-b border-slate-800/80 relative overflow-hidden">
@@ -142,24 +142,20 @@
           </div>
           <div class="p-6 rounded-2xl bg-slate-900/90 border border-slate-800/90 shadow-xl">
             <div class="w-9 h-9 rounded-lg bg-blue-600/20 text-blue-400 font-extrabold text-sm flex items-center justify-center mb-4">04</div>
-            <h3 class="font-bold text-white text-base">Attendance & Chat Logs</h3>
-            <p class="text-xs text-slate-300 mt-1.5 leading-relaxed">Click any completed meeting to inspect every participant, join/leave times, and their exact in-meeting chat messages.</p>
+            <h3 class="font-bold text-white text-base">Attendance & Live Chat View</h3>
+            <p class="text-xs text-slate-300 mt-1.5 leading-relaxed">Click any completed meeting to inspect every participant and open the real in-meeting chat conversation.</p>
           </div>
         </div>
       </div>
     </section>
 
-    <!-- PRICING SECTION -->
+    <!-- PRICING SECTION (USD $ ONLY) -->
     <section id="pricing-section" class="py-20 bg-[#f8fafc]">
       <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div class="text-center max-w-2xl mx-auto mb-12">
           <span class="text-xs uppercase tracking-widest text-blue-600 font-extrabold">Subscription Plans</span>
           <h2 class="text-3xl sm:text-4xl font-extrabold text-slate-900 mt-1">Select Your Plan to Get Started</h2>
-          <p class="text-sm text-slate-600 mt-2">Each plan unlocks its specific set of automation features in your workspace.</p>
-          <div class="mt-5 inline-flex items-center gap-1.5 bg-white p-1.5 rounded-xl border border-slate-200 shadow-sm">
-            <button onclick="setCurrency('PKR')" id="cur-pkr" class="px-4 py-1.5 rounded-lg text-xs font-bold ghl-btn-primary">PKR (Rs.)</button>
-            <button onclick="setCurrency('USD')" id="cur-usd" class="px-4 py-1.5 rounded-lg text-xs font-bold text-slate-600 hover:text-slate-900 whitespace-nowrap">USD ($)</button>
-          </div>
+          <p class="text-sm text-slate-600 mt-2">All plans are billed monthly in USD ($). Choose a plan below to create your account and subscribe.</p>
         </div>
 
         <div id="pricing-cards-container" class="grid grid-cols-1 md:grid-cols-3 gap-7"></div>
@@ -208,7 +204,7 @@
           </div>
           <div>
             <label class="text-xs font-bold text-slate-700">Password</label>
-            <input id="signin-password" type="password" placeholder="Enter your password" class="mt-1 w-full px-3.5 py-2.5 rounded-xl ghl-input text-sm" />
+            <input id="signin-password" type="password" placeholder="Enter your password" class="mt-1 w-full px-3.5 py-2.5 rounded-xl ghl-input text-sm" onkeydown="if(event.key==='Enter') handleEmailSignIn()" />
           </div>
           <button type="button" onclick="handleEmailSignIn()" class="w-full py-3 rounded-xl ghl-btn-primary font-bold text-sm">
             Sign In to Workspace
@@ -244,7 +240,7 @@
             <input id="signup-password" type="password" placeholder="Minimum 6 characters" class="mt-1 w-full px-3.5 py-2.5 rounded-xl ghl-input text-sm" />
           </div>
           <button type="button" onclick="handleEmailSignUp()" class="w-full py-3 rounded-xl ghl-btn-primary font-bold text-sm">
-            Verify & Create Account →
+            Verify & Continue to Plan Selection →
           </button>
         </div>
       </div>
@@ -258,7 +254,7 @@
           </button>
         </div>
         <h2 class="text-xl sm:text-2xl font-extrabold text-slate-900">Choose Your Subscription Plan</h2>
-        <p class="text-xs sm:text-sm text-slate-600">Select the plan you want to activate for your account.</p>
+        <p class="text-xs sm:text-sm text-slate-600">Select a plan below to proceed to USD ($) card checkout.</p>
 
         <div id="modal-plan-selector-list" class="space-y-3"></div>
       </div>
@@ -266,13 +262,13 @@
       <!-- STEP C: CARD PAYMENT CHECKOUT -->
       <div id="auth-step-payment" class="hidden ghl-card p-6 sm:p-8 rounded-2xl">
         <div class="flex items-center justify-between">
-          <span class="px-2.5 py-1 rounded-md text-xs font-bold bg-emerald-50 text-emerald-700">STEP 3 OF 3 • CARD CHECKOUT</span>
+          <span class="px-2.5 py-1 rounded-md text-xs font-bold bg-emerald-50 text-emerald-700">STEP 3 OF 3 • USD CARD CHECKOUT</span>
           <button type="button" onclick="showAuthStep('plan')" class="text-xs font-bold text-blue-600 hover:underline">
             ← Change Plan
           </button>
         </div>
         <h2 class="text-xl sm:text-2xl font-extrabold text-slate-900 mt-3">Complete Payment</h2>
-        <p class="text-xs sm:text-sm text-slate-600 mt-1">Enter your Debit or Credit Card details to activate your workspace.</p>
+        <p class="text-xs sm:text-sm text-slate-600 mt-1">Enter your Debit or Credit Card details to activate your subscription.</p>
 
         <div class="mt-4 p-4 rounded-xl bg-slate-50 border border-slate-200 flex items-center justify-between">
           <div>
@@ -280,7 +276,7 @@
             <h4 id="checkout-plan-name" class="font-extrabold text-slate-900 text-base">Business Pro</h4>
           </div>
           <div class="text-right">
-            <span id="checkout-plan-price" class="text-xl font-extrabold text-blue-600">Rs. 8,500</span>
+            <span id="checkout-plan-price" class="text-xl font-extrabold text-blue-600">$35</span>
             <span class="block text-[11px] text-slate-500">/ month</span>
           </div>
         </div>
@@ -293,23 +289,23 @@
           <div>
             <label class="text-xs font-bold text-slate-700 flex justify-between">
               <span>Card Number</span>
-              <span class="text-blue-600 font-semibold">Visa • Mastercard</span>
+              <span class="text-blue-600 font-semibold">Visa • Mastercard • Amex</span>
             </label>
-            <input id="card-number" type="text" placeholder="0000 0000 0000 0000" class="mt-1 w-full px-3.5 py-2.5 rounded-xl ghl-input text-sm font-mono" />
+            <input id="card-number" type="text" maxlength="19" placeholder="0000 0000 0000 0000" class="mt-1 w-full px-3.5 py-2.5 rounded-xl ghl-input text-sm font-mono" />
           </div>
           <div class="grid grid-cols-2 gap-4">
             <div>
               <label class="text-xs font-bold text-slate-700">Expiry Date</label>
-              <input id="card-expiry" type="text" placeholder="MM / YY" class="mt-1 w-full px-3.5 py-2.5 rounded-xl ghl-input text-sm font-mono" />
+              <input id="card-expiry" type="text" maxlength="7" placeholder="MM / YY" class="mt-1 w-full px-3.5 py-2.5 rounded-xl ghl-input text-sm font-mono" />
             </div>
             <div>
               <label class="text-xs font-bold text-slate-700">CVC</label>
-              <input id="card-cvc" type="password" placeholder="CVC" class="mt-1 w-full px-3.5 py-2.5 rounded-xl ghl-input text-sm font-mono" />
+              <input id="card-cvc" type="password" maxlength="4" placeholder="CVC" class="mt-1 w-full px-3.5 py-2.5 rounded-xl ghl-input text-sm font-mono" />
             </div>
           </div>
 
           <button type="button" onclick="completeSubscriptionAndLogin()" class="mt-3 w-full py-3.5 px-4 rounded-xl ghl-btn-primary font-bold text-sm shadow-md">
-            Pay & Activate Workspace →
+            Pay Now & Activate Workspace →
           </button>
         </div>
       </div>
@@ -318,7 +314,7 @@
   </section>
 
   <!-- ===================================================================== -->
-  <!-- VIEW 3: GOHIGHLEVEL CRM CLIENT WORKSPACE (PLAN-GATED FEATURES)        -->
+  <!-- VIEW 3: GOHIGHLEVEL CRM CLIENT WORKSPACE (NO PLAN SWITCHER / TEST UI) -->
   <!-- ===================================================================== -->
   <div id="view-dashboard" class="hidden flex-1 flex flex-col lg:flex-row min-h-screen bg-[#f8fafc]">
 
@@ -342,10 +338,9 @@
             <span>📅</span>
             <span>Meeting Workflows</span>
           </button>
-          <!-- Hidden automatically if Starter Plan (allowAttendanceTab = false) -->
           <button onclick="switchDashboardTab('attendance')" id="dtab-attendance" class="flex items-center gap-2.5 px-3.5 py-2.5 rounded-xl text-xs sm:text-sm font-semibold text-slate-300 hover:bg-slate-800 hover:text-white whitespace-nowrap text-left">
             <span>📊</span>
-            <span id="dtab-attendance-label">Attendance Report</span>
+            <span id="dtab-attendance-label">Attendance & Chat Logs</span>
           </button>
           <button onclick="switchDashboardTab('profile')" id="dtab-profile" class="flex items-center gap-2.5 px-3.5 py-2.5 rounded-xl text-xs sm:text-sm font-semibold text-slate-300 hover:bg-slate-800 hover:text-white whitespace-nowrap text-left">
             <span>⚙️</span>
@@ -358,7 +353,7 @@
         <div class="p-2.5 rounded-xl bg-slate-900 border border-slate-800">
           <span class="text-[10px] uppercase tracking-wider text-slate-400 font-bold block">Active Plan</span>
           <div class="flex items-center justify-between mt-0.5">
-            <span id="sidebar-plan-badge" class="text-xs font-extrabold text-blue-400">Business Pro</span>
+            <span id="sidebar-plan-badge" class="text-xs font-extrabold text-blue-400">Enterprise</span>
             <button onclick="switchView('auth'); showAuthStep('plan');" class="text-[11px] font-bold text-emerald-400 hover:underline">Upgrade</button>
           </div>
         </div>
@@ -380,17 +375,13 @@
       <header class="bg-white border-b border-slate-200 h-16 px-4 sm:px-8 flex items-center justify-between gap-3">
         <div class="flex items-center gap-3 truncate">
           <h1 id="workspace-page-title" class="text-base sm:text-lg font-extrabold text-slate-900 truncate">Meeting Workflows</h1>
-          <span id="header-plan-limits-pill" class="hidden md:inline-block px-2.5 py-1 rounded-md bg-blue-50 text-blue-700 border border-blue-200 text-xs font-bold whitespace-nowrap"></span>
         </div>
-        <div class="flex items-center gap-2 shrink-0">
-          <!-- Plan Switcher for instant testing of Starter vs Pro vs Enterprise -->
-          <select id="quick-plan-switcher" onchange="switchActivePlanInstant(this.value)" class="px-2.5 py-2 rounded-xl ghl-input text-xs font-bold text-slate-800">
-            <option value="Starter Plan">Plan: Starter (Basic)</option>
-            <option value="Business Pro" selected>Plan: Business Pro (Normal)</option>
-            <option value="Enterprise">Plan: Enterprise (Advanced)</option>
-          </select>
+        <div class="flex items-center gap-2.5 shrink-0">
           <button onclick="triggerLiveMeetingNow()" class="px-4 py-2 rounded-xl ghl-btn-primary text-xs sm:text-sm font-bold">
             ▶ Run Broadcast Now
+          </button>
+          <button onclick="switchDashboardTab('profile')" class="hidden sm:inline-flex px-3.5 py-2 rounded-xl ghl-btn-secondary text-xs sm:text-sm font-bold">
+            Profile & Settings
           </button>
         </div>
       </header>
@@ -407,7 +398,7 @@
             <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-4 border-b border-slate-200">
               <div>
                 <h2 class="text-base font-extrabold text-slate-900">Your Scheduled Workflows</h2>
-                <p id="workflows-limit-subtext" class="text-xs text-slate-500 mt-0.5">Manage your automated Zoom broadcasts.</p>
+                <p class="text-xs text-slate-500 mt-0.5">Manage your automated Zoom broadcasts.</p>
               </div>
               <button onclick="resetCategoryForm()" class="px-4 py-2 rounded-xl ghl-btn-primary text-xs font-bold self-start sm:self-auto">
                 + Create New Workflow
@@ -425,7 +416,6 @@
                 <p class="text-xs text-slate-500 mt-0.5">Configure your workflow name, weekly days, 12-hour AM/PM times, and video playback.</p>
               </div>
 
-              <!-- GATED: Top Active / Draft Toggle Switch (Hidden in Starter Plan) -->
               <div id="builder-draft-toggle-wrap" class="flex items-center gap-3 bg-slate-50 px-3.5 py-2 rounded-xl border border-slate-200 self-start sm:self-auto">
                 <span class="text-xs font-bold text-slate-700">Workflow Status:</span>
                 <label class="inline-flex items-center cursor-pointer gap-2">
@@ -435,14 +425,14 @@
               </div>
             </div>
 
-            <!-- Step 1: Workflow Name & GATED Session Type (Webinar only in Enterprise) -->
+            <!-- Step 1: Workflow Name & Session Type -->
             <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
               <div id="workflow-name-col" class="md:col-span-2">
                 <label class="text-xs font-bold text-slate-700">1. Workflow / Meeting Name</label>
                 <input id="cat-name" type="text" placeholder="e.g. Daily Training Session" class="mt-1 w-full px-3.5 py-2.5 rounded-xl ghl-input text-sm" />
               </div>
               <div id="session-type-wrap">
-                <label class="text-xs font-bold text-slate-700">Session Type (Enterprise)</label>
+                <label class="text-xs font-bold text-slate-700">Session Type</label>
                 <select id="cat-session-type" class="mt-1 w-full px-3.5 py-2.5 rounded-xl ghl-input text-sm">
                   <option value="Zoom Meeting">Automated Zoom Meeting</option>
                   <option value="Zoom Webinar">Automated Zoom Webinar</option>
@@ -511,7 +501,7 @@
               <div id="cat-videos-list" class="mt-3 space-y-2"></div>
             </div>
 
-            <!-- Step 4: 12-Hour (AM / PM) Time Calendar + GATED Custom Time Picker -->
+            <!-- Step 4: 12-Hour (AM / PM) Time Calendar + Custom Time Picker -->
             <div>
               <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-3 mb-3">
                 <div>
@@ -519,7 +509,6 @@
                   <p id="time-slots-subtext" class="text-[11px] text-slate-500">Select your daily broadcast times below.</p>
                 </div>
 
-                <!-- GATED: Custom Hour + Minute + AM/PM Selector (Hidden in Starter Plan) -->
                 <div id="custom-time-picker-wrap" class="flex flex-wrap items-center gap-1.5 bg-slate-100 p-1.5 rounded-xl border border-slate-200">
                   <select id="custom-hour-select" class="px-2.5 py-1.5 rounded-lg ghl-input text-xs font-bold">
                     <option value="01">01</option>
@@ -560,7 +549,6 @@
                 </div>
               </div>
 
-              <!-- 12-Hour AM/PM Quick Select Grid -->
               <div id="time-calendar-grid" class="grid grid-cols-3 sm:grid-cols-6 md:grid-cols-8 gap-2 p-3.5 rounded-xl bg-slate-50 border border-slate-200 max-h-52 overflow-y-auto"></div>
 
               <div class="mt-4">
@@ -587,7 +575,6 @@
               </div>
 
               <div class="flex items-center gap-2.5 self-end sm:self-auto">
-                <!-- GATED: Save as Draft Button (Hidden in Starter Plan) -->
                 <button id="btn-save-draft" type="button" onclick="saveMeetingCategory('Draft')" class="px-5 py-2.5 rounded-xl ghl-btn-secondary text-xs sm:text-sm font-bold">
                   Save as Draft
                 </button>
@@ -601,7 +588,7 @@
         </div>
 
         <!-- =============================================================== -->
-        <!-- TAB 2: ATTENDANCE & CHAT REPORT (GATED BY PLAN)                 -->
+        <!-- TAB 2: ATTENDANCE & REAL ZOOM CHAT VIEWER                       -->
         <!-- =============================================================== -->
         <div id="dash-content-attendance" class="hidden space-y-6">
           
@@ -610,15 +597,16 @@
             <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-4 border-b border-slate-200">
               <div>
                 <h2 class="text-base font-extrabold text-slate-900">Broadcast Sessions & Attendance History</h2>
-                <p class="text-xs text-slate-500 mt-0.5">Click on any meeting row below to inspect its participants list.</p>
+                <p class="text-xs text-slate-500 mt-0.5">Click on any meeting row below to inspect its participants list and open their real Zoom chat messages.</p>
               </div>
-              <div class="flex items-center gap-2">
-                <button onclick="recordAccurateDemoSession()" class="px-3.5 py-2 rounded-xl ghl-btn-secondary text-xs font-bold">
-                  + Log Sample Live Session
-                </button>
-                <!-- GATED: Export CSV only visible in Enterprise Plan -->
+              <div class="flex flex-wrap items-center gap-2">
+                <!-- Import real Zoom meeting_saved_chat.txt file -->
+                <label class="px-3.5 py-2 rounded-xl ghl-btn-secondary text-xs font-bold cursor-pointer">
+                  📂 Upload Zoom Chat File (.txt)
+                  <input type="file" accept=".txt" class="hidden" onchange="handleRealZoomChatUpload(event)" />
+                </label>
                 <button id="btn-export-summary-csv" onclick="exportAllSessionsSummaryCsv()" class="px-4 py-2 rounded-xl ghl-btn-primary text-xs font-bold">
-                  ⬇ Export All Summary CSV
+                  ⬇ Export Summary CSV
                 </button>
               </div>
             </div>
@@ -640,7 +628,7 @@
             </div>
           </div>
 
-          <!-- LEVEL 2: SELECTED MEETING PARTICIPANTS & IN-MEETING CHAT LOGS -->
+          <!-- LEVEL 2: SELECTED MEETING PARTICIPANTS & REAL CHAT DRAWER -->
           <div id="attendance-session-detail-card" class="hidden ghl-card p-5 sm:p-6 rounded-2xl space-y-6">
             <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-4 border-b border-slate-200">
               <div>
@@ -650,10 +638,14 @@
                 <h2 id="detail-session-title" class="text-lg font-extrabold text-slate-900">Meeting Details</h2>
                 <p id="detail-session-meta" class="text-xs text-slate-500 mt-0.5"></p>
               </div>
-              <!-- GATED: Export CSV only visible in Enterprise Plan -->
-              <button id="btn-export-detail-csv" onclick="exportSingleSessionCsv()" class="px-4 py-2.5 rounded-xl ghl-btn-primary text-xs font-bold self-start sm:self-auto">
-                ⬇ Export Participants & Chat CSV
-              </button>
+              <div class="flex items-center gap-2 self-start sm:self-auto">
+                <button id="btn-open-full-chat" onclick="openChatTranscriptModal('ALL')" class="px-4 py-2.5 rounded-xl ghl-btn-secondary text-xs font-bold">
+                  💬 Open Full Meeting Chat
+                </button>
+                <button id="btn-export-detail-csv" onclick="exportSingleSessionCsv()" class="px-4 py-2.5 rounded-xl ghl-btn-primary text-xs font-bold">
+                  ⬇ Export CSV
+                </button>
+              </div>
             </div>
 
             <div>
@@ -668,8 +660,7 @@
                       <th class="py-3 px-3">Join Time</th>
                       <th class="py-3 px-3">Leave Time</th>
                       <th class="py-3 px-3">Duration</th>
-                      <!-- GATED: Chat column only visible in Enterprise Plan -->
-                      <th id="th-chat-messages" class="py-3 px-3">Saved Chat Messages (In-Meeting Replies)</th>
+                      <th id="th-chat-messages" class="py-3 px-3 text-right">Client Chat Messages</th>
                     </tr>
                   </thead>
                   <tbody id="detail-participants-tbody" class="divide-y divide-slate-200 text-xs sm:text-sm"></tbody>
@@ -732,7 +723,6 @@
             </div>
           </div>
 
-          <!-- Team Co-Host Emails Manager (Gated by Plan maxCoHosts) -->
           <div class="ghl-card p-5 sm:p-6 rounded-2xl">
             <div class="pb-4 border-b border-slate-200">
               <div class="flex items-center justify-between">
@@ -759,6 +749,24 @@
       </div>
     </div>
 
+  </div>
+
+  <!-- ===================================================================== -->
+  <!-- REAL ZOOM IN-MEETING CHAT VIEWER MODAL                                -->
+  <!-- ===================================================================== -->
+  <div id="chat-viewer-modal" class="fixed inset-0 z-50 hidden bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4">
+    <div class="bg-white rounded-2xl max-w-lg w-full shadow-2xl border border-slate-200 flex flex-col max-h-[82vh]">
+      <div class="p-4 sm:p-5 border-b border-slate-200 flex items-center justify-between">
+        <div>
+          <h3 id="chat-modal-title" class="text-base font-extrabold text-slate-900">Zoom In-Meeting Chat</h3>
+          <p id="chat-modal-subtitle" class="text-xs text-slate-500 mt-0.5">Exact messages written by participant during the Zoom session.</p>
+        </div>
+        <button onclick="closeChatTranscriptModal()" class="px-3 py-1.5 rounded-lg bg-slate-100 hover:bg-slate-200 text-xs font-bold text-slate-700">
+          ✕ Close
+        </button>
+      </div>
+      <div id="chat-modal-messages-body" class="p-4 sm:p-5 overflow-y-auto space-y-3 flex-1 bg-slate-50"></div>
+    </div>
   </div>
 
   <!-- Toast Notification -->
