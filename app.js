@@ -809,8 +809,38 @@ async function dispatchOtpEmailEverywhere(email, otp, subjectText) {
   // 1. Show Instant Push Mail Popup at top-right so user NEVER misses the code
   showInstantOtpPushBanner(email, otp);
 
-  // 2. Try Cloud Google Apps Script Webhook if configured
-  if (appState.cms.otpWebhookUrl) {
+  // 2. Call Hostinger PHP Resend Endpoint (api/send-otp.php) or Local Server (/api/send-otp)
+  let sentViaResendOrSmtp = false;
+  const endpoints = [
+    HOSTINGER_PRODUCTION_CONFIG.otpEndpoint || '/api/send-otp.php',
+    'api/send-otp.php',
+    '/api/send-otp'
+  ];
+
+  for (const ep of endpoints) {
+    try {
+      const res = await fetch(ep, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          email,
+          otp,
+          purpose: appState.otpPurpose || 'verification',
+          subject: subjectText || `ZoomCast CRM — Your 4-Digit Security OTP Code (${otp})`
+        })
+      });
+      if (res.ok) {
+        const data = await res.json();
+        if (data.sentEmail || data.ok) {
+          sentViaResendOrSmtp = true;
+          break;
+        }
+      }
+    } catch (e) {}
+  }
+
+  // 3. Also try Custom Webhook if configured
+  if (!sentViaResendOrSmtp && appState.cms.otpWebhookUrl) {
     try {
       fetch(appState.cms.otpWebhookUrl, {
         method: 'POST',
@@ -825,21 +855,7 @@ async function dispatchOtpEmailEverywhere(email, otp, subjectText) {
     } catch (e) {}
   }
 
-  // 3. Try Local Server.ps1 SMTP API
-  let sentViaSmtp = false;
-  try {
-    const res = await fetch('/api/send-otp', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ email, otp })
-    });
-    if (res.ok) {
-      const data = await res.json();
-      if (data.sentEmail) sentViaSmtp = true;
-    }
-  } catch (e) {}
-
-  return sentViaSmtp;
+  return sentViaResendOrSmtp;
 }
 
 function startOtpCountdownTimer() {
