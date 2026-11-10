@@ -57,7 +57,7 @@ try {
             continue
         }
 
-        if ($Path -eq "/api/send-otp" -and $Req.HttpMethod -eq "POST") {
+        if (($Path -eq "/api/send-otp" -or $Path -eq "/api/send-otp.php") -and $Req.HttpMethod -eq "POST") {
             $Reader = New-Object System.IO.StreamReader($Req.InputStream, $Req.ContentEncoding)
             $Body = $Reader.ReadToEnd()
             $Reader.Close()
@@ -68,7 +68,46 @@ try {
             $SentRealEmail = $false
             $ErrorMessage = ""
 
-            if (Test-Path $SmtpConfigPath) {
+            # 1. Try Resend High-Speed Email API (from resend-secret.php or $env:RESEND_API_KEY)
+            $ResendApiKey = $env:RESEND_API_KEY
+            $ResendFrom = "ZoomCast CRM <onboarding@resend.dev>"
+            $SecretPhpPath = Join-Path $WebRoot "api\resend-secret.php"
+            if (Test-Path $SecretPhpPath) {
+                $PhpRaw = Get-Content $SecretPhpPath -Raw
+                if ($PhpRaw -match "'api_key'\s*=>\s*'([^']+)'") {
+                    $ResendApiKey = $Matches[1]
+                }
+                if ($PhpRaw -match "'from_email'\s*=>\s*'([^']+)'") {
+                    $ResendFrom = $Matches[1]
+                }
+            }
+
+            if (-not [string]::IsNullOrWhiteSpace($ResendApiKey) -and $ResendApiKey -ne "re_YOUR_RESEND_API_KEY") {
+                try {
+                    $Headers = @{
+                        "Authorization"   = "Bearer $ResendApiKey"
+                        "Content-Type"    = "application/json"
+                        "Idempotency-Key" = [guid]::NewGuid().ToString()
+                    }
+                    $HtmlContent = "<div style='font-family:Inter,sans-serif;max-width:480px;margin:0 auto;padding:28px;background:#0e0d0a;color:#f8fafc;border-radius:16px;border:1px solid rgba(245,183,0,0.35);'><h2 style='color:#f5b700;margin-top:0;'>ZoomCast CRM Verification</h2><p style='color:#cbd5e1;font-size:14px;'>Use the 4-digit security code below to verify your email address:</p><div style='background:#181611;border:1px solid #f5b700;border-radius:12px;padding:18px;text-align:center;margin:20px 0;'><span style='font-size:32px;font-weight:800;letter-spacing:8px;color:#f5b700;'>$OtpCode</span></div><p style='color:#94a3b8;font-size:12px;'>This code expires in 10 minutes.</p></div>"
+                    $ResendPayload = @{
+                        from    = $ResendFrom
+                        to      = @($ToEmail)
+                        subject = "ZoomCast CRM — 4-Digit Security OTP ($OtpCode)"
+                        html    = $HtmlContent
+                    } | ConvertTo-Json -Depth 4
+
+                    $ResendResp = Invoke-RestMethod -Uri "https://api.resend.com/emails" -Method Post -Headers $Headers -Body $ResendPayload -TimeoutSec 10
+                    if ($ResendResp.id) {
+                        $SentRealEmail = $true
+                    }
+                } catch {
+                    $ErrorMessage = $_.Exception.Message
+                }
+            }
+
+            # 2. Fallback to Local SMTP if Resend did not send
+            if (-not $SentRealEmail -and (Test-Path $SmtpConfigPath)) {
                 try {
                     $SmtpCfg = Get-Content $SmtpConfigPath -Raw | ConvertFrom-Json
                     if (-not [string]::IsNullOrWhiteSpace($SmtpCfg.gmailUser) -and -not [string]::IsNullOrWhiteSpace($SmtpCfg.gmailAppPassword)) {
@@ -79,7 +118,7 @@ try {
                         $MailMsg.From = New-Object System.Net.Mail.MailAddress($SmtpCfg.gmailUser, "ZoomCast CRM Verification")
                         $MailMsg.To.Add($ToEmail)
                         $MailMsg.Subject = "Your ZoomCast CRM Verification Code: $OtpCode"
-                        $MailMsg.Body = "Hello,`n`nYour 6-digit verification OTP code for ZoomCast CRM is: $OtpCode`n`nThis code is valid for 10 minutes."
+                        $MailMsg.Body = "Hello,`n`nYour 4-digit verification OTP code for ZoomCast CRM is: $OtpCode`n`nThis code is valid for 10 minutes."
                         $SmtpClient.Send($MailMsg)
                         $SentRealEmail = $true
                     }
