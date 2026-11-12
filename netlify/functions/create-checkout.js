@@ -25,7 +25,7 @@ exports.handler = async (event) => {
   const email = String(payload.email || '').trim();
   const name = String(payload.name || '').trim();
 
-  const returnBase = (process.env.SITE_URL || 'https://aamiq.online').replace(/\/$/, '');
+  const returnBase = (process.env.SITE_URL || 'https://zoomcast.aamiq.online').replace(/\/$/, '');
   const successUrl = `${returnBase}/?payment_status=success&plan=${encodeURIComponent(planId)}&currency=${encodeURIComponent(currency)}`;
   const cancelUrl = `${returnBase}/?payment_status=cancelled&plan=${encodeURIComponent(planId)}`;
 
