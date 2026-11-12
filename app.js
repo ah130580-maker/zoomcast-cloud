@@ -11,9 +11,9 @@ const MASTER_ADMIN_USER = {
 // HOSTINGER + RESEND/BREVO OTP + SAFEPAY (PKR) & LEMONSQUEEZY (USD) CONFIG
 // ============================================================================
 const HOSTINGER_PRODUCTION_CONFIG = {
-  domain: 'aamiq.online',
+  domain: 'zoomcast.aamiq.online',
   netlifySiteUrl: 'https://zoomcast-aamiq.netlify.app',
-  // Phase 2: High-Speed Transactional OTP Endpoint (Netlify Live Function + Custom Domain)
+  // Phase 2: High-Speed Transactional OTP Endpoint (Netlify Live Function + Custom Subdomain)
   otpEndpoint: '/.netlify/functions/send-otp',
   otpRemoteEndpoint: 'https://zoomcast-aamiq.netlify.app/.netlify/functions/send-otp',
   senderEmail: 'noreply@aamiq.online',
