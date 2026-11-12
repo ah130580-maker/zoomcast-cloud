@@ -27,7 +27,7 @@ $otp     = isset($payload['otp']) ? trim($payload['otp']) : '';
 $purpose = isset($payload['purpose']) ? trim($payload['purpose']) : 'verification';
 $subject = isset($payload['subject']) && $payload['subject'] !== ''
     ? trim($payload['subject'])
-    : "ZoomCast CRM — Your 4-Digit Security OTP Code ($otp)";
+    : "ZoomCast by Aamiq — Your 4-Digit Security OTP Code ($otp)";
 
 if (!filter_var($email, FILTER_VALIDATE_EMAIL) || !preg_match('/^\d{4,6}$/', $otp)) {
     http_response_code(400);
@@ -37,7 +37,7 @@ if (!filter_var($email, FILTER_VALIDATE_EMAIL) || !preg_match('/^\d{4,6}$/', $ot
 
 // Load Resend API Key & Verified Domain Sender from resend-secret.php or Environment
 $resendApiKey = getenv('RESEND_API_KEY') ?: '';
-$resendFrom   = getenv('RESEND_FROM_EMAIL') ?: 'ZoomCast CRM <noreply@aamiq.online>';
+$resendFrom   = getenv('RESEND_FROM_EMAIL') ?: 'ZoomCast by Aamiq <noreply@aamiq.online>';
 
 $secretFile = __DIR__ . '/resend-secret.php';
 if (file_exists($secretFile)) {
@@ -62,13 +62,13 @@ $purposeLabel = ($purpose === 'forgot') ? 'Password Reset Request' : 'Account Ve
 
 $htmlBody = <<<HTML
 <div style="font-family:Inter,Arial,sans-serif;max-width:480px;margin:0 auto;padding:28px;background:#0e0d0a;color:#f8fafc;border-radius:16px;border:1px solid rgba(245,183,0,0.35);">
-  <div style="display:flex;align-items:center;gap:10px;margin-bottom:16px;">
-    <span style="display:inline-block;padding:6px 12px;border-radius:8px;background:#f5b700;color:#0a0a0a;font-weight:900;font-size:14px;">Z</span>
-    <span style="font-size:18px;font-weight:800;color:#ffffff;">ZoomCast <span style="color:#f5b700;">CRM</span></span>
+  <div style="display:flex;align-items:center;gap:12px;margin-bottom:18px;">
+    <img src="https://ah130580-maker.github.io/zoomcast-cloud/aamiq-logo.png" alt="Aamiq" style="height:40px;width:auto;object-fit:contain;" />
+    <span style="font-size:18px;font-weight:800;color:#ffffff;">ZoomCast <span style="color:#f5b700;">by Aamiq</span></span>
   </div>
   <h2 style="color:#ffffff;font-size:20px;margin:0 0 8px 0;">{$purposeLabel}</h2>
   <p style="color:#cbd5e1;font-size:14px;line-height:1.6;margin:0 0 20px 0;">
-    Use the 4-digit security code below to verify your email address on ZoomCast CRM:
+    Use the 4-digit security code below to verify your email address on ZoomCast by Aamiq:
   </p>
   <div style="background:#181611;border:1px solid #f5b700;border-radius:12px;padding:18px;text-align:center;margin:20px 0;">
     <span style="font-size:34px;font-weight:800;letter-spacing:10px;color:#f5b700;">{$otp}</span>
