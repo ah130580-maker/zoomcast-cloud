@@ -37,7 +37,7 @@ if (!filter_var($email, FILTER_VALIDATE_EMAIL) || !preg_match('/^\d{4,6}$/', $ot
 
 // Load Resend API Key & Verified Domain Sender from resend-secret.php or Environment
 $resendApiKey = getenv('RESEND_API_KEY') ?: '';
-$resendFrom   = getenv('RESEND_FROM_EMAIL') ?: 'ZoomCast CRM <onboarding@resend.dev>';
+$resendFrom   = getenv('RESEND_FROM_EMAIL') ?: 'ZoomCast CRM <noreply@aamiq.online>';
 
 $secretFile = __DIR__ . '/resend-secret.php';
 if (file_exists($secretFile)) {
