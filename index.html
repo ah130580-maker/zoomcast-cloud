@@ -1023,7 +1023,7 @@
                           <span id="live-card-expiry" class="text-xs font-bold tracking-wider text-white">09/28</span>
                         </div>
                       </div>
-                      <span class="text-lg font-black italic tracking-wider text-white">VISA</span>
+                      <span id="live-card-brand-front" class="text-lg font-black italic tracking-wider text-white">VISA</span>
                     </div>
                   </div>
 
@@ -1041,7 +1041,7 @@
                     </div>
                     <div class="px-6 flex items-center justify-between text-[10px] text-slate-400">
                       <span>256-Bit Encrypted Virtual Card</span>
-                      <span class="font-black italic text-white text-sm">VISA</span>
+                      <span id="live-card-brand-back" class="font-black italic text-white text-sm">VISA</span>
                     </div>
                   </div>
 
@@ -1096,8 +1096,8 @@
               <div>
                 <label class="text-[11px] font-bold uppercase tracking-wider text-slate-400 block mb-1.5">Card Number</label>
                 <div class="relative">
-                  <input id="card-number" type="text" maxlength="19" placeholder="5412 7534 8910 3414" oninput="formatAndSyncCardNumber(this)" onfocus="flip3DCard(false)" class="w-full pl-4 pr-16 py-3 rounded-xl glass-input text-sm font-mono-card" />
-                  <span class="absolute inset-y-0 right-0 pr-4 flex items-center text-xs font-black italic text-yellow-400 pointer-events-none">VISA</span>
+                  <input id="card-number" type="text" maxlength="19" placeholder="5412 7534 8910 3414" oninput="formatAndSyncCardNumber(this)" onfocus="flip3DCard(false)" class="w-full pl-4 pr-24 py-3 rounded-xl glass-input text-sm font-mono-card" />
+                  <span id="card-input-brand-badge" class="absolute inset-y-0 right-0 pr-4 flex items-center text-xs font-black italic text-yellow-400 pointer-events-none">VISA</span>
                 </div>
               </div>
 
@@ -1632,7 +1632,40 @@
         <!-- TAB 4: SECURITY & ACTIVE WORKSPACE SESSIONS                     -->
         <!-- =============================================================== -->
         <div id="dash-content-profile" class="hidden space-y-6 animate-view-enter">
-          
+
+          <!-- Active Subscription & Payment Receipt Card -->
+          <div class="glass-card-gold p-6 rounded-2xl border border-yellow-500/35">
+            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-white/10">
+              <div>
+                <div class="flex items-center gap-2">
+                  <span class="px-2.5 py-0.5 rounded-md bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 text-[10px] font-extrabold uppercase tracking-wider">● Active Paid Subscription</span>
+                  <span class="text-xs font-mono text-slate-400" id="prof-billing-txn">TXN-MASTER-ENT</span>
+                </div>
+                <h2 class="text-lg font-extrabold text-white mt-1.5">Current Plan: <span id="prof-billing-plan" class="text-yellow-400">Enterprise</span></h2>
+                <p id="prof-billing-gateway" class="text-xs text-slate-300 mt-0.5">Protected by 7-Day 100% Money-Back Refund Guarantee • Dual Currency (USD $ & PKR Rs.)</p>
+              </div>
+              <div class="flex items-center gap-2 self-start sm:self-auto">
+                <button id="prof-change-plan-btn" type="button" onclick="switchView('auth'); showAuthStep('plan');" class="px-4 py-2 rounded-xl btn-gold text-xs">
+                  Change / Upgrade Plan →
+                </button>
+              </div>
+            </div>
+            <div class="mt-4 grid grid-cols-1 sm:grid-cols-3 gap-3 text-xs">
+              <div class="p-3 rounded-xl bg-white/5 border border-white/10">
+                <span class="text-slate-400 block text-[10px] uppercase font-bold">Billing Amount</span>
+                <span id="prof-billing-amount" class="text-white font-extrabold text-sm mt-0.5 block">$65.00 / month</span>
+              </div>
+              <div class="p-3 rounded-xl bg-white/5 border border-white/10">
+                <span class="text-slate-400 block text-[10px] uppercase font-bold">Payment Gateway</span>
+                <span id="prof-billing-method" class="text-emerald-400 font-bold text-sm mt-0.5 block">Lemon Squeezy (USD) / Safepay (PKR)</span>
+              </div>
+              <div class="p-3 rounded-xl bg-white/5 border border-white/10">
+                <span class="text-slate-400 block text-[10px] uppercase font-bold">Refund Protection</span>
+                <span class="text-yellow-400 font-bold text-sm mt-0.5 block">🛡️ 7-Day 100% Refund Guarantee</span>
+              </div>
+            </div>
+          </div>
+
           <div class="glass-card p-6 rounded-2xl">
             <div class="flex items-center justify-between pb-4 border-b border-white/10">
               <div>
