@@ -12,9 +12,10 @@ const MASTER_ADMIN_USER = {
 // ============================================================================
 const HOSTINGER_PRODUCTION_CONFIG = {
   domain: 'aamiq.online',
-  // Phase 2: High-Speed Transactional OTP Endpoint (Netlify Function /.netlify/functions/send-otp + PHP fallback)
+  netlifySiteUrl: 'https://zoomcast-aamiq.netlify.app',
+  // Phase 2: High-Speed Transactional OTP Endpoint (Netlify Live Function + Custom Domain)
   otpEndpoint: '/.netlify/functions/send-otp',
-  otpRemoteEndpoint: 'https://aamiq.online/.netlify/functions/send-otp',
+  otpRemoteEndpoint: 'https://zoomcast-aamiq.netlify.app/.netlify/functions/send-otp',
   senderEmail: 'noreply@aamiq.online',
   // Phase 3: Dual Payment Gateways (Safepay for PKR + Lemon Squeezy for USD)
   safepayPkrCheckoutUrls: {
