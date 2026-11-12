@@ -5,5 +5,5 @@
  */
 return [
     'api_key'    => 're_YOUR_RESEND_API_KEY',
-    'from_email' => 'ZoomCast CRM <noreply@yourdomain.com>'
+    'from_email' => 'ZoomCast CRM <noreply@aamiq.online>'
 ];
