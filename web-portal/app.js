@@ -11,9 +11,11 @@ const MASTER_ADMIN_USER = {
 // HOSTINGER + RESEND/BREVO OTP + SAFEPAY (PKR) & LEMONSQUEEZY (USD) CONFIG
 // ============================================================================
 const HOSTINGER_PRODUCTION_CONFIG = {
-  // Phase 2: High-Speed Transactional OTP Endpoint (Resend / Brevo PHP/Node endpoint on Hostinger)
-  otpBackendEndpoint: '/api/send-otp', // or 'https://yourdomain.com/api/send-otp.php'
-  senderEmail: 'noreply@zoomcastcrm.com',
+  domain: 'aamiq.online',
+  // Phase 2: High-Speed Transactional OTP Endpoint (Resend PHP endpoint on Hostinger aamiq.online)
+  otpEndpoint: '/api/send-otp.php',
+  otpRemoteEndpoint: 'https://aamiq.online/api/send-otp.php',
+  senderEmail: 'noreply@aamiq.online',
   // Phase 3: Dual Payment Gateways (Safepay for PKR + Lemon Squeezy for USD)
   safepayPkrCheckoutUrls: {
     starter: '',    // Paste Safepay PKR Payment Link or Checkout URL when live
@@ -814,8 +816,9 @@ async function dispatchOtpEmailEverywhere(email, otp, subjectText) {
   const endpoints = [
     HOSTINGER_PRODUCTION_CONFIG.otpEndpoint || '/api/send-otp.php',
     'api/send-otp.php',
-    '/api/send-otp'
-  ];
+    '/api/send-otp',
+    HOSTINGER_PRODUCTION_CONFIG.otpRemoteEndpoint
+  ].filter(Boolean);
 
   for (const ep of endpoints) {
     try {
