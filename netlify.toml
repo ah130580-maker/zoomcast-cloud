@@ -1,5 +1,5 @@
 [build]
-  publish = "web-portal"
+  publish = "."
   functions = "netlify/functions"
 
 [[redirects]]
