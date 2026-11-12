@@ -1,4 +1,4 @@
-param(
+﻿param(
     [int]$Port = 8080,
     [switch]$OpenBrowser
 )
@@ -70,7 +70,7 @@ try {
 
             # 1. Try Resend High-Speed Email API (from resend-secret.php or $env:RESEND_API_KEY)
             $ResendApiKey = $env:RESEND_API_KEY
-            $ResendFrom = "ZoomCast CRM <onboarding@resend.dev>"
+            $ResendFrom = "ZoomCast CRM <noreply@aamiq.online>"
             $SecretPhpPath = Join-Path $WebRoot "api\resend-secret.php"
             if (Test-Path $SecretPhpPath) {
                 $PhpRaw = Get-Content $SecretPhpPath -Raw
