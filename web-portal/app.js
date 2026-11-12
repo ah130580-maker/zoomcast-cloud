@@ -1317,6 +1317,45 @@ function formatAndSyncExpiry(input) {
   updateLive3DCard();
 }
 
+function detectCardBrand(digits) {
+  const clean = String(digits || '').replace(/\D/g, '');
+  if (/^4/.test(clean)) return 'VISA';
+  if (/^(5[1-5]|2[2-7])/.test(clean)) return 'MASTERCARD';
+  if (/^(62|2205)/.test(clean)) return 'PAYPAK';
+  if (/^3[47]/.test(clean)) return 'AMEX';
+  return appState.currency === 'PKR' ? 'PAYPAK / VISA' : 'VISA';
+}
+
+function validateCardDetails(holder, rawNumber, expiry, cvc) {
+  if (!holder || holder.length < 2) {
+    return { valid: false, message: 'Please enter the Cardholder Full Name.' };
+  }
+  const cleanNum = String(rawNumber || '').replace(/\D/g, '');
+  if (cleanNum.length < 15 || cleanNum.length > 16 || /^(\d)\1+$/.test(cleanNum)) {
+    return { valid: false, message: 'Please enter a valid 15 or 16-digit Debit/Credit Card Number.' };
+  }
+  const expMatch = String(expiry || '').match(/^(\d{2})\/(\d{2})$/);
+  if (!expMatch) {
+    return { valid: false, message: 'Please enter a valid Expiry Date in MM/YY format (e.g. 09/28).' };
+  }
+  const expMonth = parseInt(expMatch[1], 10);
+  const expYear = 2000 + parseInt(expMatch[2], 10);
+  const now = new Date();
+  const curMonth = now.getMonth() + 1;
+  const curYear = now.getFullYear();
+  if (expMonth < 1 || expMonth > 12) {
+    return { valid: false, message: 'Expiry Month must be between 01 and 12.' };
+  }
+  if (expYear < curYear || (expYear === curYear && expMonth < curMonth)) {
+    return { valid: false, message: 'This card is expired. Please use an active card.' };
+  }
+  const cleanCvc = String(cvc || '').replace(/\D/g, '');
+  if (cleanCvc.length < 3 || cleanCvc.length > 4) {
+    return { valid: false, message: 'Please enter a valid 3 or 4-digit CVV security code.' };
+  }
+  return { valid: true };
+}
+
 function updateLive3DCard() {
   const holder = (document.getElementById('card-holder')?.value || '').trim().toUpperCase();
   const number = (document.getElementById('card-number')?.value || '').trim();
@@ -1332,6 +1371,12 @@ function updateLive3DCard() {
   if (liveNumber) liveNumber.textContent = number ? number.replace(/\s/g, '  ') : '5412  7534  8910  3414';
   if (liveExpiry) liveExpiry.textContent = expiry || '09/28';
   if (liveCvc) liveCvc.textContent = cvc || '842';
+
+  const brand = detectCardBrand(number);
+  ['live-card-brand-front', 'live-card-brand-back', 'card-input-brand-badge'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.textContent = brand;
+  });
 }
 
 function resetPaymentCheckoutUI() {
@@ -1380,6 +1425,7 @@ function updateCheckoutCurrencyDisplay(plan) {
     if (gwNameEl) gwNameEl.textContent = '🌎 Lemon Squeezy (International USD Cards, Wise, Revolut)';
     if (gwRateEl) gwRateEl.textContent = 'USD Billing';
   }
+  updateLive3DCard();
 }
 
 function proceedToCardPayment(planId) {
@@ -1396,9 +1442,109 @@ function proceedToCardPayment(planId) {
   showAuthStep('payment');
 }
 
-function completeSubscriptionAndLogin() {
+async function dispatchPaymentReceiptEmail(paymentRecord) {
+  const endpoints = [
+    HOSTINGER_PRODUCTION_CONFIG.otpEndpoint || '/api/send-otp.php',
+    'api/send-otp.php',
+    '/api/send-otp',
+    HOSTINGER_PRODUCTION_CONFIG.otpRemoteEndpoint
+  ].filter(Boolean);
+
+  for (const ep of endpoints) {
+    try {
+      const res = await fetch(ep, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          type: 'receipt',
+          email: paymentRecord.email,
+          userName: paymentRecord.userName,
+          planName: paymentRecord.planName,
+          amountFormatted: paymentRecord.amountFormatted,
+          gateway: paymentRecord.gateway,
+          txnId: paymentRecord.txnId
+        })
+      });
+      if (res.ok) break;
+    } catch (e) {}
+  }
+}
+
+function activateSubscriptionAfterPayment(plan, holderName, gatewayName, txnId) {
+  const planName = plan ? plan.name : 'Business Pro';
+  const pInfo = getPlanPriceInActiveCurrency(plan || appState.plans[1]);
+  const receipt = {
+    txnId: txnId || ('TXN-' + Math.floor(100000 + Math.random() * 900000)),
+    planName,
+    currency: appState.currency,
+    amountFormatted: pInfo.formattedWithDecimals,
+    gateway: gatewayName || (appState.currency === 'PKR' ? 'Safepay Pakistan (PKR)' : 'Lemon Squeezy (USD)'),
+    userName: appState.profile.name || holderName || 'Subscriber',
+    email: appState.profile.email || MASTER_ADMIN_USER.email,
+    paidAt: new Date().toLocaleString()
+  };
+
+  appState.profile.hasActivePlan = true;
+  appState.profile.planName = planName;
+  appState.profile.lastPayment = receipt;
+  if (!appState.profile.authToken) {
+    appState.profile.authToken = 'paid_tok_' + Date.now();
+  }
+
+  const uIdx = appState.usersDb.findIndex(u => u.email.toLowerCase() === (appState.profile.email || '').toLowerCase());
+  if (uIdx >= 0) {
+    appState.usersDb[uIdx].hasActivePlan = true;
+    appState.usersDb[uIdx].planName = planName;
+    appState.usersDb[uIdx].lastPayment = receipt;
+  }
+
+  const existingIdx = appState.clients.findIndex(c => c.email.toLowerCase() === (appState.profile.email || '').toLowerCase());
+  const clientRecord = {
+    id: 'USR-' + Math.floor(100 + Math.random() * 900),
+    name: appState.profile.name || holderName || 'Subscriber',
+    email: appState.profile.email,
+    plan: planName,
+    categoriesCount: appState.categories.length,
+    coHostsCount: appState.coHostEmails.length,
+    status: 'Active'
+  };
+  if (existingIdx >= 0) {
+    appState.clients[existingIdx] = clientRecord;
+  } else if (clientRecord.email) {
+    appState.clients.unshift(clientRecord);
+  }
+
+  persistState();
+  syncProfileUI();
+  dispatchPaymentReceiptEmail(receipt);
+  switchView('dashboard');
+  showToast(`🎉 Payment Successful (${receipt.amountFormatted} via ${receipt.gateway})! ${planName} is now active.`);
+}
+
+function handleGatewayReturnCallback() {
+  try {
+    const params = new URLSearchParams(window.location.search);
+    const status = params.get('payment_status');
+    const planId = params.get('plan');
+    const curr = params.get('currency');
+    if (status === 'success') {
+      if (curr === 'PKR' || curr === 'USD') appState.currency = curr;
+      const plan = appState.plans.find(p => p.id === planId) || appState.selectedPlan || appState.plans[1];
+      const gw = appState.currency === 'PKR' ? 'Safepay Pakistan (PKR)' : 'Lemon Squeezy (USD)';
+      history.replaceState(null, '', window.location.pathname);
+      activateSubscriptionAfterPayment(plan, appState.profile.name, gw, 'TXN-GW-' + Date.now());
+    } else if (status === 'cancelled') {
+      history.replaceState(null, '', window.location.pathname);
+      showToast('Payment was cancelled. You can complete checkout whenever you are ready.');
+    }
+  } catch (e) {}
+}
+
+async function completeSubscriptionAndLogin() {
   const plan = appState.selectedPlan || appState.plans[1];
-  // If production external checkout URL is configured in HOSTINGER_PRODUCTION_CONFIG, redirect to Safepay (PKR) or LemonSqueezy (USD)
+  const pInfo = getPlanPriceInActiveCurrency(plan);
+
+  // 1. If production external checkout URL is configured in HOSTINGER_PRODUCTION_CONFIG, redirect to Safepay (PKR) or LemonSqueezy (USD)
   if (appState.currency === 'PKR' && HOSTINGER_PRODUCTION_CONFIG.safepayPkrCheckoutUrls[plan.id]) {
     window.location.href = HOSTINGER_PRODUCTION_CONFIG.safepayPkrCheckoutUrls[plan.id];
     return;
@@ -1408,13 +1554,37 @@ function completeSubscriptionAndLogin() {
     return;
   }
 
+  // 2. Check if backend api/create-checkout.php has a dynamic Safepay / Lemon Squeezy session configured
+  try {
+    const chkRes = await fetch('api/create-checkout.php', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        planId: plan.id,
+        currency: appState.currency,
+        amount: pInfo.rawAmount,
+        email: appState.profile.email,
+        name: appState.profile.name
+      })
+    });
+    if (chkRes.ok) {
+      const chkData = await chkRes.json();
+      if (chkData && chkData.checkoutUrl) {
+        window.location.href = chkData.checkoutUrl;
+        return;
+      }
+    }
+  } catch (e) {}
+
+  // 3. Validate 3D Card Checkout Form (Cardholder, Luhn/Length, Expiry MM/YY, CVV)
   const holder = (document.getElementById('card-holder')?.value || '').trim();
   const number = (document.getElementById('card-number')?.value || '').replace(/\s+/g, '');
   const expiry = (document.getElementById('card-expiry')?.value || '').trim();
   const cvc = (document.getElementById('card-cvc')?.value || '').trim();
 
-  if (!holder || number.length < 12 || !expiry || cvc.length < 3) {
-    showToast('Please enter valid Cardholder Name, 16-Digit Card Number, Expiry Date, and CVV.');
+  const validation = validateCardDetails(holder, number, expiry, cvc);
+  if (!validation.valid) {
+    showToast(`⚠️ ${validation.message}`);
     return;
   }
 
@@ -1428,6 +1598,9 @@ function completeSubscriptionAndLogin() {
   const progFill = document.getElementById('payment-progress-fill');
   const statusLbl = document.getElementById('payment-status-label');
   const successBadge = document.getElementById('payment-success-badge');
+
+  const gwLabel = appState.currency === 'PKR' ? 'Safepay Pakistan (PKR)' : 'Lemon Squeezy (USD)';
+  if (statusLbl) statusLbl.textContent = `Authorizing ${pInfo.formattedWithDecimals} via ${gwLabel}...`;
 
   if (formCol) formCol.classList.add('hidden');
   if (cardCol) cardCol.className = 'lg:col-span-12 flex flex-col items-center justify-center py-6 transition-all duration-700';
@@ -1450,37 +1623,15 @@ function completeSubscriptionAndLogin() {
   }, 1300);
 
   setTimeout(() => {
-    const planName = appState.selectedPlan ? appState.selectedPlan.name : 'Business Pro';
-    appState.profile.hasActivePlan = true;
-    appState.profile.planName = planName;
-
-    const uIdx = appState.usersDb.findIndex(u => u.email.toLowerCase() === appState.profile.email.toLowerCase());
-    if (uIdx >= 0) {
-      appState.usersDb[uIdx].hasActivePlan = true;
-      appState.usersDb[uIdx].planName = planName;
-    }
-
-    const existingIdx = appState.clients.findIndex(c => c.email.toLowerCase() === appState.profile.email.toLowerCase());
-    const clientRecord = {
-      id: 'USR-' + Math.floor(100 + Math.random() * 900),
-      name: appState.profile.name || holder,
-      email: appState.profile.email,
-      plan: planName,
-      categoriesCount: appState.categories.length,
-      coHostsCount: appState.coHostEmails.length,
-      status: 'Active'
-    };
-    if (existingIdx >= 0) {
-      appState.clients[existingIdx] = clientRecord;
-    } else {
-      appState.clients.unshift(clientRecord);
-    }
-
-    persistState();
-    syncProfileUI();
-    switchView('dashboard');
-    showToast(`🎉 Payment Successful! ${planName} is now active.`);
-  }, 2600);
+    const brand = detectCardBrand(number);
+    const last4 = number.slice(-4);
+    activateSubscriptionAfterPayment(
+      plan,
+      holder,
+      `${gwLabel} • ${brand} **** ${last4}`,
+      'TXN-' + Math.floor(100000 + Math.random() * 900000)
+    );
+  }, 2500);
 }
 
 function logoutClient() {
@@ -1569,6 +1720,35 @@ function createTicketRecord(clientName, clientEmail, clientPlan, subject, priori
   persistState();
   updateBentoStats();
   renderSupportTicketsUI();
+
+  // Send Live Support Ticket Email Notification via Resend API (noreply@aamiq.online -> amirjupiteradvisers@gmail.com)
+  const endpoints = [
+    HOSTINGER_PRODUCTION_CONFIG.otpEndpoint || '/api/send-otp.php',
+    'api/send-otp.php',
+    '/api/send-otp',
+    HOSTINGER_PRODUCTION_CONFIG.otpRemoteEndpoint
+  ].filter(Boolean);
+
+  (async () => {
+    for (const ep of endpoints) {
+      try {
+        const res = await fetch(ep, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            type: 'ticket',
+            email: clientEmail || 'amirjupiteradvisers@gmail.com',
+            ticketId,
+            clientName: clientName || 'Workspace Client',
+            priority,
+            ticketSubject: subject,
+            message: messageText
+          })
+        });
+        if (res.ok) break;
+      } catch (e) {}
+    }
+  })();
 
   // Optional webhook notification to agency owner
   if (appState.cms.otpWebhookUrl) {
@@ -1882,6 +2062,23 @@ function syncProfileUI() {
   const pZoomLink = document.getElementById('prof-zoom-link');
   const badge = document.getElementById('zoom-conn-badge');
   const titleEl = document.getElementById('workspace-page-title');
+
+  const bPlan = document.getElementById('prof-billing-plan');
+  const bTxn = document.getElementById('prof-billing-txn');
+  const bAmt = document.getElementById('prof-billing-amount');
+  const bMethod = document.getElementById('prof-billing-method');
+  const bChangeBtn = document.getElementById('prof-change-plan-btn');
+
+  const planName = appState.profile.planName || 'Enterprise';
+  const matchedPlan = appState.plans.find(p => p.name === planName) || appState.plans[2];
+  const pInfo = getPlanPriceInActiveCurrency(matchedPlan);
+  const lastPay = appState.profile.lastPayment;
+
+  if (bPlan) bPlan.textContent = planName;
+  if (bTxn) bTxn.textContent = (lastPay && lastPay.txnId) ? lastPay.txnId : 'TXN-MASTER-ENT';
+  if (bAmt) bAmt.textContent = `${(lastPay && lastPay.amountFormatted) ? lastPay.amountFormatted : pInfo.formattedWithDecimals} / month`;
+  if (bMethod) bMethod.textContent = (lastPay && lastPay.gateway) ? lastPay.gateway : (appState.currency === 'PKR' ? 'Safepay Pakistan (PKR)' : 'Lemon Squeezy (USD)');
+  if (bChangeBtn) bChangeBtn.classList.toggle('hidden', planName === 'Enterprise');
 
   if (sName) sName.textContent = appState.profile.name || 'Amir Hayat';
   if (sEmail) sEmail.textContent = appState.profile.email || 'amirjupiteradvisers@gmail.com';
@@ -3009,4 +3206,5 @@ window.addEventListener('DOMContentLoaded', () => {
   renderSupportTicketsUI();
   syncRealBackendSessions();
   renderAdminPanel();
+  handleGatewayReturnCallback();
 });
