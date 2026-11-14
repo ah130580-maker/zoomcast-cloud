@@ -1850,6 +1850,34 @@
             <div id="cohost-emails-list" class="mt-4 grid grid-cols-1 sm:grid-cols-2 gap-2.5"></div>
           </div>
 
+          <!-- STORAGE & MEDIA LIBRARY (2GB / 5GB / 7GB PLAN QUOTA + PLAY / DELETE + ACTIVE WORKFLOW USAGE) -->
+          <div id="storage-media-card" class="glass-card p-6 rounded-2xl space-y-4">
+            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-4 border-b border-white/10">
+              <div>
+                <div class="flex items-center gap-2.5 flex-wrap">
+                  <h2 class="text-base font-extrabold text-white">Storage &amp; Media Library</h2>
+                  <span id="storage-quota-badge" class="px-2.5 py-0.5 rounded-md text-xs font-bold bg-blue-500/15 text-blue-300 border border-blue-500/30 whitespace-nowrap">0 MB / 2 GB Used</span>
+                </div>
+                <p id="storage-quota-subtext" class="text-xs text-slate-400 mt-1">Manage your uploaded broadcast videos, preview playback, and see which active workflows use each file.</p>
+              </div>
+              <span id="storage-remaining-text" class="text-xs font-bold text-emerald-400 whitespace-nowrap">2.00 GB Remaining</span>
+            </div>
+
+            <!-- Storage Progress Bar -->
+            <div class="space-y-1.5">
+              <div class="w-full h-2.5 rounded-full bg-white/10 overflow-hidden">
+                <div id="storage-usage-bar" class="h-full rounded-full bg-gradient-to-r from-yellow-400 to-amber-500 transition-all duration-300" style="width: 0%"></div>
+              </div>
+              <div class="flex items-center justify-between text-[11px] text-slate-400">
+                <span id="storage-used-label">Used: 0 MB</span>
+                <span id="storage-limit-label">Plan Limit: 2 GB (Starter: 2 GB · Pro: 5 GB · Enterprise: 7 GB)</span>
+              </div>
+            </div>
+
+            <!-- Uploaded Media List -->
+            <div id="storage-media-list" class="space-y-2.5"></div>
+          </div>
+
           <!-- BILLING, PAYMENT METHODS (PRIMARY & BACKUP), TRANSACTION HISTORY & CANCEL -->
           <div class="glass-card p-6 rounded-2xl space-y-5">
             <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-4 border-b border-white/10">
@@ -2030,6 +2058,20 @@
         <button type="button" onclick="closeZoomIssueModal()" class="px-4 py-2 rounded-xl btn-glass text-xs">Dismiss</button>
         <button type="button" onclick="closeZoomIssueModal(); goToIntegrationsFromModal();" class="px-4 py-2 rounded-xl btn-gold text-xs">Fix Connection Now →</button>
       </div>
+    </div>
+  </div>
+
+  <!-- MEDIA VIDEO PLAYER MODAL (Preview uploaded media from Profile -> Storage) -->
+  <div id="media-player-modal" class="fixed inset-0 z-50 hidden bg-black/80 backdrop-blur-md flex items-center justify-center p-4">
+    <div class="glass-card-gold rounded-2xl max-w-2xl w-full p-5 space-y-3 border border-yellow-500/35 animate-view-enter">
+      <div class="flex items-center justify-between gap-3">
+        <h3 id="media-player-title" class="text-sm font-extrabold text-white truncate">Media Preview</h3>
+        <button type="button" onclick="closeMediaPlayerModal()" class="px-3 py-1 rounded-lg btn-glass text-xs">✕ Close</button>
+      </div>
+      <div class="rounded-xl overflow-hidden bg-black border border-white/10">
+        <video id="media-player-video" controls class="w-full max-h-[60vh] bg-black"></video>
+      </div>
+      <p id="media-player-note" class="text-[11px] text-slate-400 hidden"></p>
     </div>
   </div>
 
