@@ -1,6 +1,6 @@
 const MASTER_ADMIN_USER = {
   name: 'Amir Hayat',
-  email: 'amirjupiteradvisers@gmail.com',
+  email: 'ah130580@gmail.com',
   password: 'Amir5748@',
   authToken: 'master_tok_amir',
   hasActivePlan: true,
@@ -34,7 +34,8 @@ const DUMMY_EMAIL_BLACKLIST = [
   'ahmed.raza@gmail.com',
   'usman.academy@gmail.com',
   'zainab.coaching@gmail.com',
-  'new.subscriber@gmail.com'
+  'new.subscriber@gmail.com',
+  'amirjupiteradvisers@gmail.com'
 ];
 
 const DEFAULT_CMS_CONTENT = {
@@ -186,7 +187,7 @@ let appState = {
     {
       id: "USR-100",
       name: "Amir Hayat",
-      email: "amirjupiteradvisers@gmail.com",
+      email: "ah130580@gmail.com",
       plan: "Enterprise",
       categoriesCount: 0,
       coHostsCount: 0,
@@ -261,7 +262,7 @@ try {
     appState.clients.unshift({
       id: "USR-100",
       name: "Amir Hayat",
-      email: "amirjupiteradvisers@gmail.com",
+      email: "ah130580@gmail.com",
       plan: "Enterprise",
       categoriesCount: appState.categories.length,
       coHostsCount: appState.coHostEmails.length,
@@ -724,9 +725,11 @@ function openAuthMode(mode) {
     const isSignIn = mode === 'signin';
     const isSignUp = mode === 'signup';
     const isForgot = mode === 'forgot';
+    const isForgotReset = mode === 'forgot-reset';
     document.getElementById('form-signin')?.classList.toggle('hidden', !isSignIn);
     document.getElementById('form-signup')?.classList.toggle('hidden', !isSignUp);
     document.getElementById('form-forgot')?.classList.toggle('hidden', !isForgot);
+    document.getElementById('form-forgot-reset')?.classList.toggle('hidden', !isForgotReset);
 
     if (isForgot) {
       const signInEmail = (document.getElementById('signin-email')?.value || '').trim();
@@ -771,14 +774,7 @@ function openGetStartedModal() {
 // EXACT GLASSY 4-DIGIT OTP ENGINE + INSTANT PUSH EMAIL NOTIFICATION
 // ============================================================================
 function showInstantOtpPushBanner(email, otp) {
-  const popup = document.getElementById('instant-email-otp-popup');
-  const recEl = document.getElementById('popup-otp-recipient');
-  const digEl = document.getElementById('popup-otp-digits');
-  if (!popup) return;
-  if (recEl) recEl.innerHTML = `To: <strong class="text-white">${email}</strong> — Use this 4-digit security code:`;
-  if (digEl) digEl.textContent = otp;
-  popup.classList.remove('hidden');
-  triggerSmoothEnterAnimation(popup);
+  // Disabled intentionally: OTP must ONLY be delivered to user's email inbox, never shown on-screen.
 }
 
 function autoFillOtpFromBanner() {
@@ -940,10 +936,13 @@ async function launchGlassyOtpScreen(email, purpose) {
 
   const codePill = document.getElementById('otp-live-code-pill');
   if (codePill) {
-    codePill.innerHTML = `<span>Code for ${email}: <strong class="text-white underline">${otp}</strong></span>`;
+    codePill.innerHTML = `<span>Check inbox: <strong class="text-white">${email}</strong></span>`;
   }
 
-  await dispatchOtpEmailEverywhere(email, otp, `ZoomCast 4-Digit Security OTP: ${otp}`);
+  const sentOk = await dispatchOtpEmailEverywhere(email, otp, `ZoomCast 4-Digit Security OTP`);
+  if (!sentOk) {
+    showToast('⚠ Could not deliver OTP email right now. Please check your email address and try Resend.');
+  }
 
   setTimeout(() => {
     document.getElementById('otp-d0')?.focus();
@@ -992,7 +991,7 @@ function triggerGlassyOtpVerifyAnimation() {
     return;
   }
   if (entered !== appState.generatedOtp) {
-    showToast(`Invalid 4-digit OTP code. Please enter ${appState.generatedOtp}.`);
+    showToast('Invalid 4-digit OTP code. Please check your email inbox and try again.');
     return;
   }
 
@@ -1047,24 +1046,9 @@ function triggerGlassyOtpVerifyAnimation() {
   // Phase 4: Complete action
   setTimeout(() => {
     if (appState.otpPurpose === 'forgot' && appState.pendingForgotData) {
-      const { email, newPass } = appState.pendingForgotData;
-      const uIdx = appState.usersDb.findIndex(u => u.email.toLowerCase() === email);
-      if (uIdx >= 0) {
-        appState.usersDb[uIdx].password = newPass;
-      }
-      if (email === MASTER_ADMIN_USER.email.toLowerCase()) {
-        MASTER_ADMIN_USER.password = newPass;
-      }
-      appState.pendingForgotData = null;
-      persistState();
-
-      const signInEmailInp = document.getElementById('signin-email');
-      const signInPassInp = document.getElementById('signin-password');
-      if (signInEmailInp) signInEmailInp.value = email;
-      if (signInPassInp) signInPassInp.value = '';
-
-      openAuthMode('signin');
-      showToast('✓ Password reset verified & saved! Please sign in with your new password.');
+      appState.pendingForgotData.otpVerified = true;
+      openAuthMode('forgot-reset');
+      showToast('✓ Email verified! Now enter and confirm your new password.');
     } else if (appState.pendingSignupUser) {
       const userObj = appState.pendingSignupUser;
       const idx = appState.usersDb.findIndex(u => u.email.toLowerCase() === userObj.email);
@@ -1110,8 +1094,16 @@ function startSignUpOtpVerification() {
     showToast('Password must be at least 6 characters.');
     return;
   }
-  if (confirmPassword && password !== confirmPassword) {
-    showToast('Passwords do not match. Please check Confirm Password.');
+  if (password !== confirmPassword) {
+    showToast('Passwords do not match. Please enter the same password in Confirm Password.');
+    return;
+  }
+  const alreadyExists = appState.usersDb.some(u => u.email.toLowerCase() === email);
+  if (alreadyExists) {
+    showToast('This email is already registered. Please Sign In or use Forgot Password.');
+    openAuthMode('signin');
+    const signInEmail = document.getElementById('signin-email');
+    if (signInEmail) signInEmail.value = email;
     return;
   }
 
@@ -1130,7 +1122,6 @@ function startSignUpOtpVerification() {
 
 function startForgotPasswordOtpFlow() {
   const email = (document.getElementById('forgot-email')?.value || '').trim().toLowerCase();
-  const newPass = (document.getElementById('forgot-new-password')?.value || '').trim();
 
   if (!email || !email.includes('@')) {
     showToast('Please enter your registered email address.');
@@ -1141,13 +1132,52 @@ function startForgotPasswordOtpFlow() {
     showToast('No registered account found with this email address.');
     return;
   }
+
+  appState.pendingForgotData = { email, otpVerified: false };
+  launchGlassyOtpScreen(email, 'forgot');
+}
+
+function completeForgotPasswordReset() {
+  if (!appState.pendingForgotData || !appState.pendingForgotData.otpVerified) {
+    showToast('Please verify your email OTP first.');
+    openAuthMode('forgot');
+    return;
+  }
+
+  const newPass = (document.getElementById('forgot-new-password')?.value || '').trim();
+  const confirmPass = (document.getElementById('forgot-confirm-password')?.value || '').trim();
   if (!newPass || newPass.length < 6) {
     showToast('Please enter a new password (minimum 6 characters).');
     return;
   }
+  if (newPass !== confirmPass) {
+    showToast('Passwords do not match. Please re-enter carefully.');
+    return;
+  }
 
-  appState.pendingForgotData = { email, newPass };
-  launchGlassyOtpScreen(email, 'forgot');
+  const { email } = appState.pendingForgotData;
+  const uIdx = appState.usersDb.findIndex(u => u.email.toLowerCase() === email);
+  if (uIdx >= 0) {
+    appState.usersDb[uIdx].password = newPass;
+  }
+  if (email === MASTER_ADMIN_USER.email.toLowerCase()) {
+    MASTER_ADMIN_USER.password = newPass;
+  }
+  appState.pendingForgotData = null;
+  persistState();
+
+  const p1 = document.getElementById('forgot-new-password');
+  const p2 = document.getElementById('forgot-confirm-password');
+  if (p1) p1.value = '';
+  if (p2) p2.value = '';
+
+  const signInEmailInp = document.getElementById('signin-email');
+  const signInPassInp = document.getElementById('signin-password');
+  if (signInEmailInp) signInEmailInp.value = email;
+  if (signInPassInp) signInPassInp.value = '';
+
+  openAuthMode('signin');
+  showToast('✓ New password saved! Please sign in with your new password.');
 }
 
 async function saveFreeSmtpConfig() {
@@ -1238,20 +1268,11 @@ function handleGoogleAuthContinue() {
     switchView('dashboard');
     showToast(`✓ Signed in as ${matchedUser.email}`);
   } else {
-    const nameInp = document.getElementById('signup-name');
-    const email = enteredEmail || 'new.subscriber@gmail.com';
-    const name = (nameInp && nameInp.value.trim()) ? nameInp.value.trim() : 'New Subscriber';
-    appState.profile = {
-      name,
-      email,
-      authToken: 'google_tok_' + Date.now(),
-      hasActivePlan: false,
-      planName: '',
-      zoomConnected: true
-    };
-    persistState();
-    showAuthStep('plan');
-    showToast('Google account linked. Please select a plan and complete payment to unlock access.');
+    if (!enteredEmail || !enteredEmail.includes('@')) {
+      showToast('Please enter your Full Name, Email, and Password above to create your account via Email OTP.');
+      return;
+    }
+    startSignUpOtpVerification();
   }
 }
 
@@ -2128,10 +2149,10 @@ async function sendProfilePasswordResetOtp() {
   appState.profileResetOtp = otp;
 
   const hint = document.getElementById('prof-otp-hint');
-  if (hint) hint.textContent = `Code: ${otp}`;
+  if (hint) hint.textContent = `Check your email inbox (${email})`;
 
-  await dispatchOtpEmailEverywhere(email, otp, `ZoomCast Password Reset OTP: ${otp}`);
-  showToast(`✓ 4-Digit Reset OTP (${otp}) sent for ${email}`);
+  await dispatchOtpEmailEverywhere(email, otp, `ZoomCast Password Reset OTP`);
+  showToast(`✓ 4-Digit Reset OTP sent to ${email}`);
 }
 
 function confirmProfilePasswordReset() {
@@ -2141,12 +2162,12 @@ function confirmProfilePasswordReset() {
 
   if (!appState.profileResetOtp) {
     sendProfilePasswordResetOtp();
-    showToast('Please enter the 4-digit OTP code shown in the notification.');
+    showToast('Please enter the 4-digit OTP code sent to your email.');
     return;
   }
 
   if (otpEntered !== appState.profileResetOtp) {
-    showToast(`Invalid OTP code. Please enter ${appState.profileResetOtp}.`);
+    showToast('Invalid OTP code. Please check your email and try again.');
     return;
   }
 
