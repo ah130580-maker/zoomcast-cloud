@@ -273,6 +273,45 @@ try {
             }
         }
 
+        if ($Path -eq "/api/zoom-session-alert" -and $Req.HttpMethod -eq "POST") {
+            $Reader = New-Object System.IO.StreamReader($Req.InputStream, $Req.ContentEncoding)
+            $Body = $Reader.ReadToEnd()
+            $Reader.Close()
+            $ReqData = $Body | ConvertFrom-Json
+            $TargetEmail = "$($ReqData.email)"
+            $ClientName = if ($ReqData.name) { "$($ReqData.name)" } else { "Workspace Owner" }
+            $Reason = if ($ReqData.reason) { "$($ReqData.reason)" } else { "Your Zoom session expired or disconnected." }
+
+            $EmailSent = $false
+            if (-not [string]::IsNullOrWhiteSpace($TargetEmail)) {
+                $ResendApiKey = $env:RESEND_API_KEY
+                $ResendFrom = "ZoomCast by Aamiq <noreply@aamiq.online>"
+                $SecretPhpPath = Join-Path $WebRoot "api\resend-secret.php"
+                if (Test-Path $SecretPhpPath) {
+                    $PhpRaw = Get-Content $SecretPhpPath -Raw
+                    if ($PhpRaw -match "'api_key'\s*=>\s*'([^']+)'") { $ResendApiKey = $Matches[1] }
+                    if ($PhpRaw -match "'from_email'\s*=>\s*'([^']+)'") { $ResendFrom = $Matches[1] }
+                }
+                if (-not [string]::IsNullOrWhiteSpace($ResendApiKey)) {
+                    $Subj = "Action Required: Zoom Connection Issue Detected — ZoomCast by Aamiq"
+                    $HtmlAlert = "<div style='font-family:Inter,sans-serif;max-width:520px;margin:0 auto;padding:24px;background:#0e0d0a;color:#f8fafc;border-radius:14px;border:1px solid rgba(245,183,0,0.35);'><h3 style='color:#f5b700;margin-top:0;'>Zoom Connection Attention Needed</h3><p style='color:#cbd5e1;font-size:14px;line-height:1.6;'>Hi $ClientName,</p><p style='color:#cbd5e1;font-size:14px;line-height:1.6;'>$Reason</p><p style='color:#cbd5e1;font-size:14px;line-height:1.6;'>Please sign in to <a href='https://zoomcast.aamiq.online' style='color:#f5b700;'>https://zoomcast.aamiq.online</a> and go to <strong>Security &amp; Integrations</strong> to reconnect your Zoom account so your scheduled broadcasts continue uninterrupted.</p><p style='color:#94a3b8;font-size:12px;margin-top:16px;'>Need help? Contact support@aamiq.online</p></div>"
+                    try {
+                        $Headers = @{ "Authorization" = "Bearer $ResendApiKey"; "Content-Type" = "application/json" }
+                        $Payload = @{ from = $ResendFrom; to = @($TargetEmail); subject = $Subj; html = $HtmlAlert } | ConvertTo-Json -Depth 4
+                        Invoke-RestMethod -Uri "https://api.resend.com/emails" -Method Post -Headers $Headers -Body $Payload -TimeoutSec 8 | Out-Null
+                        $EmailSent = $true
+                    } catch {}
+                }
+            }
+
+            $RespObj = @{ ok = $true; emailSent = $EmailSent } | ConvertTo-Json -Depth 3
+            $RespBytes = [System.Text.Encoding]::UTF8.GetBytes($RespObj)
+            $Res.ContentType = "application/json; charset=utf-8"
+            $Res.OutputStream.Write($RespBytes, 0, $RespBytes.Length)
+            $Res.Close()
+            continue
+        }
+
         if ($Path -eq "/" -or $Path -eq "") {
             $Path = "/index.html"
         }
