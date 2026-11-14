@@ -41,7 +41,7 @@ const DUMMY_EMAIL_BLACKLIST = [
 const DEFAULT_CMS_CONTENT = {
   heroTitle: 'Automate Your Recorded Zoom Broadcasts On Autopilot',
   heroSubtitle: 'Build automated Zoom meeting workflows, schedule multi-video playlists across any day or 12-hour AM/PM time slot, auto-promote your team to Co-Host, and inspect real Zoom chat messages.',
-  supportEmail: 'support@aamiq.online',
+  supportEmail: 'support@zoomcast.aamiq.online',
   otpWebhookUrl: '',
   refundPolicy: 'If you are not 100% satisfied with our setup or if the platform does not fit your workflow for any reason, you can cancel your subscription within 7 days of purchase and receive a 100% full refund of your payment — no questions asked. Simply email our support team or open a ticket in your portal within 7 days for an immediate full refund.',
   termsBody: `1. 7-Day 100% Money-Back Refund Guarantee
@@ -54,7 +54,7 @@ Access to the ZoomCast CRM workspace requires a verified account and an active m
 By connecting your Zoom account and scheduling workflows, you authorize ZoomCast Cloud to launch your scheduled Zoom meetings on your permanent meeting link, stream your uploaded recorded video playlists, auto-promote your designated Co-Host emails, and capture attendance & in-meeting chat logs on your behalf.
 
 4. Customer Support & Help Desk
-Customers may contact us anytime via email at support@aamiq.online or through the built-in Support & Tickets section inside the portal with Low, Normal, or High priority.`,
+Customers may contact us anytime via email at support@zoomcast.aamiq.online or through the built-in Support & Tickets section inside the portal with Low, Normal, or High priority.`,
   privacyBody: `1. Information We Collect
 We collect your name, email address, encrypted account credentials, and subscription status when you register on ZoomCast CRM.
 
@@ -65,7 +65,7 @@ When you connect your Zoom account via Google OAuth, we use secure authorization
 All subscription payments are processed through 256-bit SSL encrypted, PCI-DSS compliant checkout channels (Safepay for Pakistani PKR cards & 1Link; Lemon Squeezy for international USD cards). We never store raw credit card CVC numbers on our servers.
 
 4. Data Control & Deletion
-You may update your profile, reset your password via 4-digit security OTP, export your attendance logs, or request complete account deletion at any time by contacting support@aamiq.online.`
+You may update your profile, reset your password via 4-digit security OTP, export your attendance logs, or request complete account deletion at any time by contacting support@zoomcast.aamiq.online.`
 };
 
 let appState = {
@@ -1777,7 +1777,7 @@ function createTicketRecord(clientName, clientEmail, clientPlan, subject, priori
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
             type: 'ticket',
-            email: clientEmail || 'support@aamiq.online',
+            email: clientEmail || 'support@zoomcast.aamiq.online',
             ticketId,
             clientName: clientName || 'Workspace Client',
             priority,
@@ -2121,7 +2121,7 @@ function syncProfileUI() {
   if (bChangeBtn) bChangeBtn.classList.toggle('hidden', planName === 'Enterprise');
 
   if (sName) sName.textContent = appState.profile.name || 'Workspace Owner';
-  if (sEmail) sEmail.textContent = appState.profile.email || 'support@aamiq.online';
+  if (sEmail) sEmail.textContent = appState.profile.email || 'support@zoomcast.aamiq.online';
   if (pName) pName.value = appState.profile.name || '';
   if (pEmail) pEmail.value = appState.profile.email || '';
   if (pZoomLink) pZoomLink.value = appState.profile.defaultZoomLink || 'https://zoom.us/j/89421756301?pwd=ZoomCastFixed';
