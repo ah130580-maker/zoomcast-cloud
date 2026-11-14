@@ -1,8 +1,8 @@
 const MASTER_ADMIN_USER = {
-  name: 'Amir Hayat',
+  name: 'Workspace Owner',
   email: 'ah130580@gmail.com',
   password: 'Amir5748@',
-  authToken: 'master_tok_amir',
+  authToken: 'master_tok_owner',
   hasActivePlan: true,
   planName: 'Enterprise'
 };
@@ -41,7 +41,7 @@ const DUMMY_EMAIL_BLACKLIST = [
 const DEFAULT_CMS_CONTENT = {
   heroTitle: 'Automate Your Recorded Zoom Broadcasts On Autopilot',
   heroSubtitle: 'Build automated Zoom meeting workflows, schedule multi-video playlists across any day or 12-hour AM/PM time slot, auto-promote your team to Co-Host, and inspect real Zoom chat messages.',
-  supportEmail: 'amirjupiteradvisers@gmail.com',
+  supportEmail: 'support@aamiq.online',
   otpWebhookUrl: '',
   refundPolicy: 'If you are not 100% satisfied with our setup or if the platform does not fit your workflow for any reason, you can cancel your subscription within 7 days of purchase and receive a 100% full refund of your payment — no questions asked. Simply email our support team or open a ticket in your portal within 7 days for an immediate full refund.',
   termsBody: `1. 7-Day 100% Money-Back Refund Guarantee
@@ -54,7 +54,7 @@ Access to the ZoomCast CRM workspace requires a verified account and an active m
 By connecting your Zoom account and scheduling workflows, you authorize ZoomCast Cloud to launch your scheduled Zoom meetings on your permanent meeting link, stream your uploaded recorded video playlists, auto-promote your designated Co-Host emails, and capture attendance & in-meeting chat logs on your behalf.
 
 4. Customer Support & Help Desk
-Customers may contact us anytime via email at amirjupiteradvisers@gmail.com or through the built-in Support & Tickets section inside the portal with Low, Normal, or High priority.`,
+Customers may contact us anytime via email at support@aamiq.online or through the built-in Support & Tickets section inside the portal with Low, Normal, or High priority.`,
   privacyBody: `1. Information We Collect
 We collect your name, email address, encrypted account credentials, and subscription status when you register on ZoomCast CRM.
 
@@ -65,7 +65,7 @@ When you connect your Zoom account via Google OAuth, we use secure authorization
 All subscription payments are processed through 256-bit SSL encrypted, PCI-DSS compliant checkout channels (Safepay for Pakistani PKR cards & 1Link; Lemon Squeezy for international USD cards). We never store raw credit card CVC numbers on our servers.
 
 4. Data Control & Deletion
-You may update your profile, reset your password via 4-digit security OTP, export your attendance logs, or request complete account deletion at any time by contacting amirjupiteradvisers@gmail.com.`
+You may update your profile, reset your password via 4-digit security OTP, export your attendance logs, or request complete account deletion at any time by contacting support@aamiq.online.`
 };
 
 let appState = {
@@ -189,7 +189,7 @@ let appState = {
   clients: [
     {
       id: "USR-100",
-      name: "Amir Hayat",
+      name: "Workspace Owner",
       email: "ah130580@gmail.com",
       plan: "Enterprise",
       categoriesCount: 0,
@@ -264,7 +264,7 @@ try {
   if (!appState.clients.some(c => c.email.toLowerCase() === MASTER_ADMIN_USER.email.toLowerCase())) {
     appState.clients.unshift({
       id: "USR-100",
-      name: "Amir Hayat",
+      name: "Workspace Owner",
       email: "ah130580@gmail.com",
       plan: "Enterprise",
       categoriesCount: appState.categories.length,
@@ -319,7 +319,7 @@ function refreshPortalHome() {
 function refreshDashboardView() {
   cleanBrowserUrlHash();
   syncProfileUI();
-  switchDashboardTab('categories');
+  switchDashboardTab('dashboard');
   const mainScroll = document.getElementById('dashboard-main-scroll');
   if (mainScroll) mainScroll.scrollTo({ top: 0, behavior: 'smooth' });
   showToast('✓ Workspace Refreshed');
@@ -370,6 +370,10 @@ function switchView(viewName) {
   const pubHeader = document.getElementById('public-header');
   if (pubHeader) {
     pubHeader.classList.toggle('hidden', viewName === 'dashboard');
+  }
+  if (viewName === 'dashboard') {
+    switchDashboardTab('dashboard');
+    setTimeout(() => checkIntegrationAndSessionPopups(), 350);
   }
   window.scrollTo({ top: 0, behavior: 'smooth' });
 }
@@ -1401,7 +1405,7 @@ function updateLive3DCard() {
   const liveExpiry = document.getElementById('live-card-expiry');
   const liveCvc = document.getElementById('live-card-cvc');
 
-  if (liveHolder) liveHolder.textContent = holder || 'AMIR HAYAT';
+  if (liveHolder) liveHolder.textContent = holder || 'CARDHOLDER NAME';
   if (liveNumber) liveNumber.textContent = number ? number.replace(/\s/g, '  ') : '5412  7534  8910  3414';
   if (liveExpiry) liveExpiry.textContent = expiry || '09/28';
   if (liveCvc) liveCvc.textContent = cvc || '842';
@@ -1684,7 +1688,7 @@ function switchDashboardTab(tab) {
     return;
   }
 
-  const tabs = ['categories', 'attendance', 'support', 'profile'];
+  const tabs = ['dashboard', 'categories', 'attendance', 'support', 'profile'];
   tabs.forEach(t => {
     const content = document.getElementById('dash-content-' + t);
     const btn = document.getElementById('dtab-' + t);
@@ -1705,12 +1709,13 @@ function switchDashboardTab(tab) {
 
   if (tab === 'support') renderSupportTicketsUI();
 
-  const userName = appState.profile.name || 'Amir Hayat';
+  const userName = appState.profile.name || 'Workspace Owner';
   const titles = {
-    categories: `Hi, ${userName} 👋 — Meeting Workflows`,
+    dashboard: `Welcome back, ${userName} 👋 — Dashboard`,
+    categories: `Meeting Workflows`,
     attendance: perms.allowChatLogs ? 'Broadcast Attendance & Live Chat Logs' : 'Broadcast Attendance Report',
     support: '24/7 Customer Support & Priority Ticket Desk',
-    profile: 'Security & Active Workspace Sessions'
+    profile: 'Security, Integrations & Billing'
   };
   const titleEl = document.getElementById('workspace-page-title');
   if (titleEl && titles[tab]) titleEl.textContent = titles[tab];
@@ -1771,7 +1776,7 @@ function createTicketRecord(clientName, clientEmail, clientPlan, subject, priori
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
             type: 'ticket',
-            email: clientEmail || 'amirjupiteradvisers@gmail.com',
+            email: clientEmail || 'support@aamiq.online',
             ticketId,
             clientName: clientName || 'Workspace Client',
             priority,
@@ -1892,7 +1897,7 @@ function sendAgencyTicketReply(ticketId) {
   const nowStr = new Date().toLocaleString([], { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' });
   tck.messages.push({
     senderRole: 'Agency Admin',
-    senderName: 'Amir Hayat (Agency Support)',
+    senderName: 'ZoomCast Support Team',
     time: nowStr,
     text
   });
@@ -2114,16 +2119,43 @@ function syncProfileUI() {
   if (bMethod) bMethod.textContent = (lastPay && lastPay.gateway) ? lastPay.gateway : (appState.currency === 'PKR' ? 'Safepay Pakistan (PKR)' : 'Lemon Squeezy (USD)');
   if (bChangeBtn) bChangeBtn.classList.toggle('hidden', planName === 'Enterprise');
 
-  if (sName) sName.textContent = appState.profile.name || 'Amir Hayat';
-  if (sEmail) sEmail.textContent = appState.profile.email || 'amirjupiteradvisers@gmail.com';
+  if (sName) sName.textContent = appState.profile.name || 'Workspace Owner';
+  if (sEmail) sEmail.textContent = appState.profile.email || 'support@aamiq.online';
   if (pName) pName.value = appState.profile.name || '';
   if (pEmail) pEmail.value = appState.profile.email || '';
   if (pZoomLink) pZoomLink.value = appState.profile.defaultZoomLink || 'https://zoom.us/j/89421756301?pwd=ZoomCastFixed';
   if (titleEl && appState.profile.name) {
-    titleEl.textContent = `Hi, ${appState.profile.name} 👋`;
+    titleEl.textContent = `Welcome back, ${appState.profile.name} 👋`;
   }
-  if (badge && appState.profile.zoomConnected) {
-    badge.textContent = '● Zoom Connected via Google';
+  const dashIntBadge = document.getElementById('dash-integration-badge');
+  const dashIntSummary = document.getElementById('dash-integration-summary');
+  if (badge) {
+    if (appState.profile.zoomSessionStatus === 'expired' || appState.profile.zoomSessionStatus === 'error') {
+      badge.textContent = '⚠ Session Expired — Fix Required';
+      badge.className = 'px-2.5 py-0.5 rounded-md text-xs font-bold bg-rose-500/15 text-rose-300 border border-rose-500/30 whitespace-nowrap';
+    } else if (appState.profile.zoomConnected) {
+      const mLabel = appState.profile.zoomAuthMethod === 'credentials' ? 'Email/Password' : 'Google';
+      badge.textContent = `● Connected (${mLabel})`;
+      badge.className = 'px-2.5 py-0.5 rounded-md text-xs font-bold bg-emerald-500/15 text-emerald-400 border border-emerald-500/30 whitespace-nowrap';
+    } else {
+      badge.textContent = '● Not Connected';
+      badge.className = 'px-2.5 py-0.5 rounded-md text-xs font-bold bg-amber-500/15 text-amber-300 border border-amber-500/30 whitespace-nowrap';
+    }
+  }
+  if (dashIntBadge && dashIntSummary) {
+    if (appState.profile.zoomSessionStatus === 'expired' || appState.profile.zoomSessionStatus === 'error') {
+      dashIntBadge.textContent = '⚠ Connection Issue';
+      dashIntBadge.className = 'px-2.5 py-1 rounded-md text-xs font-bold bg-rose-500/15 text-rose-300 border border-rose-500/30 whitespace-nowrap';
+      dashIntSummary.textContent = 'Your Zoom session expired or disconnected. Reconnect to resume broadcasts.';
+    } else if (appState.profile.zoomConnected) {
+      dashIntBadge.textContent = '● Connected';
+      dashIntBadge.className = 'px-2.5 py-1 rounded-md text-xs font-bold bg-emerald-500/15 text-emerald-400 border border-emerald-500/30 whitespace-nowrap';
+      dashIntSummary.textContent = 'Your Zoom account is connected and ready for automated workflows.';
+    } else {
+      dashIntBadge.textContent = '● Setup Required';
+      dashIntBadge.className = 'px-2.5 py-1 rounded-md text-xs font-bold bg-amber-500/15 text-amber-300 border border-amber-500/30 whitespace-nowrap';
+      dashIntSummary.textContent = 'Connect your Zoom account before creating automated workflows.';
+    }
   }
   applyPlanFeatureRestrictions();
 }
@@ -2210,12 +2242,31 @@ function confirmProfilePasswordReset() {
 
 function reconnectZoomOAuth() {
   appState.profile.zoomConnected = true;
-  const badge = document.getElementById('zoom-conn-badge');
-  if (badge) {
-    badge.textContent = '● Zoom Connected via Google';
-  }
+  appState.profile.zoomAuthMethod = 'google';
+  appState.profile.zoomSessionStatus = 'healthy';
+  appState.profile.zoomSessionIssueReason = '';
   persistState();
-  showToast('✓ Zoom Account Connected via Google OAuth');
+  syncProfileUI();
+  syncBackendConfig();
+  showToast('✓ Zoom Account Connected via Google');
+}
+
+function connectZoomWithCredentials() {
+  const email = (document.getElementById('zoom-auth-email')?.value || '').trim();
+  const pass = (document.getElementById('zoom-auth-password')?.value || '').trim();
+  if (!email || !email.includes('@') || !pass) {
+    showToast('⚠️ Please enter both Zoom Email and Password.');
+    return;
+  }
+  appState.profile.zoomConnected = true;
+  appState.profile.zoomAuthMethod = 'credentials';
+  appState.profile.zoomAccountEmail = email;
+  appState.profile.zoomSessionStatus = 'healthy';
+  appState.profile.zoomSessionIssueReason = '';
+  persistState();
+  syncProfileUI();
+  syncBackendConfig();
+  showToast(`✓ Zoom Account (${email}) connected!`);
 }
 
 // ============================================================================
@@ -2570,6 +2621,10 @@ function resetCategoryForm() {
 }
 
 function startCreateNewWorkflow() {
+  if (!isIntegrationComplete()) {
+    openIntegrationGateModal();
+    return;
+  }
   resetCategoryForm();
   const builderCard = document.getElementById('workflow-builder-card');
   const nameInp = document.getElementById('cat-name');
@@ -2587,6 +2642,10 @@ function startCreateNewWorkflow() {
 }
 
 async function saveMeetingCategory(forcedStatus) {
+  if (!isIntegrationComplete()) {
+    openIntegrationGateModal();
+    return;
+  }
   const perms = getActivePlanPermissions();
   if (!appState.currentCategory.editingId && appState.categories.length >= perms.maxWorkflows) {
     showToast(`Your ${appState.profile.planName} allows up to ${perms.maxWorkflows} workflows.`);
@@ -3506,3 +3565,85 @@ window.addEventListener('DOMContentLoaded', () => {
   renderAdminPanel();
   handleGatewayReturnCallback();
 });
+
+// ============================================================================
+// INTEGRATION GATE & ZOOM SESSION EXPIRY / CONNECTION ISSUE ALERTS
+// ============================================================================
+function isIntegrationComplete() {
+  return Boolean(appState.profile && appState.profile.zoomConnected === true && appState.profile.zoomSessionStatus !== 'expired' && appState.profile.zoomSessionStatus !== 'error');
+}
+
+function openIntegrationGateModal() {
+  const modal = document.getElementById('integration-gate-modal');
+  if (modal) modal.classList.remove('hidden');
+}
+
+function closeIntegrationGateModal() {
+  const modal = document.getElementById('integration-gate-modal');
+  if (modal) modal.classList.add('hidden');
+}
+
+function goToIntegrationsFromModal() {
+  closeIntegrationGateModal();
+  switchDashboardTab('profile');
+  setTimeout(() => {
+    const card = document.getElementById('zoom-integration-card');
+    if (card) {
+      card.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      card.classList.add('ring-2', 'ring-yellow-400');
+      setTimeout(() => card.classList.remove('ring-2', 'ring-yellow-400'), 1800);
+    }
+  }, 200);
+}
+
+function openZoomIssueModal(reasonText) {
+  const modal = document.getElementById('zoom-issue-modal');
+  const textEl = document.getElementById('zoom-issue-modal-text');
+  if (textEl && reasonText) textEl.textContent = reasonText;
+  if (modal) modal.classList.remove('hidden');
+}
+
+function closeZoomIssueModal() {
+  const modal = document.getElementById('zoom-issue-modal');
+  if (modal) modal.classList.add('hidden');
+}
+
+async function reportZoomSessionIssue(reason, sendEmail) {
+  const msg = reason || 'Your Zoom session has expired or disconnected. Please reconnect your Zoom account in Security & Integrations.';
+  appState.profile.zoomSessionStatus = 'expired';
+  appState.profile.zoomSessionIssueReason = msg;
+  persistState();
+  syncProfileUI();
+  openZoomIssueModal(msg);
+
+  if (sendEmail && appState.profile && appState.profile.email) {
+    try {
+      const res = await fetch('/api/zoom-session-alert', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          email: appState.profile.email,
+          name: appState.profile.name || 'Workspace Owner',
+          reason: msg
+        })
+      });
+      if (res.ok) {
+        const data = await res.json();
+        if (data && data.emailSent) {
+          showToast('⚠️ Connection issue alert emailed to ' + appState.profile.email);
+        }
+      }
+    } catch (e) {}
+  }
+}
+
+function checkIntegrationAndSessionPopups() {
+  if (!appState.profile || !appState.profile.authToken) return;
+  if (appState.profile.zoomSessionStatus === 'expired' || appState.profile.zoomSessionStatus === 'error') {
+    openZoomIssueModal(appState.profile.zoomSessionIssueReason);
+    return;
+  }
+  if (!isIntegrationComplete()) {
+    openIntegrationGateModal();
+  }
+}
