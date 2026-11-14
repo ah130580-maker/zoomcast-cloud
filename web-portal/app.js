@@ -94,6 +94,9 @@ let appState = {
   coHostEmails: [],
   categories: [],
   supportTickets: [],
+  paymentMethods: [],
+  transactions: [],
+  serviceStatus: { mode: 'operational', message: '', updatedAt: '' },
   currentCategory: {
     editingId: null,
     status: 'Active',
@@ -275,6 +278,12 @@ try {
 
   const savedTickets = localStorage.getItem('zoomcast_support_tickets');
   if (savedTickets) appState.supportTickets = JSON.parse(savedTickets);
+
+  const savedPMs = localStorage.getItem('zoomcast_payment_methods');
+  if (savedPMs) appState.paymentMethods = JSON.parse(savedPMs);
+
+  const savedTx = localStorage.getItem('zoomcast_transactions');
+  if (savedTx) appState.transactions = JSON.parse(savedTx);
 } catch (e) {}
 
 function persistState() {
@@ -288,6 +297,8 @@ function persistState() {
     localStorage.setItem('zoomcast_clients', JSON.stringify(appState.clients));
     localStorage.setItem('zoomcast_sessions', JSON.stringify(appState.attendanceSessions));
     localStorage.setItem('zoomcast_support_tickets', JSON.stringify(appState.supportTickets));
+    localStorage.setItem('zoomcast_payment_methods', JSON.stringify(appState.paymentMethods));
+    localStorage.setItem('zoomcast_transactions', JSON.stringify(appState.transactions));
   } catch (e) {}
 }
 
@@ -682,6 +693,7 @@ function applyPlanFeatureRestrictions() {
   renderCoHostEmails();
   renderAttendanceSessionsList();
   renderSupportTicketsUI();
+  renderBillingSection();
   renderAdminPanel();
   if (appState.activeSessionDetailId) {
     openSessionDetails(appState.activeSessionDetailId);
@@ -3213,6 +3225,267 @@ function toggleClientStatus(idx) {
   renderAdminPanel();
 }
 
+// ============================================================================
+// PROFILE BILLING, PAYMENT METHODS (PRIMARY/BACKUP), CANCEL & SERVICE STATUS
+// ============================================================================
+function getUserBillingTransactions() {
+  const email = (appState.profile.email || '').toLowerCase();
+  if (appState.transactions.length === 0 && appState.profile.hasActivePlan) {
+    const pName = appState.profile.planName || 'Enterprise';
+    const matchedPlan = appState.plans.find(p => p.name.toLowerCase() === pName.toLowerCase()) || appState.plans[2];
+    appState.transactions.push({
+      id: 'INV-' + new Date().getFullYear() + '-1001',
+      date: new Date().toISOString().slice(0, 10),
+      email,
+      description: `${matchedPlan.name} Monthly Subscription`,
+      method: appState.currency === 'PKR' ? 'Safepay (PKR)' : 'Lemon Squeezy (USD)',
+      amount: appState.currency === 'PKR' ? `Rs. ${matchedPlan.pricePkr.toLocaleString()}` : `$${matchedPlan.priceUsd}`,
+      status: 'Paid'
+    });
+  }
+  return appState.transactions.filter(t => !t.email || t.email.toLowerCase() === email);
+}
+
+function renderBillingSection() {
+  const statusBadge = document.getElementById('billing-plan-status-badge');
+  const summaryEl = document.getElementById('billing-plan-summary');
+  const cancelBtn = document.getElementById('btn-toggle-cancel-plan');
+  const pName = appState.profile.planName || 'Starter';
+  const matchedPlan = appState.plans.find(p => p.name.toLowerCase() === pName.toLowerCase()) || appState.plans[2];
+  const priceStr = appState.currency === 'PKR' ? `Rs. ${matchedPlan.pricePkr.toLocaleString()}/mo` : `$${matchedPlan.priceUsd}/mo`;
+
+  if (statusBadge) {
+    if (appState.profile.hasActivePlan) {
+      statusBadge.textContent = 'Active';
+      statusBadge.className = 'px-2.5 py-0.5 rounded-md text-xs font-bold bg-emerald-500/15 text-emerald-400 border border-emerald-500/30';
+    } else {
+      statusBadge.textContent = 'Cancelled';
+      statusBadge.className = 'px-2.5 py-0.5 rounded-md text-xs font-bold bg-rose-500/15 text-rose-400 border border-rose-500/30';
+    }
+  }
+  if (summaryEl) {
+    summaryEl.textContent = appState.profile.hasActivePlan
+      ? `Current Plan: ${matchedPlan.name} (${priceStr})`
+      : `Plan Cancelled — Upgrade anytime to resume automated broadcasts.`;
+  }
+  if (cancelBtn) {
+    cancelBtn.classList.toggle('hidden', !appState.profile.hasActivePlan);
+  }
+
+  // Render Payment Methods (Primary & Backup)
+  const pmContainer = document.getElementById('payment-methods-list');
+  if (pmContainer) {
+    if (appState.paymentMethods.length === 0) {
+      pmContainer.innerHTML = `<div class="sm:col-span-2 p-4 rounded-xl border border-dashed border-white/15 text-xs text-slate-400 text-center">No saved payment methods yet. Click <strong>+ Add Method</strong> to set your Primary &amp; Backup billing methods.</div>`;
+    } else {
+      pmContainer.innerHTML = appState.paymentMethods.map(pm => {
+        const isPrimary = pm.role === 'primary';
+        const badgeHtml = isPrimary
+          ? `<span class="px-2 py-0.5 rounded bg-yellow-500/20 text-yellow-400 border border-yellow-500/40 text-[10px] font-extrabold uppercase">Primary</span>`
+          : `<span class="px-2 py-0.5 rounded bg-blue-500/20 text-blue-300 border border-blue-500/30 text-[10px] font-extrabold uppercase">Backup</span>`;
+        const switchBtn = isPrimary
+          ? `<button type="button" onclick="setPaymentMethodRole('${pm.id}','backup')" class="text-[11px] text-slate-400 hover:text-white underline">Make Backup</button>`
+          : `<button type="button" onclick="setPaymentMethodRole('${pm.id}','primary')" class="text-[11px] text-yellow-400 hover:underline font-bold">Make Primary</button>`;
+        return `
+          <div class="p-3.5 rounded-xl bg-white/5 border ${isPrimary ? 'border-yellow-500/40' : 'border-white/10'} flex items-center justify-between gap-3">
+            <div>
+              <div class="flex items-center gap-2">
+                <span class="text-xs font-bold text-white">${pm.type}</span>
+                ${badgeHtml}
+              </div>
+              <p class="text-[11px] text-slate-400 font-mono mt-1">•••• ${pm.last4}</p>
+            </div>
+            <div class="flex items-center gap-3 shrink-0">
+              ${switchBtn}
+              <button type="button" onclick="removePaymentMethod('${pm.id}')" class="text-[11px] text-rose-400 hover:text-rose-300">Remove</button>
+            </div>
+          </div>`;
+      }).join('');
+    }
+  }
+
+  // Render Transaction History
+  const txBody = document.getElementById('billing-transactions-tbody');
+  if (txBody) {
+    const txs = getUserBillingTransactions();
+    if (txs.length === 0) {
+      txBody.innerHTML = `<tr><td colspan="6" class="py-5 text-center text-xs text-slate-400">No billing transactions recorded yet.</td></tr>`;
+    } else {
+      txBody.innerHTML = txs.map(tx => {
+        const badgeCls = tx.status === 'Paid'
+          ? 'bg-emerald-500/15 text-emerald-400 border-emerald-500/30'
+          : 'bg-rose-500/15 text-rose-400 border-rose-500/30';
+        return `
+          <tr>
+            <td class="py-2.5 px-3 font-mono text-white font-semibold">${tx.id}</td>
+            <td class="py-2.5 px-3 text-slate-300">${tx.date}</td>
+            <td class="py-2.5 px-3 text-white">${tx.description}</td>
+            <td class="py-2.5 px-3 text-slate-300">${tx.method}</td>
+            <td class="py-2.5 px-3 font-bold text-yellow-400">${tx.amount}</td>
+            <td class="py-2.5 px-3"><span class="px-2 py-0.5 rounded border text-[10px] font-bold ${badgeCls}">${tx.status}</span></td>
+          </tr>`;
+      }).join('');
+    }
+  }
+}
+
+function toggleAddPaymentMethodBox() {
+  document.getElementById('add-payment-method-box')?.classList.toggle('hidden');
+}
+
+function saveNewPaymentMethod() {
+  const type = document.getElementById('pm-type')?.value || 'Visa / Mastercard';
+  const last4 = (document.getElementById('pm-last4')?.value || '').trim();
+  const role = document.getElementById('pm-role')?.value || 'primary';
+  if (!last4) {
+    showToast('Please enter last 4 digits or account label.');
+    return;
+  }
+  if (role === 'primary') {
+    appState.paymentMethods.forEach(m => { if (m.role === 'primary') m.role = 'backup'; });
+  }
+  appState.paymentMethods.push({ id: 'pm_' + Date.now(), type, last4, role });
+  document.getElementById('pm-last4').value = '';
+  document.getElementById('add-payment-method-box')?.classList.add('hidden');
+  persistState();
+  renderBillingSection();
+  showToast(`✓ Saved ${type} (${last4}) as ${role.toUpperCase()} payment method.`);
+}
+
+function setPaymentMethodRole(id, role) {
+  if (role === 'primary') {
+    appState.paymentMethods.forEach(m => { if (m.role === 'primary') m.role = 'backup'; });
+  }
+  const target = appState.paymentMethods.find(m => m.id === id);
+  if (target) target.role = role;
+  persistState();
+  renderBillingSection();
+  showToast(`✓ Payment method updated to ${role.toUpperCase()}.`);
+}
+
+function removePaymentMethod(id) {
+  appState.paymentMethods = appState.paymentMethods.filter(m => m.id !== id);
+  persistState();
+  renderBillingSection();
+  showToast('Payment method removed.');
+}
+
+function toggleCancelSubscriptionBox(forceState) {
+  const box = document.getElementById('cancel-subscription-box');
+  if (!box) return;
+  if (typeof forceState === 'boolean') {
+    box.classList.toggle('hidden', !forceState);
+  } else {
+    box.classList.toggle('hidden');
+  }
+}
+
+function confirmPlanCancellation() {
+  const reason = (document.getElementById('cancel-reason-select')?.value || '').trim();
+  const notes = (document.getElementById('cancel-reason-notes')?.value || '').trim();
+  if (!reason) {
+    showToast('Please select a cancellation reason first.');
+    return;
+  }
+  const prevPlan = appState.profile.planName || 'Enterprise';
+  appState.profile.hasActivePlan = false;
+
+  const uIdx = appState.usersDb.findIndex(u => u.email.toLowerCase() === (appState.profile.email || '').toLowerCase());
+  if (uIdx >= 0) appState.usersDb[uIdx].hasActivePlan = false;
+
+  appState.transactions.unshift({
+    id: 'CXL-' + Date.now().toString().slice(-6),
+    date: new Date().toISOString().slice(0, 10),
+    email: appState.profile.email,
+    description: `Cancelled ${prevPlan} (${reason}${notes ? ' — ' + notes : ''})`,
+    method: 'Subscription',
+    amount: '$0',
+    status: 'Cancelled'
+  });
+
+  toggleCancelSubscriptionBox(false);
+  persistState();
+  syncProfileUI();
+  renderBillingSection();
+  showToast('Subscription cancelled. Your feedback has been recorded.');
+}
+
+async function fetchAndRenderServiceStatus() {
+  try {
+    const res = await fetch('/api/service-status', { cache: 'no-store' });
+    if (!res.ok) return;
+    const data = await res.json();
+    appState.serviceStatus = data;
+
+    const banner = document.getElementById('service-status-banner');
+    const dot = document.getElementById('service-status-dot');
+    const txt = document.getElementById('service-status-text');
+    if (banner && txt && dot) {
+      if (data.mode && data.mode !== 'operational' && data.message) {
+        const isIssue = data.mode === 'issue';
+        banner.className = isIssue
+          ? 'px-4 sm:px-8 py-2 border-b border-rose-500/30 bg-rose-500/10 flex items-center gap-2 text-xs text-rose-200 shrink-0'
+          : 'px-4 sm:px-8 py-2 border-b border-amber-500/25 bg-amber-500/10 flex items-center gap-2 text-xs text-amber-200 shrink-0';
+        dot.className = isIssue
+          ? 'w-2 h-2 rounded-full bg-rose-400 animate-pulse shrink-0'
+          : 'w-2 h-2 rounded-full bg-amber-400 animate-pulse shrink-0';
+        const prefix = isIssue ? 'Service Notice:' : 'Maintenance:';
+        txt.textContent = `${prefix} ${data.message}`;
+        banner.classList.remove('hidden');
+      } else {
+        banner.classList.add('hidden');
+      }
+    }
+
+    const modeSel = document.getElementById('admin-service-mode');
+    const msgInp = document.getElementById('admin-service-message');
+    const badge = document.getElementById('admin-service-mode-badge');
+    if (modeSel && data.mode) modeSel.value = data.mode;
+    if (msgInp && data.message) msgInp.value = data.message;
+    if (badge) {
+      if (data.mode === 'issue') {
+        badge.textContent = '● Service Issue Active';
+        badge.className = 'px-2.5 py-1 rounded-md text-xs font-bold bg-rose-500/15 text-rose-400 border border-rose-500/30';
+      } else if (data.mode === 'maintenance') {
+        badge.textContent = '● Maintenance Active';
+        badge.className = 'px-2.5 py-1 rounded-md text-xs font-bold bg-amber-500/15 text-amber-400 border border-amber-500/30';
+      } else {
+        badge.textContent = '● Operational';
+        badge.className = 'px-2.5 py-1 rounded-md text-xs font-bold bg-emerald-500/15 text-emerald-400 border border-emerald-500/30';
+      }
+    }
+  } catch (e) {}
+}
+
+async function saveAdminServiceStatus() {
+  const mode = document.getElementById('admin-service-mode')?.value || 'operational';
+  const message = (document.getElementById('admin-service-message')?.value || '').trim();
+  const notifyClients = Boolean(document.getElementById('admin-service-notify-email')?.checked);
+  if (mode !== 'operational' && !message) {
+    showToast('Please enter a short status message for clients.');
+    return;
+  }
+  const emails = Array.from(new Set(
+    [...appState.usersDb.map(u => u.email), ...appState.clients.map(c => c.email)].filter(Boolean)
+  ));
+  try {
+    const res = await fetch('/api/service-status', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ mode, message, notifyClients, emails })
+    });
+    const out = await res.json();
+    await fetchAndRenderServiceStatus();
+    if (notifyClients && mode !== 'operational') {
+      showToast(`✓ Status updated & emailed to ${out.emailedCount || 0} client(s).`);
+    } else {
+      showToast('✓ Service status updated across all client portals.');
+    }
+  } catch (e) {
+    showToast('Could not reach server to update status.');
+  }
+}
+
 window.addEventListener('DOMContentLoaded', () => {
   cleanBrowserUrlHash();
   persistState(); // Immediately persist purged clean state to localStorage
@@ -3226,7 +3499,10 @@ window.addEventListener('DOMContentLoaded', () => {
   renderSavedCategories();
   renderAttendanceSessionsList();
   renderSupportTicketsUI();
+  renderBillingSection();
   syncRealBackendSessions();
+  fetchAndRenderServiceStatus();
+  setInterval(fetchAndRenderServiceStatus, 60000);
   renderAdminPanel();
   handleGatewayReturnCallback();
 });
