@@ -210,6 +210,69 @@ try {
             continue
         }
 
+        if ($Path -eq "/api/service-status") {
+            $StatusFile = Join-Path $PSScriptRoot "service-status.json"
+            if ($Req.HttpMethod -eq "GET") {
+                $JsonOut = '{"mode":"operational","message":"","updatedAt":""}'
+                if (Test-Path $StatusFile) {
+                    $JsonOut = Get-Content $StatusFile -Raw
+                }
+                $RespBytes = [System.Text.Encoding]::UTF8.GetBytes($JsonOut)
+                $Res.ContentType = "application/json; charset=utf-8"
+                if ($Req.HttpMethod -ne "HEAD") {
+                    $Res.OutputStream.Write($RespBytes, 0, $RespBytes.Length)
+                }
+                $Res.Close()
+                continue
+            }
+            if ($Req.HttpMethod -eq "POST") {
+                $Reader = New-Object System.IO.StreamReader($Req.InputStream, $Req.ContentEncoding)
+                $Body = $Reader.ReadToEnd()
+                $Reader.Close()
+                $ReqData = $Body | ConvertFrom-Json
+                $Mode = if ($ReqData.mode) { "$($ReqData.mode)" } else { "operational" }
+                $Msg = if ($ReqData.message) { "$($ReqData.message)" } else { "" }
+                $UpdatedAt = (Get-Date).ToUniversalTime().ToString("yyyy-MM-ddTHH:mm:ssZ")
+                $StatusObj = @{ mode = $Mode; message = $Msg; updatedAt = $UpdatedAt }
+                $StatusJson = $StatusObj | ConvertTo-Json -Depth 3
+                Set-Content -Path $StatusFile -Value $StatusJson -Encoding UTF8
+
+                $EmailedCount = 0
+                if ($ReqData.notifyClients -and $ReqData.emails -and $Mode -ne "operational") {
+                    $ResendApiKey = $env:RESEND_API_KEY
+                    $ResendFrom = "ZoomCast by Aamiq <noreply@aamiq.online>"
+                    $SecretPhpPath = Join-Path $WebRoot "api\resend-secret.php"
+                    if (Test-Path $SecretPhpPath) {
+                        $PhpRaw = Get-Content $SecretPhpPath -Raw
+                        if ($PhpRaw -match "'api_key'\s*=>\s*'([^']+)'") { $ResendApiKey = $Matches[1] }
+                        if ($PhpRaw -match "'from_email'\s*=>\s*'([^']+)'") { $ResendFrom = $Matches[1] }
+                    }
+                    if (-not [string]::IsNullOrWhiteSpace($ResendApiKey)) {
+                        $Label = if ($Mode -eq "issue") { "Service Issue Notice" } else { "Scheduled Maintenance Notice" }
+                        $Subj = "ZoomCast by Aamiq — $Label"
+                        $HtmlAlert = "<div style='font-family:Inter,sans-serif;max-width:520px;margin:0 auto;padding:24px;background:#0e0d0a;color:#f8fafc;border-radius:14px;border:1px solid rgba(245,183,0,0.35);'><h3 style='color:#f5b700;margin-top:0;'>$Label</h3><p style='color:#cbd5e1;font-size:14px;line-height:1.6;'>$Msg</p><p style='color:#94a3b8;font-size:12px;margin-top:16px;'>Our engineering team is actively monitoring and resolving this. Thank you for your patience.</p></div>"
+                        foreach ($TargetEmail in $ReqData.emails) {
+                            if (-not [string]::IsNullOrWhiteSpace($TargetEmail)) {
+                                try {
+                                    $Headers = @{ "Authorization" = "Bearer $ResendApiKey"; "Content-Type" = "application/json" }
+                                    $Payload = @{ from = $ResendFrom; to = @("$TargetEmail"); subject = $Subj; html = $HtmlAlert } | ConvertTo-Json -Depth 4
+                                    Invoke-RestMethod -Uri "https://api.resend.com/emails" -Method Post -Headers $Headers -Body $Payload -TimeoutSec 8 | Out-Null
+                                    $EmailedCount++
+                                } catch {}
+                            }
+                        }
+                    }
+                }
+
+                $RespObj = @{ ok = $true; status = $StatusObj; emailedCount = $EmailedCount } | ConvertTo-Json -Depth 4
+                $RespBytes = [System.Text.Encoding]::UTF8.GetBytes($RespObj)
+                $Res.ContentType = "application/json; charset=utf-8"
+                $Res.OutputStream.Write($RespBytes, 0, $RespBytes.Length)
+                $Res.Close()
+                continue
+            }
+        }
+
         if ($Path -eq "/" -or $Path -eq "") {
             $Path = "/index.html"
         }
