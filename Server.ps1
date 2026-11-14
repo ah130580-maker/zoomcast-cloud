@@ -57,7 +57,7 @@ try {
             continue
         }
 
-        if (($Path -eq "/api/send-otp" -or $Path -eq "/api/send-otp.php") -and $Req.HttpMethod -eq "POST") {
+        if (($Path -eq "/api/send-otp" -or $Path -eq "/api/send-otp.php" -or $Path -eq "/.netlify/functions/send-otp") -and $Req.HttpMethod -eq "POST") {
             $Reader = New-Object System.IO.StreamReader($Req.InputStream, $Req.ContentEncoding)
             $Body = $Reader.ReadToEnd()
             $Reader.Close()
@@ -174,6 +174,11 @@ try {
             elseif ($Ext -eq ".js") { $Mime = "application/javascript; charset=utf-8" }
             elseif ($Ext -eq ".json") { $Mime = "application/json; charset=utf-8" }
             elseif ($Ext -eq ".css") { $Mime = "text/css; charset=utf-8" }
+            elseif ($Ext -eq ".png") { $Mime = "image/png" }
+            elseif ($Ext -eq ".jpg" -or $Ext -eq ".jpeg") { $Mime = "image/jpeg" }
+            elseif ($Ext -eq ".svg") { $Mime = "image/svg+xml" }
+            elseif ($Ext -eq ".ico") { $Mime = "image/x-icon" }
+            elseif ($Ext -eq ".webp") { $Mime = "image/webp" }
 
             $Bytes = [System.IO.File]::ReadAllBytes($LocalFile)
             $Res.ContentType = $Mime
