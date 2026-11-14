@@ -170,7 +170,45 @@
         </div>
       </div>
 
-      <!-- 4. Customer Subscriptions -->
+      <!-- 4. Service Status, Maintenance & Client Email Alert -->
+      <div class="glass-card p-5 sm:p-6 rounded-2xl space-y-4">
+        <div class="pb-3 border-b border-white/10 flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+          <div>
+            <h3 class="text-base font-extrabold text-white">🛠 Service Status, Maintenance Banner &amp; Client Email Alert</h3>
+            <p class="text-xs text-slate-400">Show a sleek status bar on all client portals and optionally notify every client via email.</p>
+          </div>
+          <span id="admin-service-mode-badge" class="px-2.5 py-1 rounded-md text-xs font-bold bg-emerald-500/15 text-emerald-400 border border-emerald-500/30 self-start sm:self-auto">
+            ● Operational
+          </span>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-4 items-end">
+          <div>
+            <label class="text-xs font-bold text-slate-300">System Status Mode</label>
+            <select id="admin-service-mode" class="mt-1 w-full px-3.5 py-2.5 rounded-xl glass-input text-sm">
+              <option value="operational">Operational (Hide Banner)</option>
+              <option value="maintenance">Scheduled Maintenance (Amber)</option>
+              <option value="issue">Temporary Service Issue (Red)</option>
+            </select>
+          </div>
+          <div class="md:col-span-2">
+            <label class="text-xs font-bold text-slate-300">Short Status Line (Shown at top of Client Portal)</label>
+            <input id="admin-service-message" type="text" placeholder="e.g. Scheduled server maintenance in progress — your broadcasts remain safe." class="mt-1 w-full px-3.5 py-2.5 rounded-xl glass-input text-sm" />
+          </div>
+        </div>
+
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pt-1">
+          <label class="inline-flex items-center gap-2 text-xs text-slate-300 cursor-pointer">
+            <input id="admin-service-notify-email" type="checkbox" class="w-4 h-4 rounded accent-yellow-400" />
+            <span>Send email notification to all registered clients when Maintenance / Issue is active</span>
+          </label>
+          <button type="button" onclick="saveAdminServiceStatus()" class="py-2.5 px-5 rounded-xl btn-gold text-xs sm:text-sm font-bold self-end sm:self-auto">
+            Save Status &amp; Notify Clients
+          </button>
+        </div>
+      </div>
+
+      <!-- 5. Customer Subscriptions -->
       <div class="glass-card p-5 sm:p-6 rounded-2xl">
         <div class="pb-4 border-b border-white/10">
           <h3 class="text-base font-extrabold text-white">👥 Paid Customer Subscriptions</h3>
