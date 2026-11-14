@@ -1201,7 +1201,7 @@
         <div class="flex items-center justify-between gap-2 px-1">
           <div class="truncate">
             <div id="sidebar-user-name" class="text-xs font-bold text-white truncate">Amir Hayat</div>
-            <div id="sidebar-user-email" class="text-[11px] text-slate-400 truncate">amirjupiteradvisers@gmail.com</div>
+            <div id="sidebar-user-email" class="text-[11px] text-slate-400 truncate">ah130580@gmail.com</div>
           </div>
           <button onclick="logoutClient()" class="px-3 py-1.5 rounded-xl btn-glass text-[11px] text-rose-300 hover:border-rose-500/40 shrink-0">
             Sign Out
@@ -1231,6 +1231,12 @@
           </button>
         </div>
       </header>
+
+      <!-- SLEEK SERVICE STATUS / MAINTENANCE STRIP (Hidden when operational) -->
+      <div id="service-status-banner" class="hidden px-4 sm:px-8 py-2 border-b border-amber-500/25 bg-amber-500/10 flex items-center gap-2 text-xs text-amber-200 shrink-0">
+        <span id="service-status-dot" class="w-2 h-2 rounded-full bg-amber-400 animate-pulse shrink-0"></span>
+        <span id="service-status-text" class="truncate font-medium"></span>
+      </div>
 
       <div class="p-4 sm:p-8 max-w-6xl w-full mx-auto space-y-6 pb-16">
 
@@ -1780,6 +1786,119 @@
             </div>
 
             <div id="cohost-emails-list" class="mt-4 grid grid-cols-1 sm:grid-cols-2 gap-2.5"></div>
+          </div>
+
+          <!-- BILLING, PAYMENT METHODS (PRIMARY & BACKUP), TRANSACTION HISTORY & CANCEL -->
+          <div class="glass-card p-6 rounded-2xl space-y-5">
+            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-4 border-b border-white/10">
+              <div>
+                <div class="flex items-center gap-2.5">
+                  <h2 class="text-base font-extrabold text-white">Billing, Invoices &amp; Payment Methods</h2>
+                  <span id="billing-plan-status-badge" class="px-2.5 py-0.5 rounded-md text-xs font-bold bg-emerald-500/15 text-emerald-400 border border-emerald-500/30">Active</span>
+                </div>
+                <p id="billing-plan-summary" class="text-xs text-slate-400 mt-1">Current Plan: Enterprise ($65/mo)</p>
+              </div>
+              <div class="flex flex-wrap items-center gap-2">
+                <button type="button" onclick="switchView('auth'); showAuthStep('plan');" class="px-4 py-2 rounded-xl btn-gold text-xs">
+                  Upgrade / Change Plan
+                </button>
+                <button id="btn-toggle-cancel-plan" type="button" onclick="toggleCancelSubscriptionBox()" class="px-4 py-2 rounded-xl bg-rose-500/15 border border-rose-500/30 hover:bg-rose-500/25 text-rose-300 text-xs font-bold">
+                  Cancel Subscription
+                </button>
+              </div>
+            </div>
+
+            <!-- Inline Cancel Subscription Reason Box -->
+            <div id="cancel-subscription-box" class="hidden p-4 rounded-xl bg-rose-500/10 border border-rose-500/30 space-y-3">
+              <div class="flex items-center justify-between">
+                <h4 class="text-xs font-extrabold text-rose-300 uppercase tracking-wider">Cancel Subscription — Tell Us Why</h4>
+                <button type="button" onclick="toggleCancelSubscriptionBox(false)" class="text-xs text-slate-400 hover:text-white">✕ Close</button>
+              </div>
+              <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+                <div>
+                  <label class="text-xs font-bold text-slate-300 block mb-1">Cancellation Reason *</label>
+                  <select id="cancel-reason-select" class="w-full px-3.5 py-2.5 rounded-xl glass-input text-xs">
+                    <option value="">Select a reason...</option>
+                    <option value="Too expensive">Too expensive for my current usage</option>
+                    <option value="Temporary pause">Temporary pause — will return later</option>
+                    <option value="Missing features">Missing features I need</option>
+                    <option value="Technical issues">Experienced technical / Zoom issues</option>
+                    <option value="Switched platform">Switched to another platform</option>
+                    <option value="Other">Other reason</option>
+                  </select>
+                </div>
+                <div>
+                  <label class="text-xs font-bold text-slate-300 block mb-1">Additional Feedback (Optional)</label>
+                  <input id="cancel-reason-notes" type="text" placeholder="Any details to help us improve..." class="w-full px-3.5 py-2.5 rounded-xl glass-input text-xs" />
+                </div>
+              </div>
+              <div class="flex justify-end gap-2">
+                <button type="button" onclick="confirmPlanCancellation()" class="px-4 py-2 rounded-xl bg-rose-600 hover:bg-rose-500 text-white text-xs font-bold">
+                  Confirm Cancel Plan
+                </button>
+              </div>
+            </div>
+
+            <!-- Payment Methods (Primary & Backup) -->
+            <div class="space-y-3">
+              <div class="flex items-center justify-between">
+                <div>
+                  <h3 class="text-sm font-extrabold text-white">Payment Methods (Primary &amp; Backup)</h3>
+                  <p class="text-xs text-slate-400">If your Primary method fails, your Backup method keeps broadcasts running uninterrupted.</p>
+                </div>
+                <button type="button" onclick="toggleAddPaymentMethodBox()" class="px-3.5 py-1.5 rounded-xl btn-glass text-xs font-bold">
+                  + Add Method
+                </button>
+              </div>
+
+              <div id="add-payment-method-box" class="hidden p-4 rounded-xl bg-white/5 border border-white/10 grid grid-cols-1 sm:grid-cols-4 gap-3 items-end">
+                <div>
+                  <label class="text-[11px] font-bold text-slate-300 block mb-1">Gateway / Card Type</label>
+                  <select id="pm-type" class="w-full px-3 py-2 rounded-xl glass-input text-xs">
+                    <option value="Visa / Mastercard">Visa / Mastercard</option>
+                    <option value="Safepay (PKR)">Safepay (PKR)</option>
+                    <option value="Lemon Squeezy (USD)">Lemon Squeezy (USD)</option>
+                    <option value="Bank Transfer">Bank Transfer</option>
+                  </select>
+                </div>
+                <div>
+                  <label class="text-[11px] font-bold text-slate-300 block mb-1">Last 4 Digits / Label</label>
+                  <input id="pm-last4" type="text" maxlength="16" placeholder="e.g. 4242 or Askari" class="w-full px-3 py-2 rounded-xl glass-input text-xs" />
+                </div>
+                <div>
+                  <label class="text-[11px] font-bold text-slate-300 block mb-1">Role</label>
+                  <select id="pm-role" class="w-full px-3 py-2 rounded-xl glass-input text-xs">
+                    <option value="primary">Primary</option>
+                    <option value="backup">Backup</option>
+                  </select>
+                </div>
+                <button type="button" onclick="saveNewPaymentMethod()" class="py-2 px-4 rounded-xl btn-gold text-xs font-bold">
+                  Save Method
+                </button>
+              </div>
+
+              <div id="payment-methods-list" class="grid grid-cols-1 sm:grid-cols-2 gap-3"></div>
+            </div>
+
+            <!-- Billing & Transaction History -->
+            <div class="pt-3 border-t border-white/10 space-y-3">
+              <h3 class="text-sm font-extrabold text-white">Billing &amp; Transaction History</h3>
+              <div class="overflow-x-auto">
+                <table class="w-full text-left border-collapse">
+                  <thead>
+                    <tr class="border-b border-white/10 text-[11px] uppercase tracking-wider text-slate-400 font-bold">
+                      <th class="py-2.5 px-3">Invoice</th>
+                      <th class="py-2.5 px-3">Date</th>
+                      <th class="py-2.5 px-3">Plan / Description</th>
+                      <th class="py-2.5 px-3">Method</th>
+                      <th class="py-2.5 px-3">Amount</th>
+                      <th class="py-2.5 px-3">Status</th>
+                    </tr>
+                  </thead>
+                  <tbody id="billing-transactions-tbody" class="divide-y divide-white/10 text-xs"></tbody>
+                </table>
+              </div>
+            </div>
           </div>
 
         </div>
