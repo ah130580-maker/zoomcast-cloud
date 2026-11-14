@@ -1708,6 +1708,7 @@ function switchDashboardTab(tab) {
   });
 
   if (tab === 'support') renderSupportTicketsUI();
+  if (tab === 'profile' && typeof renderStorageMediaLibrary === 'function') renderStorageMediaLibrary();
 
   const userName = appState.profile.name || 'Workspace Owner';
   const titles = {
@@ -2158,6 +2159,7 @@ function syncProfileUI() {
     }
   }
   applyPlanFeatureRestrictions();
+  if (typeof renderStorageMediaLibrary === 'function') renderStorageMediaLibrary();
 }
 
 function saveDefaultZoomMeetingLink() {
@@ -2478,38 +2480,48 @@ function handleCategoryVideosSelect(event) {
       showToast(`Your ${appState.profile.planName} supports up to ${perms.maxVideosPerWorkflow} video(s) per workflow.`);
       return;
     }
+    const fileSizeMB = file.size / (1024 * 1024);
+    const stats = getStorageUsageStats();
+    if (stats.usedMB + fileSizeMB > stats.limitMB) {
+      showToast(`⚠️ Storage limit (${stats.limitGB} GB) exceeded! Remaining: ${formatStorageMB(stats.remainingMB)}. Delete unused media in Profile → Storage.`);
+      return;
+    }
     const tempVideo = document.createElement('video');
     const objUrl = URL.createObjectURL(file);
+    window.zoomCastMediaObjectUrls = window.zoomCastMediaObjectUrls || {};
+    const mKey = getMediaKey(file.name, fileSizeMB.toFixed(1));
+    window.zoomCastMediaObjectUrls[mKey] = objUrl;
     tempVideo.src = objUrl;
     tempVideo.onloadedmetadata = () => {
       if (appState.currentCategory.videos.length >= perms.maxVideosPerWorkflow) {
-        URL.revokeObjectURL(objUrl);
         return;
       }
       const sec = Math.ceil(tempVideo.duration || 0);
       appState.currentCategory.videos.push({
         name: file.name,
-        sizeMB: (file.size / (1024 * 1024)).toFixed(1),
+        sizeMB: fileSizeMB.toFixed(1),
         durationSec: sec,
-        formattedDuration: formatSecondsToHHMMSS(sec)
+        formattedDuration: formatSecondsToHHMMSS(sec),
+        uploadedAt: new Date().toLocaleDateString()
       });
-      URL.revokeObjectURL(objUrl);
       renderCategoryVideosList();
       renderSelectedTimesAssignment();
       updateBuilderReadinessBadge();
+      renderStorageMediaLibrary();
     };
     tempVideo.onerror = () => {
       // Fallback if browser cannot decode video metadata directly
       appState.currentCategory.videos.push({
         name: file.name,
-        sizeMB: (file.size / (1024 * 1024)).toFixed(1),
+        sizeMB: fileSizeMB.toFixed(1),
         durationSec: 2700,
-        formattedDuration: '00:45:00'
+        formattedDuration: '00:45:00',
+        uploadedAt: new Date().toLocaleDateString()
       });
-      URL.revokeObjectURL(objUrl);
       renderCategoryVideosList();
       renderSelectedTimesAssignment();
       updateBuilderReadinessBadge();
+      renderStorageMediaLibrary();
     };
   });
 }
@@ -3646,4 +3658,203 @@ function checkIntegrationAndSessionPopups() {
   if (!isIntegrationComplete()) {
     openIntegrationGateModal();
   }
+}
+
+// ============================================================================
+// STORAGE QUOTA (2GB / 5GB / 7GB) & MEDIA LIBRARY (PLAY / DELETE / USAGE)
+// ============================================================================
+function getPlanStorageLimitGB() {
+  const p = (appState.profile.planName || '').toLowerCase();
+  if (p.includes('enterprise')) return 7;
+  if (p.includes('pro')) return 5;
+  return 2;
+}
+
+function formatStorageMB(mb) {
+  if (mb >= 1024) return (mb / 1024).toFixed(2) + ' GB';
+  return mb.toFixed(1) + ' MB';
+}
+
+function getMediaKey(name, sizeMB) {
+  return `${String(name || '').trim()}__${String(sizeMB || '0')}`;
+}
+
+function getStorageUsageStats() {
+  const limitGB = getPlanStorageLimitGB();
+  const limitMB = limitGB * 1024;
+  const mediaMap = new Map();
+
+  (appState.categories || []).forEach(cat => {
+    const isActive = (cat.status || 'Active') === 'Active';
+    (cat.videos || []).forEach(v => {
+      const key = getMediaKey(v.name, v.sizeMB);
+      if (!mediaMap.has(key)) {
+        mediaMap.set(key, {
+          key,
+          name: v.name || 'Unnamed Video',
+          sizeMB: parseFloat(v.sizeMB || 0) || 0,
+          formattedDuration: v.formattedDuration || '00:00:00',
+          mediaUrl: v.mediaUrl || '',
+          workflows: []
+        });
+      }
+      mediaMap.get(key).workflows.push({
+        id: cat.id,
+        name: cat.name || 'Workflow',
+        active: isActive
+      });
+    });
+  });
+
+  // Also include unsaved videos currently staged in the workflow builder
+  ((appState.currentCategory && appState.currentCategory.videos) || []).forEach(v => {
+    const key = getMediaKey(v.name, v.sizeMB);
+    if (!mediaMap.has(key)) {
+      mediaMap.set(key, {
+        key,
+        name: v.name || 'Staged Video',
+        sizeMB: parseFloat(v.sizeMB || 0) || 0,
+        formattedDuration: v.formattedDuration || '00:00:00',
+        mediaUrl: v.mediaUrl || '',
+        workflows: []
+      });
+    }
+  });
+
+  const items = Array.from(mediaMap.values());
+  const usedMB = items.reduce((sum, item) => sum + item.sizeMB, 0);
+  const remainingMB = Math.max(0, limitMB - usedMB);
+  const percentUsed = Math.min(100, (usedMB / limitMB) * 100);
+
+  return { limitGB, limitMB, usedMB, remainingMB, percentUsed, items };
+}
+
+function renderStorageMediaLibrary() {
+  const stats = getStorageUsageStats();
+  const badge = document.getElementById('storage-quota-badge');
+  const remEl = document.getElementById('storage-remaining-text');
+  const bar = document.getElementById('storage-usage-bar');
+  const usedLbl = document.getElementById('storage-used-label');
+  const limitLbl = document.getElementById('storage-limit-label');
+  const listEl = document.getElementById('storage-media-list');
+
+  if (badge) badge.textContent = `${formatStorageMB(stats.usedMB)} / ${stats.limitGB} GB Used`;
+  if (remEl) remEl.textContent = `${formatStorageMB(stats.remainingMB)} Remaining`;
+  if (bar) {
+    bar.style.width = `${stats.percentUsed.toFixed(1)}%`;
+    bar.className = stats.percentUsed >= 90
+      ? 'h-full rounded-full bg-gradient-to-r from-rose-500 to-amber-500 transition-all duration-300'
+      : 'h-full rounded-full bg-gradient-to-r from-yellow-400 to-amber-500 transition-all duration-300';
+  }
+  if (usedLbl) usedLbl.textContent = `Used: ${formatStorageMB(stats.usedMB)} (${stats.percentUsed.toFixed(1)}%)`;
+  if (limitLbl) limitLbl.textContent = `Plan Limit: ${stats.limitGB} GB (Starter: 2 GB · Pro: 5 GB · Enterprise: 7 GB)`;
+
+  if (!listEl) return;
+  if (stats.items.length === 0) {
+    listEl.innerHTML = `<div class="p-4 rounded-xl glass-card-subtle text-xs text-slate-400 text-center">No media files uploaded yet. Videos you add to your workflows will appear here.</div>`;
+    return;
+  }
+
+  listEl.innerHTML = stats.items.map(item => {
+    const activeWfs = item.workflows.filter(w => w.active);
+    const draftWfs = item.workflows.filter(w => !w.active);
+    let usageBadge = `<span class="px-2 py-0.5 rounded-md text-[10px] font-bold bg-slate-500/20 text-slate-300 border border-white/10">○ Unused</span>`;
+    if (activeWfs.length > 0) {
+      const names = activeWfs.map(w => escapeHtml(w.name)).join(', ');
+      usageBadge = `<span class="px-2 py-0.5 rounded-md text-[10px] font-bold bg-emerald-500/15 text-emerald-300 border border-emerald-500/30">● Active in: ${names}</span>`;
+    } else if (draftWfs.length > 0) {
+      const names = draftWfs.map(w => escapeHtml(w.name)).join(', ');
+      usageBadge = `<span class="px-2 py-0.5 rounded-md text-[10px] font-bold bg-amber-500/15 text-amber-300 border border-amber-500/30">○ Draft/Paused: ${names}</span>`;
+    }
+
+    const safeKey = encodeURIComponent(item.key);
+    return `
+      <div class="p-3.5 rounded-xl glass-card-subtle flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+        <div class="min-w-0 space-y-1">
+          <div class="flex items-center gap-2 flex-wrap">
+            <span class="text-xs font-extrabold text-white truncate">${escapeHtml(item.name)}</span>
+            <span class="text-[11px] font-mono text-slate-400">${item.sizeMB.toFixed(1)} MB · ${escapeHtml(item.formattedDuration)}</span>
+          </div>
+          <div>${usageBadge}</div>
+        </div>
+        <div class="flex items-center gap-2 shrink-0">
+          <button type="button" onclick="playStorageMedia(decodeURIComponent('${safeKey}'))" class="px-3 py-1.5 rounded-lg btn-glass text-xs font-bold text-yellow-300 hover:border-yellow-500/40">▶ Play</button>
+          <button type="button" onclick="deleteStorageMedia(decodeURIComponent('${safeKey}'))" class="px-3 py-1.5 rounded-lg bg-rose-500/15 border border-rose-500/30 text-rose-300 hover:bg-rose-500/25 text-xs font-bold">🗑️ Delete</button>
+        </div>
+      </div>
+    `;
+  }).join('');
+}
+
+function playStorageMedia(mediaKey) {
+  const stats = getStorageUsageStats();
+  const item = stats.items.find(i => i.key === mediaKey);
+  if (!item) return;
+
+  const modal = document.getElementById('media-player-modal');
+  const titleEl = document.getElementById('media-player-title');
+  const videoEl = document.getElementById('media-player-video');
+  const noteEl = document.getElementById('media-player-note');
+
+  const objUrl = (window.zoomCastMediaObjectUrls && window.zoomCastMediaObjectUrls[mediaKey]) || item.mediaUrl || '';
+  if (titleEl) titleEl.textContent = `${item.name} (${item.sizeMB.toFixed(1)} MB)`;
+  if (videoEl) {
+    if (objUrl) {
+      videoEl.src = objUrl;
+      videoEl.classList.remove('hidden');
+      if (noteEl) noteEl.classList.add('hidden');
+    } else {
+      videoEl.removeAttribute('src');
+      videoEl.classList.add('hidden');
+      if (noteEl) {
+        noteEl.textContent = 'Video preview is available for files uploaded in the current session or stored on cloud media storage.';
+        noteEl.classList.remove('hidden');
+      }
+    }
+  }
+  if (modal) modal.classList.remove('hidden');
+}
+
+function closeMediaPlayerModal() {
+  const modal = document.getElementById('media-player-modal');
+  const videoEl = document.getElementById('media-player-video');
+  if (videoEl) {
+    videoEl.pause();
+    videoEl.removeAttribute('src');
+  }
+  if (modal) modal.classList.add('hidden');
+}
+
+function deleteStorageMedia(mediaKey) {
+  const stats = getStorageUsageStats();
+  const item = stats.items.find(i => i.key === mediaKey);
+  if (!item) return;
+
+  const activeWfs = item.workflows.filter(w => w.active);
+  if (activeWfs.length > 0) {
+    const wfNames = activeWfs.map(w => w.name).join(', ');
+    if (!confirm(`"${item.name}" is currently used in Active workflow(s): ${wfNames}.\n\nDeleting it will remove this video from those workflows. Continue?`)) {
+      return;
+    }
+  }
+
+  (appState.categories || []).forEach(cat => {
+    if (Array.isArray(cat.videos)) {
+      cat.videos = cat.videos.filter(v => getMediaKey(v.name, v.sizeMB) !== mediaKey);
+    }
+  });
+  if (appState.currentCategory && Array.isArray(appState.currentCategory.videos)) {
+    appState.currentCategory.videos = appState.currentCategory.videos.filter(v => getMediaKey(v.name, v.sizeMB) !== mediaKey);
+  }
+  if (window.zoomCastMediaObjectUrls && window.zoomCastMediaObjectUrls[mediaKey]) {
+    URL.revokeObjectURL(window.zoomCastMediaObjectUrls[mediaKey]);
+    delete window.zoomCastMediaObjectUrls[mediaKey];
+  }
+
+  persistState();
+  renderSavedCategories();
+  renderCategoryVideosList();
+  renderStorageMediaLibrary();
+  syncBackendConfig();
+  showToast(`✓ Deleted "${item.name}" and freed ${item.sizeMB.toFixed(1)} MB storage.`);
 }
