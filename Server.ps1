@@ -10,7 +10,7 @@ $RunnerScript = Join-Path $PSScriptRoot "Run-ZoomMeeting.ps1"
 $SchedScript = Join-Path $PSScriptRoot "Register-ZoomSchedule.ps1"
 
 $Listener = New-Object System.Net.HttpListener
-$Prefix = "http://localhost:$Port/"
+$Prefix = "http://+:$Port/"
 $Listener.Prefixes.Add($Prefix)
 $Listener.Start()
 
@@ -26,6 +26,7 @@ if ($OpenBrowser) {
 try {
     while ($Listener.IsListening) {
         $Context = $Listener.GetContext()
+        try {
         $Req = $Context.Request
         $Res = $Context.Response
         $Path = $Req.Url.AbsolutePath
@@ -139,6 +140,53 @@ try {
             continue
         }
 
+        if (($Path -eq "/api/create-checkout" -or $Path -eq "/api/create-checkout.php" -or $Path -eq "/.netlify/functions/create-checkout") -and $Req.HttpMethod -eq "POST") {
+            $Reader = New-Object System.IO.StreamReader($Req.InputStream, $Req.ContentEncoding)
+            $Body = $Reader.ReadToEnd()
+            $Reader.Close()
+            $ReqData = $Body | ConvertFrom-Json
+            $PlanId = if ($ReqData.planId) { "$($ReqData.planId)".Trim().ToLower() } else { "pro" }
+            $Currency = if ($ReqData.currency) { "$($ReqData.currency)".Trim().ToUpper() } else { "PKR" }
+            $Amount = if ($ReqData.amount) { [int][Math]::Round([double]$ReqData.amount) } else { 35 }
+            $SuccessUrl = "https://zoomcast.aamiq.online/?payment_status=success&plan=$PlanId&currency=$Currency"
+            $CancelUrl = "https://zoomcast.aamiq.online/?payment_status=cancelled&plan=$PlanId"
+
+            $CheckoutResp = @{ ok = $false; pendingApproval = $true; message = "Payment gateway activation is pending Safepay/LemonSqueezy approval." }
+            if ($Currency -eq "PKR") {
+                $SpKey = [Environment]::GetEnvironmentVariable("SAFEPAY_API_KEY", "Machine")
+                $SpEnv = [Environment]::GetEnvironmentVariable("SAFEPAY_ENV", "Machine")
+                if ([string]::IsNullOrWhiteSpace($SpEnv)) { $SpEnv = "production" }
+                if (-not [string]::IsNullOrWhiteSpace($SpKey)) {
+                    try {
+                        $SpApiBase = if ($SpEnv -eq "sandbox") { "https://sandbox.api.getsafepay.com" } else { "https://api.getsafepay.com" }
+                        $SpBody = @{ client = $SpKey; amount = $Amount; currency = "PKR"; environment = $SpEnv } | ConvertTo-Json
+                        $SpInit = Invoke-RestMethod -Uri "$SpApiBase/order/v1/init" -Method Post -ContentType "application/json" -Body $SpBody -TimeoutSec 10
+                        if ($SpInit.data.token) {
+                            $SpCkBase = if ($SpEnv -eq "sandbox") { "https://sandbox.api.getsafepay.com/components" } else { "https://getsafepay.com/checkout/pay" }
+                            $OrderId = "ZC-" + [DateTimeOffset]::UtcNow.ToUnixTimeMilliseconds()
+                            $RedirectUrl = "$SpCkBase?env=$SpEnv&beacon=$($SpInit.data.token)&source=custom&order_id=$OrderId&redirect_url=$([Uri]::EscapeDataString($SuccessUrl))&cancel_url=$([Uri]::EscapeDataString($CancelUrl))"
+                            $CheckoutResp = @{ ok = $true; checkoutUrl = $RedirectUrl; gateway = "safepay" }
+                        }
+                    } catch {
+                        $CheckoutResp = @{ ok = $false; error = $_.Exception.Message }
+                    }
+                }
+            } else {
+                $LsEnvName = "LEMONSQUEEZY_" + $PlanId.ToUpper() + "_URL"
+                $LsUrl = [Environment]::GetEnvironmentVariable($LsEnvName, "Machine")
+                if (-not [string]::IsNullOrWhiteSpace($LsUrl)) {
+                    $CheckoutResp = @{ ok = $true; checkoutUrl = $LsUrl; gateway = "lemonsqueezy" }
+                }
+            }
+
+            $JsonOut = $CheckoutResp | ConvertTo-Json -Depth 4
+            $RespBytes = [System.Text.Encoding]::UTF8.GetBytes($JsonOut)
+            $Res.ContentType = "application/json; charset=utf-8"
+            $Res.OutputStream.Write($RespBytes, 0, $RespBytes.Length)
+            $Res.Close()
+            continue
+        }
+
         if ($Path -eq "/api/run-now" -and $Req.HttpMethod -eq "POST") {
             $ArgStr = "-NoProfile -ExecutionPolicy Bypass -File `"$RunnerScript`" -ConfigPath `"$ConfigPath`""
             Start-Process powershell.exe -ArgumentList $ArgStr
@@ -182,11 +230,16 @@ try {
 
             $Bytes = [System.IO.File]::ReadAllBytes($LocalFile)
             $Res.ContentType = $Mime
-            $Res.OutputStream.Write($Bytes, 0, $Bytes.Length)
+            if ($Req.HttpMethod -ne "HEAD") {
+                $Res.OutputStream.Write($Bytes, 0, $Bytes.Length)
+            }
         } else {
             $Res.StatusCode = 404
         }
         $Res.Close()
+        } catch {
+            try { $Context.Response.StatusCode = 500; $Context.Response.Close() } catch {}
+        }
     }
 } finally {
     $Listener.Stop()
