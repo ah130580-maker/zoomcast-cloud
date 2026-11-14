@@ -516,7 +516,7 @@
         <div id="cms-terms-body-display" class="space-y-4 text-xs sm:text-sm text-slate-300 leading-relaxed whitespace-pre-line"></div>
 
         <div class="pt-5 border-t border-white/10 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs text-slate-400">
-          <span>Need assistance or want to request a refund within 7 days? Email us at <strong id="terms-support-email" class="text-yellow-400">amirjupiteradvisers@gmail.com</strong></span>
+          <span>Need assistance or want to request a refund within 7 days? Email us at <strong id="terms-support-email" class="text-yellow-400">support@aamiq.online</strong></span>
           <button type="button" onclick="switchView('contact')" class="px-4 py-2 rounded-xl btn-gold text-xs self-start sm:self-auto">
             Contact Support →
           </button>
@@ -549,7 +549,7 @@
         <div id="cms-privacy-body-display" class="space-y-4 text-xs sm:text-sm text-slate-300 leading-relaxed whitespace-pre-line"></div>
 
         <div class="pt-5 border-t border-white/10 flex items-center justify-between text-xs text-slate-400">
-          <span>Privacy Officer Contact: <strong id="privacy-support-email" class="text-yellow-400">amirjupiteradvisers@gmail.com</strong></span>
+          <span>Privacy Officer Contact: <strong id="privacy-support-email" class="text-yellow-400">support@aamiq.online</strong></span>
           <button type="button" onclick="switchView('contact')" class="px-4 py-2 rounded-xl btn-gold text-xs">
             Contact Us →
           </button>
@@ -582,7 +582,7 @@
         <div class="p-4 rounded-2xl bg-white/5 border border-white/10 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
           <div>
             <span class="text-xs text-slate-400 block">Official Support Email (Direct Inquiry / Refund Request)</span>
-            <a id="contact-page-email-link" href="mailto:amirjupiteradvisers@gmail.com" class="text-base font-extrabold text-yellow-400 hover:underline">amirjupiteradvisers@gmail.com</a>
+            <a id="contact-page-email-link" href="mailto:support@aamiq.online" class="text-base font-extrabold text-yellow-400 hover:underline">support@aamiq.online</a>
           </div>
           <span class="px-3 py-1 rounded-full bg-emerald-500/15 border border-emerald-500/30 text-emerald-400 text-xs font-bold self-start sm:self-auto">
             ● Typical Response: &lt; 2 Hours
@@ -1023,7 +1023,7 @@
                       <div class="flex items-center gap-6">
                         <div>
                           <span class="block text-[9px] uppercase tracking-widest text-slate-400">Card Holder</span>
-                          <span id="live-card-holder" class="text-xs font-bold tracking-wider uppercase text-white">AMIR HAYAT</span>
+                          <span id="live-card-holder" class="text-xs font-bold tracking-wider uppercase text-white">CARDHOLDER NAME</span>
                         </div>
                         <div>
                           <span class="block text-[9px] uppercase tracking-widest text-slate-400">Expires</span>
@@ -1097,7 +1097,7 @@
 
               <div>
                 <label class="text-[11px] font-bold uppercase tracking-wider text-slate-400 block mb-1.5">Cardholder Name</label>
-                <input id="card-holder" type="text" placeholder="AMIR HAYAT" oninput="updateLive3DCard()" onfocus="flip3DCard(false)" class="w-full px-4 py-3 rounded-xl glass-input text-sm font-semibold uppercase" />
+                <input id="card-holder" type="text" placeholder="FULL NAME ON CARD" oninput="updateLive3DCard()" onfocus="flip3DCard(false)" class="w-full px-4 py-3 rounded-xl glass-input text-sm font-semibold uppercase" />
               </div>
 
               <div>
@@ -1167,7 +1167,11 @@
         </div>
 
         <nav class="p-3.5 flex lg:flex-col gap-2 overflow-x-auto">
-          <button onclick="switchDashboardTab('categories')" id="dtab-categories" class="flex items-center gap-3 px-4 py-3 rounded-2xl text-xs sm:text-sm font-bold bg-gradient-to-r from-blue-600/90 to-indigo-600/80 text-white shadow-lg shadow-blue-600/25 border border-blue-400/30 whitespace-nowrap text-left transition">
+          <button onclick="switchDashboardTab('dashboard')" id="dtab-dashboard" class="flex items-center gap-3 px-4 py-3 rounded-2xl text-xs sm:text-sm font-bold bg-gradient-to-r from-blue-600/90 to-indigo-600/80 text-white shadow-lg shadow-blue-600/25 border border-blue-400/30 whitespace-nowrap text-left transition">
+            <span>🏠</span>
+            <span>Dashboard</span>
+          </button>
+          <button onclick="switchDashboardTab('categories')" id="dtab-categories" class="flex items-center gap-3 px-4 py-3 rounded-2xl text-xs sm:text-sm font-semibold text-slate-300 hover:bg-white/5 hover:text-white whitespace-nowrap text-left transition">
             <span>📅</span>
             <span>Meeting Workflows</span>
           </button>
@@ -1200,7 +1204,7 @@
         </div>
         <div class="flex items-center justify-between gap-2 px-1">
           <div class="truncate">
-            <div id="sidebar-user-name" class="text-xs font-bold text-white truncate">Amir Hayat</div>
+            <div id="sidebar-user-name" class="text-xs font-bold text-white truncate">Workspace Owner</div>
             <div id="sidebar-user-email" class="text-[11px] text-slate-400 truncate">ah130580@gmail.com</div>
           </div>
           <button onclick="logoutClient()" class="px-3 py-1.5 rounded-xl btn-glass text-[11px] text-rose-300 hover:border-rose-500/40 shrink-0">
@@ -1217,7 +1221,7 @@
       <header class="sticky top-0 z-30 h-16 px-4 sm:px-8 border-b border-white/10 bg-[#08090f]/85 backdrop-blur-xl flex items-center justify-between gap-3 shrink-0">
         <div class="flex items-center gap-3 truncate">
           <div>
-            <h1 id="workspace-page-title" class="text-sm sm:text-base font-extrabold text-white truncate">Hi, Amir Hayat 👋</h1>
+            <h1 id="workspace-page-title" class="text-sm sm:text-base font-extrabold text-white truncate">Welcome back 👋</h1>
             <p class="text-[11px] text-slate-400 hidden sm:block">Cloud Broadcast Command Center & Automated Scheduler</p>
           </div>
         </div>
@@ -1239,6 +1243,11 @@
       </div>
 
       <div class="p-4 sm:p-8 max-w-6xl w-full mx-auto space-y-6 pb-16">
+
+        <!-- =============================================================== -->
+        <!-- TAB 0: DASHBOARD OVERVIEW (KPIs & Integration Readiness Only)   -->
+        <!-- =============================================================== -->
+        <div id="dash-content-dashboard" class="space-y-6 animate-view-enter">
 
         <!-- TOP BENTO STATS ROW (Detailed Telemetry) -->
         <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
@@ -1299,10 +1308,41 @@
           </div>
         </div>
 
+        <!-- Dashboard Integration Readiness & Quick Actions -->
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
+          <div class="glass-card p-6 rounded-2xl flex flex-col justify-between gap-4">
+            <div class="flex items-start justify-between gap-3">
+              <div>
+                <h2 class="text-base font-extrabold text-white">Integration &amp; Zoom Connection</h2>
+                <p id="dash-integration-summary" class="text-xs text-slate-400 mt-1">Connect your Zoom account before creating automated workflows.</p>
+              </div>
+              <span id="dash-integration-badge" class="px-2.5 py-1 rounded-md text-xs font-bold bg-amber-500/15 text-amber-300 border border-amber-500/30 whitespace-nowrap">● Setup Required</span>
+            </div>
+            <div class="flex flex-wrap gap-2.5">
+              <button type="button" onclick="switchDashboardTab('profile')" class="px-4 py-2 rounded-xl btn-gold text-xs">Manage Integrations →</button>
+              <button type="button" onclick="startCreateNewWorkflow()" class="px-4 py-2 rounded-xl btn-glass text-xs">+ Create Workflow</button>
+            </div>
+          </div>
+
+          <div class="glass-card p-6 rounded-2xl flex flex-col justify-between gap-4">
+            <div>
+              <h2 class="text-base font-extrabold text-white">Workspace Quick Navigation</h2>
+              <p class="text-xs text-slate-400 mt-1">Jump directly to your workflows, attendance &amp; chat logs, or billing settings.</p>
+            </div>
+            <div class="flex flex-wrap gap-2.5">
+              <button type="button" onclick="switchDashboardTab('categories')" class="px-4 py-2 rounded-xl btn-glass text-xs">📅 Meeting Workflows</button>
+              <button type="button" onclick="switchDashboardTab('attendance')" class="px-4 py-2 rounded-xl btn-glass text-xs">📊 Attendance &amp; Logs</button>
+              <button type="button" onclick="switchDashboardTab('support')" class="px-4 py-2 rounded-xl btn-glass text-xs">💬 Support Desk</button>
+            </div>
+          </div>
+        </div>
+
+        </div><!-- /dash-content-dashboard -->
+
         <!-- =============================================================== -->
         <!-- TAB 1: WORKFLOWS & GLASSY CALENDAR SCHEDULER                    -->
         <!-- =============================================================== -->
-        <div id="dash-content-categories" class="space-y-6 animate-view-enter">
+        <div id="dash-content-categories" class="hidden space-y-6 animate-view-enter">
 
           <!-- Saved Workflows List -->
           <div class="glass-card p-5 sm:p-6 rounded-2xl">
@@ -1591,7 +1631,7 @@
               </div>
               <p class="text-xs text-slate-400 mt-1">
                 Open a support ticket below or email us directly at
-                <a id="portal-support-email-link" href="mailto:amirjupiteradvisers@gmail.com" class="text-yellow-400 font-bold hover:underline">amirjupiteradvisers@gmail.com</a>
+                <a id="portal-support-email-link" href="mailto:support@aamiq.online" class="text-yellow-400 font-bold hover:underline">support@aamiq.online</a>
               </p>
             </div>
             <button type="button" onclick="switchView('terms')" class="px-4 py-2 rounded-xl btn-glass text-xs self-start sm:self-auto">
@@ -1739,23 +1779,45 @@
             </div>
           </div>
 
-          <div class="glass-card p-6 rounded-2xl space-y-4">
+          <div id="zoom-integration-card" class="glass-card p-6 rounded-2xl space-y-4">
             <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
               <div>
-                <div class="flex items-center gap-2.5">
-                  <h2 class="text-base font-extrabold text-white">Zoom Account Integration & Permanent Meeting Room</h2>
-                  <span id="zoom-conn-badge" class="px-2.5 py-0.5 rounded-md text-xs font-bold bg-emerald-500/15 text-emerald-400 border border-emerald-500/30 whitespace-nowrap">
-                    ● Ready to Connect
+                <div class="flex items-center gap-2.5 flex-wrap">
+                  <h2 class="text-base font-extrabold text-white">Zoom Account Integration &amp; Permanent Meeting Room</h2>
+                  <span id="zoom-conn-badge" class="px-2.5 py-0.5 rounded-md text-xs font-bold bg-amber-500/15 text-amber-300 border border-amber-500/30 whitespace-nowrap">
+                    ● Not Connected
                   </span>
                 </div>
                 <p class="text-xs text-slate-400 mt-1">
-                  Connect your normal Zoom account via Google and set your permanent Zoom Meeting link so your meeting link never changes across broadcasts.
+                  Connect your Zoom account using Email &amp; Password or Continue with Google, and set your permanent Zoom Meeting link.
                 </p>
               </div>
-              <button onclick="reconnectZoomOAuth()" class="px-5 py-2.5 rounded-xl btn-gold text-xs sm:text-sm self-start sm:self-auto">
-                Connect Zoom with Google
+              <div class="flex flex-wrap items-center gap-2 self-start sm:self-auto">
+                <button type="button" onclick="reconnectZoomOAuth()" class="px-4 py-2.5 rounded-xl btn-gold text-xs sm:text-sm flex items-center gap-2">
+                  <span>G</span>
+                  <span>Continue with Google</span>
+                </button>
+                <button type="button" onclick="reportZoomSessionIssue('Simulated session expiry check — please reconnect your Zoom account.', true)" class="px-3 py-2.5 rounded-xl btn-glass text-xs text-amber-300" title="Test session expiry alert &amp; email">
+                  Test Session Alert
+                </button>
+              </div>
+            </div>
+
+            <!-- Connect Zoom via Email & Password -->
+            <div class="pt-3 border-t border-white/10 grid grid-cols-1 sm:grid-cols-3 gap-2.5 items-end">
+              <div>
+                <label class="text-xs font-bold text-slate-300 block mb-1">Zoom Account Email</label>
+                <input id="zoom-auth-email" type="email" placeholder="zoom-user@domain.com" class="w-full px-3.5 py-2.5 rounded-xl glass-input text-xs" />
+              </div>
+              <div>
+                <label class="text-xs font-bold text-slate-300 block mb-1">Zoom Password</label>
+                <input id="zoom-auth-password" type="password" placeholder="••••••••" class="w-full px-3.5 py-2.5 rounded-xl glass-input text-xs" />
+              </div>
+              <button type="button" onclick="connectZoomWithCredentials()" class="px-4 py-2.5 rounded-xl btn-glass text-xs font-bold border border-yellow-500/30 text-yellow-300 hover:bg-yellow-500/10">
+                Connect with Email &amp; Password
               </button>
             </div>
+
             <div class="pt-3 border-t border-white/10 flex flex-col sm:flex-row gap-2.5 items-stretch sm:items-end">
               <div class="flex-1">
                 <label class="text-xs font-bold text-slate-300 block mb-1">Your Default Permanent Zoom Meeting Link (Used for all scheduled broadcasts)</label>
@@ -1928,6 +1990,46 @@
         </button>
       </div>
       <div id="chat-modal-messages-body" class="p-5 overflow-y-auto space-y-3 flex-1"></div>
+    </div>
+  </div>
+
+  <!-- INTEGRATION GATE POPUP (Complete Integrations Before Creating Workflow) -->
+  <div id="integration-gate-modal" class="fixed inset-0 z-50 hidden bg-black/75 backdrop-blur-md flex items-center justify-center p-4">
+    <div class="glass-card-gold rounded-2xl max-w-md w-full p-6 space-y-4 border border-yellow-500/35 animate-view-enter">
+      <div class="flex items-start justify-between gap-3">
+        <div class="flex items-center gap-2.5">
+          <span class="w-8 h-8 rounded-xl bg-amber-500/20 border border-amber-500/30 flex items-center justify-center text-amber-300 text-sm">🔌</span>
+          <h3 class="text-base font-extrabold text-white">Complete Integrations First</h3>
+        </div>
+        <button type="button" onclick="closeIntegrationGateModal()" class="text-xs text-slate-400 hover:text-white">✕</button>
+      </div>
+      <p class="text-xs text-slate-300 leading-relaxed">
+        Before you can create or schedule a Meeting Workflow, please connect your Zoom account in <strong>Security &amp; Integrations</strong> (via Email &amp; Password or Continue with Google).
+      </p>
+      <div class="flex items-center justify-end gap-2.5 pt-2">
+        <button type="button" onclick="closeIntegrationGateModal()" class="px-4 py-2 rounded-xl btn-glass text-xs">Later</button>
+        <button type="button" onclick="goToIntegrationsFromModal()" class="px-4 py-2 rounded-xl btn-gold text-xs">Go to Integrations →</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ZOOM SESSION EXPIRY / CONNECTION ISSUE POPUP -->
+  <div id="zoom-issue-modal" class="fixed inset-0 z-50 hidden bg-black/75 backdrop-blur-md flex items-center justify-center p-4">
+    <div class="glass-card rounded-2xl max-w-md w-full p-6 space-y-4 border border-rose-500/40 animate-view-enter">
+      <div class="flex items-start justify-between gap-3">
+        <div class="flex items-center gap-2.5">
+          <span class="w-8 h-8 rounded-xl bg-rose-500/20 border border-rose-500/30 flex items-center justify-center text-rose-300 text-sm">⚠️</span>
+          <h3 class="text-base font-extrabold text-white">Zoom Connection Issue</h3>
+        </div>
+        <button type="button" onclick="closeZoomIssueModal()" class="text-xs text-slate-400 hover:text-white">✕</button>
+      </div>
+      <p id="zoom-issue-modal-text" class="text-xs text-slate-300 leading-relaxed">
+        Your Zoom session has expired or disconnected. Please reconnect your account to avoid missed broadcasts.
+      </p>
+      <div class="flex items-center justify-end gap-2.5 pt-2">
+        <button type="button" onclick="closeZoomIssueModal()" class="px-4 py-2 rounded-xl btn-glass text-xs">Dismiss</button>
+        <button type="button" onclick="closeZoomIssueModal(); goToIntegrationsFromModal();" class="px-4 py-2 rounded-xl btn-gold text-xs">Fix Connection Now →</button>
+      </div>
     </div>
   </div>
 
