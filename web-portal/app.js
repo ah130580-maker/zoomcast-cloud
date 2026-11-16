@@ -2473,11 +2473,13 @@ async function selectGoogleAccountForZoom(selectedEmail) {
         showToast(`✓ Zoom Account (${selectedEmail}) Verified & Connected!`);
         return;
       }
-      showToast(data.message || `⚠️ Selected ${selectedEmail} — Zoom OAuth Client ID required for live Zoom login.`);
+      showToast(data.message || `Opening Zoom Sign-In for ${selectedEmail}...`);
+      setTimeout(() => { window.open('https://zoom.us/signin', '_blank', 'noopener,noreferrer'); }, 600);
       return;
     }
   } catch (e) {}
-  showToast('⚠️ Zoom OAuth verification is not configured on the server yet.');
+  showToast('Opening Zoom Sign-In... (Add Zoom OAuth Client ID on server for automatic verification)');
+  setTimeout(() => { window.open('https://zoom.us/signin', '_blank', 'noopener,noreferrer'); }, 600);
 }
 
 async function connectZoomWithCredentials() {
