@@ -1111,6 +1111,9 @@ function startSignUpOtpVerification() {
     return;
   }
   if (password !== confirmPassword) {
+    checkSignupPasswordMatch();
+    const confEl = document.getElementById('signup-confirm-password');
+    if (confEl) confEl.focus();
     showToast('Passwords do not match. Please enter the same password in Confirm Password.');
     return;
   }
@@ -3857,4 +3860,75 @@ function deleteStorageMedia(mediaKey) {
   renderStorageMediaLibrary();
   syncBackendConfig();
   showToast(`✓ Deleted "${item.name}" and freed ${item.sizeMB.toFixed(1)} MB storage.`);
+}
+
+// ============================================================================
+// SIGNUP PASSWORD MATCH CHECK & OTP BACK / EDIT EMAIL NAVIGATION
+// ============================================================================
+function checkSignupPasswordMatch() {
+  const passEl = document.getElementById('signup-password');
+  const confEl = document.getElementById('signup-confirm-password');
+  const msgEl = document.getElementById('signup-pass-match-msg');
+  if (!passEl || !confEl || !msgEl) return true;
+
+  const p1 = passEl.value;
+  const p2 = confEl.value;
+  if (!p2) {
+    msgEl.classList.add('hidden');
+    confEl.classList.remove('ring-2', 'ring-rose-500/70', 'ring-emerald-500/50');
+    return true;
+  }
+  msgEl.classList.remove('hidden');
+  if (p1 !== p2) {
+    msgEl.textContent = '✗ Passwords do not match — both passwords must be identical.';
+    msgEl.className = 'text-[11px] font-bold text-rose-400';
+    confEl.classList.remove('ring-emerald-500/50');
+    confEl.classList.add('ring-2', 'ring-rose-500/70');
+    return false;
+  }
+  if (p1.length < 6) {
+    msgEl.textContent = '⚠ Passwords match, but must be at least 6 characters.';
+    msgEl.className = 'text-[11px] font-bold text-amber-400';
+    confEl.classList.remove('ring-2', 'ring-rose-500/70', 'ring-emerald-500/50');
+    return false;
+  }
+  msgEl.textContent = '✓ Passwords match';
+  msgEl.className = 'text-[11px] font-bold text-emerald-400';
+  confEl.classList.remove('ring-rose-500/70');
+  confEl.classList.add('ring-2', 'ring-emerald-500/50');
+  return true;
+}
+
+function goBackFromOtpStep() {
+  if (appState.otpTimerInterval) {
+    clearInterval(appState.otpTimerInterval);
+    appState.otpTimerInterval = null;
+  }
+  if (appState.otpPurpose === 'forgot') {
+    openAuthMode('forgot');
+    const fEmail = document.getElementById('forgot-email');
+    if (fEmail) {
+      if (appState.pendingForgotData && appState.pendingForgotData.email) {
+        fEmail.value = appState.pendingForgotData.email;
+      }
+      setTimeout(() => fEmail.focus(), 100);
+    }
+    showToast('Edit your email address and request a new OTP.');
+    return;
+  }
+
+  openAuthMode('signup');
+  const sName = document.getElementById('signup-name');
+  const sEmail = document.getElementById('signup-email');
+  const sPass = document.getElementById('signup-password');
+  const sConf = document.getElementById('signup-confirm-password');
+  if (appState.pendingSignupUser) {
+    if (sName && !sName.value) sName.value = appState.pendingSignupUser.name || '';
+    if (sEmail) sEmail.value = appState.pendingSignupUser.email || '';
+    if (sPass && !sPass.value) sPass.value = appState.pendingSignupUser.password || '';
+    if (sConf && !sConf.value) sConf.value = appState.pendingSignupUser.password || '';
+  }
+  checkSignupPasswordMatch();
+  if (sEmail) setTimeout(() => { sEmail.focus(); sEmail.select(); }, 100);
+  showToast('Update your email address and click Create Account to resend OTP.');
 }
