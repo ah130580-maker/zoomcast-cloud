@@ -302,12 +302,32 @@ function persistState() {
   } catch (e) {}
 }
 
-function cleanBrowserUrlHash() {
+const TAB_TO_ROUTE = {
+  dashboard: '#/dashboard',
+  categories: '#/workflows',
+  attendance: '#/attendance',
+  support: '#/support',
+  profile: '#/integrations'
+};
+
+const ROUTE_TO_TAB = {
+  '#/dashboard': 'dashboard',
+  '#/workflows': 'categories',
+  '#/attendance': 'attendance',
+  '#/support': 'support',
+  '#/integrations': 'profile'
+};
+
+function setRouteHash(hashRoute) {
   try {
-    if (window.location.hash) {
-      history.replaceState(null, '', window.location.pathname + window.location.search);
+    if (hashRoute && window.location.hash !== hashRoute) {
+      history.replaceState(null, '', hashRoute);
     }
   } catch (e) {}
+}
+
+function cleanBrowserUrlHash() {
+  // No-op: URL hashes are now preserved for page/tab routing across refreshes.
 }
 
 function refreshPortalHome() {
@@ -372,8 +392,17 @@ function switchView(viewName) {
     pubHeader.classList.toggle('hidden', viewName === 'dashboard');
   }
   if (viewName === 'dashboard') {
-    switchDashboardTab('dashboard');
+    const activeTab = appState.activeDashboardTab || 'dashboard';
+    switchDashboardTab(activeTab);
     setTimeout(() => checkIntegrationAndSessionPopups(), 350);
+  } else {
+    const viewRoutes = {
+      landing: '#/home',
+      terms: '#/terms',
+      privacy: '#/privacy',
+      contact: '#/contact'
+    };
+    if (viewRoutes[viewName]) setRouteHash(viewRoutes[viewName]);
   }
   window.scrollTo({ top: 0, behavior: 'smooth' });
 }
@@ -733,6 +762,8 @@ function openAuthMode(mode) {
 
   switchView('auth');
   showAuthStep('account');
+  const authRoutes = { signin: '#/signin', signup: '#/signup', forgot: '#/forgot', 'forgot-reset': '#/forgot-reset' };
+  if (authRoutes[mode]) setRouteHash(authRoutes[mode]);
 
   const wrapper = document.getElementById('auth-morph-wrapper');
   const loader = document.getElementById('auth-diamond-loader');
@@ -1718,6 +1749,8 @@ function switchDashboardTab(tab) {
 
   if (tab === 'support') renderSupportTicketsUI();
   if (tab === 'profile' && typeof renderStorageMediaLibrary === 'function') renderStorageMediaLibrary();
+  appState.activeDashboardTab = tab;
+  if (TAB_TO_ROUTE[tab]) setRouteHash(TAB_TO_ROUTE[tab]);
 
   const userName = appState.profile.name || 'Workspace Owner';
   const titles = {
@@ -2359,12 +2392,64 @@ function confirmProfilePasswordReset() {
   showToast('✓ Your password has been updated & secured!');
 }
 
-async function reconnectZoomOAuth() {
+function reconnectZoomOAuth() {
+  const modal = document.getElementById('google-account-picker-modal');
+  const listEl = document.getElementById('google-picker-accounts-list');
+  if (!modal || !listEl) return;
+
+  const candidateEmails = [];
+  if (appState.profile && appState.profile.email) candidateEmails.push(appState.profile.email);
+  (appState.usersDb || []).forEach(u => {
+    if (u && u.email && !candidateEmails.some(e => e.toLowerCase() === u.email.toLowerCase())) {
+      candidateEmails.push(u.email);
+    }
+  });
+  (appState.coHostEmails || []).forEach(e => {
+    if (e && !candidateEmails.some(x => x.toLowerCase() === e.toLowerCase())) {
+      candidateEmails.push(e);
+    }
+  });
+
+  if (candidateEmails.length === 0) {
+    listEl.innerHTML = `<div class="p-3 rounded-xl glass-card-subtle text-xs text-slate-400">No existing accounts in workspace. Enter your Google email below.</div>`;
+  } else {
+    listEl.innerHTML = candidateEmails.map(em => `
+      <button type="button" onclick="selectGoogleAccountForZoom('${escapeHtml(em)}')" class="w-full p-3 rounded-xl glass-card-subtle hover:border-yellow-500/50 flex items-center justify-between gap-3 text-left transition">
+        <div class="flex items-center gap-3 min-w-0">
+          <span class="w-8 h-8 rounded-full bg-yellow-500/20 border border-yellow-500/35 flex items-center justify-center text-xs font-extrabold text-yellow-300 shrink-0">${escapeHtml(em.charAt(0).toUpperCase())}</span>
+          <div class="min-w-0">
+            <div class="text-xs font-bold text-white truncate">${escapeHtml(em)}</div>
+            <div class="text-[10px] text-slate-400">Continue with Google → Zoom Login</div>
+          </div>
+        </div>
+        <span class="text-xs text-yellow-400 font-bold shrink-0">Select →</span>
+      </button>
+    `).join('');
+  }
+  modal.classList.remove('hidden');
+}
+
+function closeGoogleAccountPickerModal() {
+  document.getElementById('google-account-picker-modal')?.classList.add('hidden');
+}
+
+function submitCustomGoogleAccountForZoom() {
+  const inp = document.getElementById('google-picker-custom-email');
+  const em = (inp?.value || '').trim().toLowerCase();
+  if (!em || !em.includes('@')) {
+    showToast('Please enter a valid Google email address.');
+    return;
+  }
+  selectGoogleAccountForZoom(em);
+}
+
+async function selectGoogleAccountForZoom(selectedEmail) {
+  closeGoogleAccountPickerModal();
   try {
     const res = await fetch('/api/zoom-connect', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ mode: 'google', email: appState.profile.email || '' })
+      body: JSON.stringify({ mode: 'google', email: selectedEmail })
     });
     if (res.ok) {
       const data = await res.json();
@@ -2372,24 +2457,27 @@ async function reconnectZoomOAuth() {
         window.location.href = data.oauthUrl;
         return;
       }
-      if (data && data.verified === true) {
+      if (data && data.verified === true && data.zoomSessionId) {
         appState.profile.zoomConnected = true;
+        appState.profile.zoomSessionId = data.zoomSessionId;
+        appState.profile.zoomAccountEmail = selectedEmail;
         appState.profile.zoomAuthMethod = 'google';
         appState.profile.zoomSessionStatus = 'healthy';
         appState.profile.zoomSessionIssueReason = '';
+        if (data.meetingLink) appState.profile.defaultZoomLink = data.meetingLink;
         const u = appState.usersDb.find(x => x.email.toLowerCase() === (appState.profile.email || '').toLowerCase());
-        if (u) { u.zoomConnected = true; u.zoomAuthMethod = 'google'; }
+        if (u) { u.zoomConnected = true; u.zoomSessionId = data.zoomSessionId; u.zoomAccountEmail = selectedEmail; u.zoomAuthMethod = 'google'; }
         persistState();
         syncProfileUI();
         syncBackendConfig();
-        showToast('✓ Zoom Account Verified & Connected via Google');
+        showToast(`✓ Zoom Account (${selectedEmail}) Verified & Connected!`);
         return;
       }
-      showToast(data.message || '⚠️ Zoom OAuth Client ID is not configured yet. Opening Zoom Sign-In...');
+      showToast(data.message || `⚠️ Selected ${selectedEmail} — Zoom OAuth Client ID required for live Zoom login.`);
       return;
     }
   } catch (e) {}
-  showToast('⚠️ Zoom OAuth verification is not configured on the server yet. Please configure Zoom OAuth Client ID.');
+  showToast('⚠️ Zoom OAuth verification is not configured on the server yet.');
 }
 
 async function connectZoomWithCredentials() {
@@ -3718,8 +3806,32 @@ async function saveAdminServiceStatus() {
   }
 }
 
+function restoreRouteFromUrl() {
+  const hash = (window.location.hash || '').toLowerCase();
+  const isLoggedIn = Boolean(appState.profile && appState.profile.authToken && appState.profile.hasActivePlan);
+
+  if (hash === '#/terms') { switchView('terms'); return; }
+  if (hash === '#/privacy') { switchView('privacy'); return; }
+  if (hash === '#/contact') { switchView('contact'); return; }
+
+  if (isLoggedIn) {
+    const targetTab = ROUTE_TO_TAB[hash] || 'dashboard';
+    appState.activeDashboardTab = targetTab;
+    switchView('dashboard');
+    return;
+  }
+
+  if (hash === '#/signin') { openAuthMode('signin'); return; }
+  if (hash === '#/signup') { openAuthMode('signup'); return; }
+  if (hash === '#/forgot') { openAuthMode('forgot'); return; }
+  switchView('landing');
+}
+
+window.addEventListener('hashchange', () => {
+  restoreRouteFromUrl();
+});
+
 window.addEventListener('DOMContentLoaded', () => {
-  cleanBrowserUrlHash();
   persistState(); // Immediately persist purged clean state to localStorage
   renderCmsContentToDOM();
   updateCurrencyButtonsUI();
@@ -3737,6 +3849,7 @@ window.addEventListener('DOMContentLoaded', () => {
   setInterval(fetchAndRenderServiceStatus, 60000);
   renderAdminPanel();
   handleGatewayReturnCallback();
+  restoreRouteFromUrl();
 });
 
 // ============================================================================
