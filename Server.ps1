@@ -312,6 +312,31 @@ try {
             continue
         }
 
+        if ($Path -eq "/api/zoom-connect" -and $Req.HttpMethod -eq "POST") {
+            $ZoomOAuthFile = Join-Path $PSScriptRoot "zoom-oauth.json"
+            $ClientId = $env:ZOOM_CLIENT_ID
+            $RedirectUri = "https://zoomcast.aamiq.online/api/zoom-oauth-callback"
+            if (Test-Path $ZoomOAuthFile) {
+                try {
+                    $OAuthCfg = Get-Content $ZoomOAuthFile -Raw | ConvertFrom-Json
+                    if ($OAuthCfg.clientId) { $ClientId = "$($OAuthCfg.clientId)" }
+                    if ($OAuthCfg.redirectUri) { $RedirectUri = "$($OAuthCfg.redirectUri)" }
+                } catch {}
+            }
+            if (-not [string]::IsNullOrWhiteSpace($ClientId)) {
+                $EncodedRedir = [System.Uri]::EscapeDataString($RedirectUri)
+                $OAuthUrl = "https://zoom.us/oauth/authorize?response_type=code&client_id=$ClientId&redirect_uri=$EncodedRedir"
+                $RespObj = @{ verified = $false; oauthUrl = $OAuthUrl } | ConvertTo-Json -Depth 3
+            } else {
+                $RespObj = @{ verified = $false; message = "Zoom OAuth App (Client ID) is not configured yet. Connection remains unverified until a valid Zoom login is confirmed." } | ConvertTo-Json -Depth 3
+            }
+            $RespBytes = [System.Text.Encoding]::UTF8.GetBytes($RespObj)
+            $Res.ContentType = "application/json; charset=utf-8"
+            $Res.OutputStream.Write($RespBytes, 0, $RespBytes.Length)
+            $Res.Close()
+            continue
+        }
+
         if ($Path -eq "/" -or $Path -eq "") {
             $Path = "/index.html"
         }
