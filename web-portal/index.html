@@ -1088,7 +1088,7 @@
               <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
                 <div>
                   <h3 class="text-xl font-extrabold text-white">Payment Details</h3>
-                  <p id="checkout-gateway-subtext" class="text-xs text-slate-400 mt-0.5">International USD Checkout • Powered by Lemon Squeezy</p>
+                  <p id="checkout-gateway-subtext" class="text-xs text-slate-400 mt-0.5">International USD Checkout • 256-Bit SSL Encrypted</p>
                 </div>
                 <div class="inline-flex items-center gap-1 p-1 rounded-xl bg-white/5 border border-white/10 self-start sm:self-auto">
                   <button type="button" id="curr-btn-usd-checkout" onclick="setPricingCurrency('USD')" class="px-3 py-1 rounded-lg text-[11px] font-extrabold btn-gold">🇺🇸 USD ($)</button>
@@ -1097,7 +1097,7 @@
               </div>
 
               <div id="checkout-gateway-pill" class="p-3 rounded-xl bg-white/5 border border-white/10 flex items-center justify-between text-xs">
-                <span id="checkout-gateway-name" class="font-bold text-emerald-400">🌎 Lemon Squeezy (USD International Cards, Wise, Revolut)</span>
+                <span id="checkout-gateway-name" class="font-bold text-emerald-400">🌎 International Credit / Debit Card (USD)</span>
                 <span id="checkout-rate-note" class="font-mono text-[11px] text-slate-400">USD Billing</span>
               </div>
 
@@ -1715,7 +1715,7 @@
               </div>
               <div class="p-3 rounded-xl bg-white/5 border border-white/10">
                 <span class="text-slate-400 block text-[10px] uppercase font-bold">Payment Gateway</span>
-                <span id="prof-billing-method" class="text-emerald-400 font-bold text-sm mt-0.5 block">Lemon Squeezy (USD) / Safepay (PKR)</span>
+                <span id="prof-billing-method" class="text-emerald-400 font-bold text-sm mt-0.5 block">Credit / Debit Card (USD / PKR)</span>
               </div>
               <div class="p-3 rounded-xl bg-white/5 border border-white/10">
                 <span class="text-slate-400 block text-[10px] uppercase font-bold">Refund Protection</span>
@@ -1821,6 +1821,13 @@
               <button type="button" onclick="connectZoomWithCredentials()" class="px-4 py-2.5 rounded-xl btn-glass text-xs font-bold border border-yellow-500/30 text-yellow-300 hover:bg-yellow-500/10">
                 Connect with Email &amp; Password
               </button>
+            </div>
+
+            <div class="flex flex-wrap items-center justify-between gap-2 text-xs text-slate-400">
+              <span>Don't have a Zoom account yet?</span>
+              <a href="https://zoom.us/signup" target="_blank" rel="noopener noreferrer" class="font-bold text-yellow-400 hover:underline">
+                + Create Free Zoom Account ↗
+              </a>
             </div>
 
             <div class="pt-3 border-t border-white/10 flex flex-col sm:flex-row gap-2.5 items-stretch sm:items-end">
@@ -1951,8 +1958,8 @@
                   <label class="text-[11px] font-bold text-slate-300 block mb-1">Gateway / Card Type</label>
                   <select id="pm-type" class="w-full px-3 py-2 rounded-xl glass-input text-xs">
                     <option value="Visa / Mastercard">Visa / Mastercard</option>
-                    <option value="Safepay (PKR)">Safepay (PKR)</option>
-                    <option value="Lemon Squeezy (USD)">Lemon Squeezy (USD)</option>
+                    <option value="Local Card / Bank (PKR)">Local Card / Bank (PKR)</option>
+                    <option value="International Card (USD)">International Card (USD)</option>
                     <option value="Bank Transfer">Bank Transfer</option>
                   </select>
                 </div>
