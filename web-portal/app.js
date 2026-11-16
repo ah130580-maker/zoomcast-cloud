@@ -48,7 +48,7 @@ const DEFAULT_CMS_CONTENT = {
 We stand behind our automated Zoom broadcast platform. If you are not satisfied with the setup or if it does not meet your business needs, you may cancel your subscription within seven (7) calendar days of your initial purchase and receive a 100% full refund.
 
 2. Account Registration & Subscription Access (USD & PKR)
-Access to the ZoomCast CRM workspace requires a verified account and an active monthly subscription plan (Starter, Business Pro, or Enterprise) billed in USD ($) via Lemon Squeezy or in PKR (Rs.) at the live exchange rate via Safepay.
+Access to the ZoomCast CRM workspace requires a verified account and an active monthly subscription plan (Starter, Business Pro, or Enterprise) billed in USD ($) or in PKR (Rs.) at the live exchange rate.
 
 3. Automated Zoom Broadcast & Permanent Meeting Link Execution
 By connecting your Zoom account and scheduling workflows, you authorize ZoomCast Cloud to launch your scheduled Zoom meetings on your permanent meeting link, stream your uploaded recorded video playlists, auto-promote your designated Co-Host emails, and capture attendance & in-meeting chat logs on your behalf.
@@ -61,8 +61,8 @@ We collect your name, email address, encrypted account credentials, and subscrip
 2. Zoom OAuth & Broadcast Data Security
 When you connect your Zoom account via Google OAuth, we use secure authorization tokens solely to start and manage your scheduled Zoom meetings. Your uploaded videos, meeting schedules, participant attendance records, and saved in-meeting chat transcripts remain strictly private to your workspace.
 
-3. Payment Security (Safepay PKR & Lemon Squeezy USD)
-All subscription payments are processed through 256-bit SSL encrypted, PCI-DSS compliant checkout channels (Safepay for Pakistani PKR cards & 1Link; Lemon Squeezy for international USD cards). We never store raw credit card CVC numbers on our servers.
+3. Payment Security (USD & PKR)
+All subscription payments are processed through 256-bit SSL encrypted, PCI-DSS compliant checkout channels for local PKR cards/bank accounts and international USD cards. We never store raw credit card CVC numbers on our servers.
 
 4. Data Control & Deletion
 You may update your profile, reset your password via 4-digit security OTP, export your attendance logs, or request complete account deletion at any time by contacting support@aamiq.online.`
@@ -563,8 +563,8 @@ function setPricingCurrency(curr) {
   }
   showToast(
     appState.currency === 'PKR'
-      ? `🇵🇰 Switched to PKR (Rs.) at live rate ($1 = Rs. ${appState.usdToPkrRate.toFixed(2)}) • Safepay Gateway`
-      : `🇺🇸 Switched to USD ($) • Lemon Squeezy International Gateway`
+      ? `🇵🇰 Switched to PKR (Rs.) at live rate ($1 = Rs. ${appState.usdToPkrRate.toFixed(2)})`
+      : `🇺🇸 Switched to USD ($)`
   );
 }
 
@@ -1248,7 +1248,10 @@ function handleEmailSignIn() {
     authToken: token,
     hasActivePlan: Boolean(existingUser.hasActivePlan),
     planName: existingUser.planName || 'Enterprise',
-    zoomConnected: true
+    zoomConnected: Boolean(existingUser.zoomConnected),
+    zoomAuthMethod: existingUser.zoomAuthMethod || '',
+    zoomAccountEmail: existingUser.zoomAccountEmail || '',
+    zoomSessionStatus: existingUser.zoomSessionStatus || 'healthy'
   };
 
   persistState();
@@ -1280,7 +1283,10 @@ function handleGoogleAuthContinue() {
       authToken: 'google_tok_' + Date.now(),
       hasActivePlan: true,
       planName: matchedUser.planName,
-      zoomConnected: true
+      zoomConnected: Boolean(matchedUser.zoomConnected),
+      zoomAuthMethod: matchedUser.zoomAuthMethod || '',
+      zoomAccountEmail: matchedUser.zoomAccountEmail || '',
+      zoomSessionStatus: matchedUser.zoomSessionStatus || 'healthy'
     };
     persistState();
     syncProfileUI();
@@ -1458,12 +1464,12 @@ function updateCheckoutCurrencyDisplay(plan) {
   if (btnTextEl) btnTextEl.textContent = `PAY ${pInfo.formattedWithDecimals} NOW`;
 
   if (appState.currency === 'PKR') {
-    if (gwSubEl) gwSubEl.textContent = 'Pakistani PKR Card Checkout • Powered by Safepay';
-    if (gwNameEl) gwNameEl.textContent = '🇵🇰 Safepay Pakistan (Pakistani Visa, Mastercard, PayPak & 1Link)';
+    if (gwSubEl) gwSubEl.textContent = 'Local PKR Card & Bank Checkout • 256-Bit SSL Encrypted';
+    if (gwNameEl) gwNameEl.textContent = '🇵🇰 Local Card / Bank Checkout (PKR)';
     if (gwRateEl) gwRateEl.textContent = `$${plan.priceUsd} × ${appState.usdToPkrRate.toFixed(2)}`;
   } else {
-    if (gwSubEl) gwSubEl.textContent = 'International USD Checkout • Powered by Lemon Squeezy';
-    if (gwNameEl) gwNameEl.textContent = '🌎 Lemon Squeezy (International USD Cards, Wise, Revolut)';
+    if (gwSubEl) gwSubEl.textContent = 'International USD Checkout • 256-Bit SSL Encrypted';
+    if (gwNameEl) gwNameEl.textContent = '🌎 International Credit / Debit Card (USD)';
     if (gwRateEl) gwRateEl.textContent = 'USD Billing';
   }
   updateLive3DCard();
@@ -1519,7 +1525,7 @@ function activateSubscriptionAfterPayment(plan, holderName, gatewayName, txnId) 
     planName,
     currency: appState.currency,
     amountFormatted: pInfo.formattedWithDecimals,
-    gateway: gatewayName || (appState.currency === 'PKR' ? 'Safepay Pakistan (PKR)' : 'Lemon Squeezy (USD)'),
+    gateway: gatewayName || (appState.currency === 'PKR' ? 'Local Card / Bank (PKR)' : 'International Card (USD)'),
     userName: appState.profile.name || holderName || 'Subscriber',
     email: appState.profile.email || MASTER_ADMIN_USER.email,
     paidAt: new Date().toLocaleString()
@@ -1571,7 +1577,7 @@ function handleGatewayReturnCallback() {
     if (status === 'success') {
       if (curr === 'PKR' || curr === 'USD') appState.currency = curr;
       const plan = appState.plans.find(p => p.id === planId) || appState.selectedPlan || appState.plans[1];
-      const gw = appState.currency === 'PKR' ? 'Safepay Pakistan (PKR)' : 'Lemon Squeezy (USD)';
+      const gw = appState.currency === 'PKR' ? 'Local Card / Bank (PKR)' : 'International Card (USD)';
       history.replaceState(null, '', window.location.pathname);
       activateSubscriptionAfterPayment(plan, appState.profile.name, gw, 'TXN-GW-' + Date.now());
     } else if (status === 'cancelled') {
@@ -1640,7 +1646,7 @@ async function completeSubscriptionAndLogin() {
   const statusLbl = document.getElementById('payment-status-label');
   const successBadge = document.getElementById('payment-success-badge');
 
-  const gwLabel = appState.currency === 'PKR' ? 'Safepay Pakistan (PKR)' : 'Lemon Squeezy (USD)';
+  const gwLabel = appState.currency === 'PKR' ? 'PKR Card / Bank Checkout' : 'USD Card Checkout';
   if (statusLbl) statusLbl.textContent = `Authorizing ${pInfo.formattedWithDecimals} via ${gwLabel}...`;
 
   if (formCol) formCol.classList.add('hidden');
@@ -2058,8 +2064,8 @@ function renderPricingCards() {
   container.innerHTML = appState.plans.map(plan => {
     const pInfo = getPlanPriceInActiveCurrency(plan);
     const subNote = appState.currency === 'PKR'
-      ? `<span class="block text-[11px] text-emerald-400 font-mono mt-0.5">($${plan.priceUsd} USD × Rs. ${appState.usdToPkrRate.toFixed(2)} • Safepay PKR)</span>`
-      : `<span class="block text-[11px] text-slate-400 font-medium mt-0.5">(Billed in USD $ • Lemon Squeezy)</span>`;
+      ? `<span class="block text-[11px] text-emerald-400 font-mono mt-0.5">($${plan.priceUsd} USD × Rs. ${appState.usdToPkrRate.toFixed(2)} • PKR)</span>`
+      : `<span class="block text-[11px] text-slate-400 font-medium mt-0.5">(Billed monthly in USD $)</span>`;
     const cardClass = plan.popular
       ? 'glass-card-gold border-2 border-yellow-400/70 relative'
       : 'glass-card';
@@ -2120,7 +2126,7 @@ function syncProfileUI() {
   if (bPlan) bPlan.textContent = planName;
   if (bTxn) bTxn.textContent = (lastPay && lastPay.txnId) ? lastPay.txnId : 'TXN-MASTER-ENT';
   if (bAmt) bAmt.textContent = `${(lastPay && lastPay.amountFormatted) ? lastPay.amountFormatted : pInfo.formattedWithDecimals} / month`;
-  if (bMethod) bMethod.textContent = (lastPay && lastPay.gateway) ? lastPay.gateway : (appState.currency === 'PKR' ? 'Safepay Pakistan (PKR)' : 'Lemon Squeezy (USD)');
+  if (bMethod) bMethod.textContent = (lastPay && lastPay.gateway) ? lastPay.gateway : (appState.currency === 'PKR' ? 'Local Card / Bank (PKR)' : 'International Card (USD)');
   if (bChangeBtn) bChangeBtn.classList.toggle('hidden', planName === 'Enterprise');
 
   if (sName) sName.textContent = appState.profile.name || 'Workspace Owner';
@@ -2245,33 +2251,77 @@ function confirmProfilePasswordReset() {
   showToast('✓ Your password has been updated & secured!');
 }
 
-function reconnectZoomOAuth() {
-  appState.profile.zoomConnected = true;
-  appState.profile.zoomAuthMethod = 'google';
-  appState.profile.zoomSessionStatus = 'healthy';
-  appState.profile.zoomSessionIssueReason = '';
-  persistState();
-  syncProfileUI();
-  syncBackendConfig();
-  showToast('✓ Zoom Account Connected via Google');
+async function reconnectZoomOAuth() {
+  try {
+    const res = await fetch('/api/zoom-connect', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ mode: 'google', email: appState.profile.email || '' })
+    });
+    if (res.ok) {
+      const data = await res.json();
+      if (data && data.oauthUrl) {
+        window.location.href = data.oauthUrl;
+        return;
+      }
+      if (data && data.verified === true) {
+        appState.profile.zoomConnected = true;
+        appState.profile.zoomAuthMethod = 'google';
+        appState.profile.zoomSessionStatus = 'healthy';
+        appState.profile.zoomSessionIssueReason = '';
+        const u = appState.usersDb.find(x => x.email.toLowerCase() === (appState.profile.email || '').toLowerCase());
+        if (u) { u.zoomConnected = true; u.zoomAuthMethod = 'google'; }
+        persistState();
+        syncProfileUI();
+        syncBackendConfig();
+        showToast('✓ Zoom Account Verified & Connected via Google');
+        return;
+      }
+      showToast(data.message || '⚠️ Zoom OAuth Client ID is not configured yet. Opening Zoom Sign-In...');
+      return;
+    }
+  } catch (e) {}
+  showToast('⚠️ Zoom OAuth verification is not configured on the server yet. Please configure Zoom OAuth Client ID.');
 }
 
-function connectZoomWithCredentials() {
+async function connectZoomWithCredentials() {
   const email = (document.getElementById('zoom-auth-email')?.value || '').trim();
   const pass = (document.getElementById('zoom-auth-password')?.value || '').trim();
   if (!email || !email.includes('@') || !pass) {
     showToast('⚠️ Please enter both Zoom Email and Password.');
     return;
   }
-  appState.profile.zoomConnected = true;
-  appState.profile.zoomAuthMethod = 'credentials';
-  appState.profile.zoomAccountEmail = email;
-  appState.profile.zoomSessionStatus = 'healthy';
-  appState.profile.zoomSessionIssueReason = '';
-  persistState();
-  syncProfileUI();
-  syncBackendConfig();
-  showToast(`✓ Zoom Account (${email}) connected!`);
+  try {
+    const res = await fetch('/api/zoom-connect', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ mode: 'credentials', zoomEmail: email, zoomPassword: pass, userEmail: appState.profile.email || '' })
+    });
+    if (res.ok) {
+      const data = await res.json();
+      if (data && data.oauthUrl) {
+        window.location.href = data.oauthUrl;
+        return;
+      }
+      if (data && data.verified === true) {
+        appState.profile.zoomConnected = true;
+        appState.profile.zoomAuthMethod = 'credentials';
+        appState.profile.zoomAccountEmail = email;
+        appState.profile.zoomSessionStatus = 'healthy';
+        appState.profile.zoomSessionIssueReason = '';
+        const u = appState.usersDb.find(x => x.email.toLowerCase() === (appState.profile.email || '').toLowerCase());
+        if (u) { u.zoomConnected = true; u.zoomAuthMethod = 'credentials'; u.zoomAccountEmail = email; }
+        persistState();
+        syncProfileUI();
+        syncBackendConfig();
+        showToast(`✓ Zoom Account (${email}) verified & connected!`);
+        return;
+      }
+      showToast(data.message || '⚠️ Could not verify Zoom login. Make sure your Zoom account exists or connect via Zoom OAuth.');
+      return;
+    }
+  } catch (e) {}
+  showToast('⚠️ Server verification unavailable. Zoom connection remains unverified.');
 }
 
 // ============================================================================
@@ -3312,7 +3362,7 @@ function getUserBillingTransactions() {
       date: new Date().toISOString().slice(0, 10),
       email,
       description: `${matchedPlan.name} Monthly Subscription`,
-      method: appState.currency === 'PKR' ? 'Safepay (PKR)' : 'Lemon Squeezy (USD)',
+      method: appState.currency === 'PKR' ? 'Local Card / Bank (PKR)' : 'International Card (USD)',
       amount: appState.currency === 'PKR' ? `Rs. ${matchedPlan.pricePkr.toLocaleString()}` : `$${matchedPlan.priceUsd}`,
       status: 'Paid'
     });
