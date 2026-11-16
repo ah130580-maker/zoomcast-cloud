@@ -2133,17 +2133,40 @@ function syncProfileUI() {
   if (sEmail) sEmail.textContent = appState.profile.email || 'support@aamiq.online';
   if (pName) pName.value = appState.profile.name || '';
   if (pEmail) pEmail.value = appState.profile.email || '';
-  if (pZoomLink) pZoomLink.value = appState.profile.defaultZoomLink || 'https://zoom.us/j/89421756301?pwd=ZoomCastFixed';
   if (titleEl && appState.profile.name) {
     titleEl.textContent = `Welcome back, ${appState.profile.name} 👋`;
   }
+
+  // Strict authentic Zoom check: requires zoomConnected === true AND a valid zoomSessionId
+  if (appState.profile.zoomConnected && !appState.profile.zoomSessionId) {
+    appState.profile.zoomConnected = false;
+  }
+  const hasSessionErr = appState.profile.zoomSessionStatus === 'expired' || appState.profile.zoomSessionStatus === 'error';
+  const isZoomAuthentic = Boolean(appState.profile.zoomConnected && appState.profile.zoomSessionId && !hasSessionErr);
+
+  if (pZoomLink) {
+    pZoomLink.value = isZoomAuthentic ? (appState.profile.defaultZoomLink || '') : '';
+  }
+
+  const connPanel = document.getElementById('zoom-connected-panel');
+  const connEmailLbl = document.getElementById('zoom-connected-email-label');
+  const connForms = document.getElementById('zoom-connect-forms');
+  const googleBtn = document.getElementById('zoom-google-btn');
+  const copyLinkBtn = document.getElementById('copy-synced-zoom-btn');
+
+  if (connPanel) connPanel.classList.toggle('hidden', !isZoomAuthentic);
+  if (connEmailLbl) connEmailLbl.textContent = appState.profile.zoomAccountEmail || appState.profile.email || 'Connected Zoom Account';
+  if (connForms) connForms.classList.toggle('hidden', isZoomAuthentic);
+  if (googleBtn) googleBtn.classList.toggle('hidden', isZoomAuthentic);
+  if (copyLinkBtn) copyLinkBtn.disabled = !isZoomAuthentic || !(appState.profile.defaultZoomLink);
+
   const dashIntBadge = document.getElementById('dash-integration-badge');
   const dashIntSummary = document.getElementById('dash-integration-summary');
   if (badge) {
-    if (appState.profile.zoomSessionStatus === 'expired' || appState.profile.zoomSessionStatus === 'error') {
+    if (hasSessionErr) {
       badge.textContent = '⚠ Session Expired — Fix Required';
       badge.className = 'px-2.5 py-0.5 rounded-md text-xs font-bold bg-rose-500/15 text-rose-300 border border-rose-500/30 whitespace-nowrap';
-    } else if (appState.profile.zoomConnected) {
+    } else if (isZoomAuthentic) {
       const mLabel = appState.profile.zoomAuthMethod === 'credentials' ? 'Email/Password' : 'Google';
       badge.textContent = `● Connected (${mLabel})`;
       badge.className = 'px-2.5 py-0.5 rounded-md text-xs font-bold bg-emerald-500/15 text-emerald-400 border border-emerald-500/30 whitespace-nowrap';
@@ -2153,11 +2176,11 @@ function syncProfileUI() {
     }
   }
   if (dashIntBadge && dashIntSummary) {
-    if (appState.profile.zoomSessionStatus === 'expired' || appState.profile.zoomSessionStatus === 'error') {
+    if (hasSessionErr) {
       dashIntBadge.textContent = '⚠ Connection Issue';
       dashIntBadge.className = 'px-2.5 py-1 rounded-md text-xs font-bold bg-rose-500/15 text-rose-300 border border-rose-500/30 whitespace-nowrap';
       dashIntSummary.textContent = 'Your Zoom session expired or disconnected. Reconnect to resume broadcasts.';
-    } else if (appState.profile.zoomConnected) {
+    } else if (isZoomAuthentic) {
       dashIntBadge.textContent = '● Connected';
       dashIntBadge.className = 'px-2.5 py-1 rounded-md text-xs font-bold bg-emerald-500/15 text-emerald-400 border border-emerald-500/30 whitespace-nowrap';
       dashIntSummary.textContent = 'Your Zoom account is connected and ready for automated workflows.';
@@ -2171,18 +2194,6 @@ function syncProfileUI() {
   if (typeof renderStorageMediaLibrary === 'function') renderStorageMediaLibrary();
 }
 
-function saveDefaultZoomMeetingLink() {
-  const inp = document.getElementById('prof-zoom-link');
-  const link = (inp?.value || '').trim();
-  if (!link || !link.startsWith('http')) {
-    showToast('Please enter a valid Zoom Meeting URL (e.g. https://zoom.us/j/...).');
-    return;
-  }
-  appState.profile.defaultZoomLink = link;
-  persistState();
-  showToast('✓ Default Permanent Zoom Meeting Link saved!');
-}
-
 function saveProfileDetails() {
   const pName = document.getElementById('prof-name');
   const pEmail = document.getElementById('prof-email');
@@ -2191,6 +2202,66 @@ function saveProfileDetails() {
   persistState();
   syncProfileUI();
   showToast('✓ Profile settings updated');
+}
+
+function copySyncedZoomLink() {
+  const link = (appState.profile.defaultZoomLink || '').trim();
+  if (!link) {
+    showToast('Connect your Zoom account first to sync your meeting link.');
+    return;
+  }
+  navigator.clipboard?.writeText(link).then(() => {
+    showToast('✓ Zoom Meeting Link copied to clipboard!');
+  }).catch(() => {
+    showToast('Meeting Link: ' + link);
+  });
+}
+
+function disconnectZoomAccount() {
+  appState.profile.zoomConnected = false;
+  appState.profile.zoomSessionId = '';
+  appState.profile.zoomAccountEmail = '';
+  appState.profile.zoomAuthMethod = '';
+  appState.profile.defaultZoomLink = '';
+  appState.profile.zoomSessionStatus = 'healthy';
+  const u = appState.usersDb.find(x => x.email.toLowerCase() === (appState.profile.email || '').toLowerCase());
+  if (u) {
+    u.zoomConnected = false;
+    u.zoomSessionId = '';
+    u.zoomAccountEmail = '';
+    u.zoomAuthMethod = '';
+  }
+  persistState();
+  syncProfileUI();
+  syncBackendConfig();
+  showToast('✓ Zoom account disconnected.');
+}
+
+function openProfilePasswordFlow() {
+  const email = (appState.profile.email || document.getElementById('prof-email')?.value || '').trim().toLowerCase();
+  const targetEl = document.getElementById('prof-pw-target-email');
+  if (targetEl) targetEl.textContent = email || 'your registered email';
+  document.getElementById('prof-pw-start-btn')?.classList.add('hidden');
+  document.getElementById('prof-pw-step-ask')?.classList.remove('hidden');
+  document.getElementById('prof-pw-step-otp')?.classList.add('hidden');
+  document.getElementById('prof-pw-step-newpass')?.classList.add('hidden');
+}
+
+function cancelProfilePasswordFlow() {
+  appState.profileResetOtp = null;
+  appState.profileResetOtpVerified = false;
+  document.getElementById('prof-pw-start-btn')?.classList.remove('hidden');
+  document.getElementById('prof-pw-step-ask')?.classList.add('hidden');
+  document.getElementById('prof-pw-step-otp')?.classList.add('hidden');
+  document.getElementById('prof-pw-step-newpass')?.classList.add('hidden');
+  const otpInp = document.getElementById('prof-reset-otp');
+  const p1 = document.getElementById('prof-new-password');
+  const p2 = document.getElementById('prof-confirm-password');
+  const msg = document.getElementById('prof-pass-match-msg');
+  if (otpInp) otpInp.value = '';
+  if (p1) p1.value = '';
+  if (p2) p2.value = '';
+  if (msg) msg.classList.add('hidden');
 }
 
 async function sendProfilePasswordResetOtp() {
@@ -2202,32 +2273,76 @@ async function sendProfilePasswordResetOtp() {
 
   const otp = String(Math.floor(1000 + Math.random() * 9000));
   appState.profileResetOtp = otp;
+  appState.profileResetOtpVerified = false;
 
   const hint = document.getElementById('prof-otp-hint');
-  if (hint) hint.textContent = `Check your email inbox (${email})`;
+  if (hint) hint.textContent = `Enter the 4-digit OTP sent to ${email}`;
+
+  document.getElementById('prof-pw-step-ask')?.classList.add('hidden');
+  document.getElementById('prof-pw-step-otp')?.classList.remove('hidden');
+  document.getElementById('prof-pw-step-newpass')?.classList.add('hidden');
 
   await dispatchOtpEmailEverywhere(email, otp, `ZoomCast Password Reset OTP`);
   showToast(`✓ 4-Digit Reset OTP sent to ${email}`);
 }
 
-function confirmProfilePasswordReset() {
+function verifyProfilePasswordResetOtp() {
   const otpEntered = (document.getElementById('prof-reset-otp')?.value || '').trim();
-  const newPass = (document.getElementById('prof-new-password')?.value || '').trim();
-  const email = (appState.profile.email || document.getElementById('prof-email')?.value || '').trim().toLowerCase();
-
   if (!appState.profileResetOtp) {
-    sendProfilePasswordResetOtp();
-    showToast('Please enter the 4-digit OTP code sent to your email.');
+    showToast('Please request a 4-digit OTP first.');
     return;
   }
-
   if (otpEntered !== appState.profileResetOtp) {
     showToast('Invalid OTP code. Please check your email and try again.');
     return;
   }
+  appState.profileResetOtpVerified = true;
+  document.getElementById('prof-pw-step-otp')?.classList.add('hidden');
+  document.getElementById('prof-pw-step-newpass')?.classList.remove('hidden');
+  showToast('✓ OTP verified! Enter your new password below.');
+}
 
+function checkProfilePasswordMatch() {
+  const p1 = document.getElementById('prof-new-password')?.value || '';
+  const p2 = document.getElementById('prof-confirm-password')?.value || '';
+  const msg = document.getElementById('prof-pass-match-msg');
+  if (!msg) return true;
+  if (!p2) {
+    msg.classList.add('hidden');
+    return true;
+  }
+  msg.classList.remove('hidden');
+  if (p1 !== p2) {
+    msg.textContent = '✗ Passwords do not match';
+    msg.className = 'text-[11px] font-bold text-rose-400';
+    return false;
+  }
+  if (p1.length < 6) {
+    msg.textContent = '⚠ Minimum 6 characters required';
+    msg.className = 'text-[11px] font-bold text-amber-400';
+    return false;
+  }
+  msg.textContent = '✓ Passwords match';
+  msg.className = 'text-[11px] font-bold text-emerald-400';
+  return true;
+}
+
+function confirmProfilePasswordReset() {
+  const newPass = (document.getElementById('prof-new-password')?.value || '').trim();
+  const confirmPass = (document.getElementById('prof-confirm-password')?.value || '').trim();
+  const email = (appState.profile.email || document.getElementById('prof-email')?.value || '').trim().toLowerCase();
+
+  if (!appState.profileResetOtpVerified) {
+    showToast('Please verify your 4-digit OTP first.');
+    return;
+  }
   if (!newPass || newPass.length < 6) {
     showToast('Please enter a new password (minimum 6 characters).');
+    return;
+  }
+  if (newPass !== confirmPass) {
+    checkProfilePasswordMatch();
+    showToast('Passwords do not match.');
     return;
   }
 
@@ -2239,14 +2354,7 @@ function confirmProfilePasswordReset() {
     MASTER_ADMIN_USER.password = newPass;
   }
 
-  appState.profileResetOtp = null;
-  const otpInp = document.getElementById('prof-reset-otp');
-  const passInp = document.getElementById('prof-new-password');
-  const hint = document.getElementById('prof-otp-hint');
-  if (otpInp) otpInp.value = '';
-  if (passInp) passInp.value = '';
-  if (hint) hint.textContent = '';
-
+  cancelProfilePasswordFlow();
   persistState();
   showToast('✓ Your password has been updated & secured!');
 }
@@ -3635,7 +3743,7 @@ window.addEventListener('DOMContentLoaded', () => {
 // INTEGRATION GATE & ZOOM SESSION EXPIRY / CONNECTION ISSUE ALERTS
 // ============================================================================
 function isIntegrationComplete() {
-  return Boolean(appState.profile && appState.profile.zoomConnected === true && appState.profile.zoomSessionStatus !== 'expired' && appState.profile.zoomSessionStatus !== 'error');
+  return Boolean(appState.profile && appState.profile.zoomConnected === true && appState.profile.zoomSessionId && appState.profile.zoomSessionStatus !== 'expired' && appState.profile.zoomSessionStatus !== 'error');
 }
 
 function openIntegrationGateModal() {
