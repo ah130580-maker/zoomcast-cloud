@@ -756,7 +756,7 @@
                     <span class="absolute inset-y-0 left-0 pl-3 flex items-center text-slate-400 pointer-events-none">
                       <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/></svg>
                     </span>
-                    <input id="signup-password" type="password" placeholder="••••••••" class="w-full pl-9 pr-3 py-2.5 rounded-xl glass-input text-sm" />
+                    <input id="signup-password" type="password" oninput="checkSignupPasswordMatch()" placeholder="••••••••" class="w-full pl-9 pr-3 py-2.5 rounded-xl glass-input text-sm" />
                   </div>
                 </div>
                 <div>
@@ -765,10 +765,11 @@
                     <span class="absolute inset-y-0 left-0 pl-3 flex items-center text-slate-400 pointer-events-none">
                       <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/></svg>
                     </span>
-                    <input id="signup-confirm-password" type="password" placeholder="••••••••" class="w-full pl-9 pr-3 py-2.5 rounded-xl glass-input text-sm" />
+                    <input id="signup-confirm-password" type="password" oninput="checkSignupPasswordMatch()" placeholder="••••••••" class="w-full pl-9 pr-3 py-2.5 rounded-xl glass-input text-sm" />
                   </div>
                 </div>
               </div>
+              <p id="signup-pass-match-msg" class="text-[11px] font-bold hidden"></p>
 
               <div class="flex items-center gap-2 text-xs text-slate-300 pt-0.5">
                 <input id="signup-terms-chk" type="checkbox" checked class="w-4 h-4 rounded accent-yellow-400 cursor-pointer" />
@@ -928,6 +929,11 @@
           <button type="button" id="otp-submit-btn" onclick="triggerGlassyOtpVerifyAnimation()" class="w-full py-3.5 rounded-xl btn-gold text-sm flex items-center justify-center gap-2">
             <span>Verify & Proceed</span>
             <span>→</span>
+          </button>
+
+          <button type="button" onclick="goBackFromOtpStep()" class="mt-3 w-full py-2.5 rounded-xl btn-glass text-xs font-bold text-slate-300 hover:text-white flex items-center justify-center gap-1.5">
+            <span>←</span>
+            <span>Back / Edit Email Address</span>
           </button>
         </div>
       </div>
