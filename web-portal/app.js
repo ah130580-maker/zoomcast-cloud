@@ -1615,6 +1615,34 @@ function handleGatewayReturnCallback() {
       history.replaceState(null, '', window.location.pathname);
       showToast('Payment was cancelled. You can complete checkout whenever you are ready.');
     }
+
+    if (params.get('zoom_connected') === '1' && params.get('zoom_session')) {
+      const zSess = params.get('zoom_session');
+      const zEmail = params.get('zoom_email') || appState.profile.email || '';
+      const zLink = params.get('zoom_link') || '';
+      appState.profile.zoomConnected = true;
+      appState.profile.zoomSessionId = zSess;
+      appState.profile.zoomAccountEmail = zEmail;
+      appState.profile.zoomAuthMethod = 'google';
+      appState.profile.zoomSessionStatus = 'healthy';
+      appState.profile.zoomSessionIssueReason = '';
+      if (zLink) appState.profile.defaultZoomLink = zLink;
+      const u = appState.usersDb.find(x => x.email.toLowerCase() === (appState.profile.email || '').toLowerCase());
+      if (u) {
+        u.zoomConnected = true;
+        u.zoomSessionId = zSess;
+        u.zoomAccountEmail = zEmail;
+        u.zoomAuthMethod = 'google';
+      }
+      persistState();
+      syncProfileUI();
+      syncBackendConfig();
+      history.replaceState(null, '', window.location.pathname + '#/integrations');
+      showToast(`✓ Zoom Account (${zEmail}) Verified & Connected!`);
+    } else if (params.get('zoom_error')) {
+      history.replaceState(null, '', window.location.pathname + '#/integrations');
+      showToast('⚠️ Zoom OAuth connection failed or cancelled. Please try again.');
+    }
   } catch (e) {}
 }
 
