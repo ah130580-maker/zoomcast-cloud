@@ -337,6 +337,55 @@ try {
             continue
         }
 
+        if ($Path -eq "/api/zoom-oauth-callback" -and $Req.HttpMethod -eq "GET") {
+            $Code = $Req.QueryString["code"]
+            $ZoomOAuthFile = Join-Path $PSScriptRoot "zoom-oauth.json"
+            $ClientId = $env:ZOOM_CLIENT_ID
+            $ClientSecret = $env:ZOOM_CLIENT_SECRET
+            $RedirectUri = "https://zoomcast.aamiq.online/api/zoom-oauth-callback"
+            if (Test-Path $ZoomOAuthFile) {
+                try {
+                    $OAuthCfg = Get-Content $ZoomOAuthFile -Raw | ConvertFrom-Json
+                    if ($OAuthCfg.clientId) { $ClientId = "$($OAuthCfg.clientId)" }
+                    if ($OAuthCfg.clientSecret) { $ClientSecret = "$($OAuthCfg.clientSecret)" }
+                    if ($OAuthCfg.redirectUri) { $RedirectUri = "$($OAuthCfg.redirectUri)" }
+                } catch {}
+            }
+            if ([string]::IsNullOrWhiteSpace($Code) -or [string]::IsNullOrWhiteSpace($ClientId) -or [string]::IsNullOrWhiteSpace($ClientSecret)) {
+                $Res.StatusCode = 302
+                $Res.RedirectLocation = "/?zoom_error=missing_oauth_config#/integrations"
+                $Res.Close()
+                continue
+            }
+            try {
+                $BasicAuth = [Convert]::ToBase64String([System.Text.Encoding]::UTF8.GetBytes("${ClientId}:${ClientSecret}"))
+                $TokenUrl = "https://zoom.us/oauth/token?grant_type=authorization_code&code=$([System.Uri]::EscapeDataString($Code))&redirect_uri=$([System.Uri]::EscapeDataString($RedirectUri))"
+                $TokenResp = Invoke-RestMethod -Uri $TokenUrl -Method Post -Headers @{ "Authorization" = "Basic $BasicAuth" } -TimeoutSec 12
+                $AccessToken = "$($TokenResp.access_token)"
+                $UserResp = Invoke-RestMethod -Uri "https://api.zoom.us/v2/users/me" -Method Get -Headers @{ "Authorization" = "Bearer $AccessToken" } -TimeoutSec 12
+                $ZEmail = "$($UserResp.email)"
+                $ZLink = "$($UserResp.personal_meeting_url)"
+                $ZSessionId = "zses_" + [guid]::NewGuid().ToString("N").Substring(0, 12)
+                $SessionsPath = Join-Path $PSScriptRoot "zoom-sessions.json"
+                $SessionEntry = @{ sessionId = $ZSessionId; email = $ZEmail; meetingUrl = $ZLink; accessToken = $AccessToken; refreshToken = "$($TokenResp.refresh_token)"; connectedAt = (Get-Date).ToUniversalTime().ToString("o") }
+                $SessionList = @()
+                if (Test-Path $SessionsPath) { try { $SessionList = @(Get-Content $SessionsPath -Raw | ConvertFrom-Json) } catch {} }
+                $SessionList = @($SessionList | Where-Object { $_.email -ne $ZEmail }) + $SessionEntry
+                Set-Content -Path $SessionsPath -Value ($SessionList | ConvertTo-Json -Depth 4) -Encoding UTF8
+
+                $Dest = "/?zoom_connected=1&zoom_session=$([System.Uri]::EscapeDataString($ZSessionId))&zoom_email=$([System.Uri]::EscapeDataString($ZEmail))&zoom_link=$([System.Uri]::EscapeDataString($ZLink))#/integrations"
+                $Res.StatusCode = 302
+                $Res.RedirectLocation = $Dest
+                $Res.Close()
+                continue
+            } catch {
+                $Res.StatusCode = 302
+                $Res.RedirectLocation = "/?zoom_error=oauth_exchange_failed#/integrations"
+                $Res.Close()
+                continue
+            }
+        }
+
         if ($Path -eq "/" -or $Path -eq "") {
             $Path = "/index.html"
         }
