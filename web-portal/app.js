@@ -44,17 +44,20 @@ const DEFAULT_CMS_CONTENT = {
   supportEmail: 'support@aamiq.online',
   otpWebhookUrl: '',
   refundPolicy: 'If you are not 100% satisfied with our setup or if the platform does not fit your workflow for any reason, you can cancel your subscription within 7 days of purchase and receive a 100% full refund of your payment — no questions asked. Simply email our support team or open a ticket in your portal within 7 days for an immediate full refund.',
-  termsBody: `1. 7-Day 100% Money-Back Refund Guarantee
-We stand behind our automated Zoom broadcast platform. If you are not satisfied with the setup or if it does not meet your business needs, you may cancel your subscription within seven (7) calendar days of your initial purchase and receive a 100% full refund.
+  termsBody: `1. Refund, Return & Cancellation Policy (7-Day 100% Money-Back Guarantee)
+We stand behind our automated Zoom broadcast SaaS platform. You may cancel your monthly subscription anytime directly from Profile → Billing & Subscription with zero cancellation fees. If you are not satisfied within seven (7) calendar days of your initial purchase, you are entitled to a 100% full refund processed back to your original payment method within 5–7 business days. Because ZoomCast by Aamiq is a 100% digital cloud software service, no physical product return is required.
 
-2. Account Registration & Subscription Access (USD & PKR)
+2. Shipping & Digital Service Delivery Policy
+ZoomCast by Aamiq is an online SaaS (Software-as-a-Service) platform; no physical items are shipped. Upon successful checkout, your subscription plan, cloud workspace access, storage quota, and automated scheduler are provisioned and delivered digitally and instantaneously to your registered account, along with a confirmation email from noreply@aamiq.online.
+
+3. Account Registration & Subscription Access (USD & PKR)
 Access to the ZoomCast CRM workspace requires a verified account and an active monthly subscription plan (Starter, Business Pro, or Enterprise) billed in USD ($) or in PKR (Rs.) at the live exchange rate.
 
-3. Automated Zoom Broadcast & Permanent Meeting Link Execution
-By connecting your Zoom account and scheduling workflows, you authorize ZoomCast Cloud to launch your scheduled Zoom meetings on your permanent meeting link, stream your uploaded recorded video playlists, auto-promote your designated Co-Host emails, and capture attendance & in-meeting chat logs on your behalf.
+4. Automated Zoom Broadcast & Permanent Meeting Link Execution
+By connecting your Zoom account and scheduling workflows, you authorize ZoomCast Cloud to launch your scheduled Zoom meetings on your connected meeting link, stream your uploaded recorded video playlists, auto-promote your designated Co-Host emails, and capture attendance & in-meeting chat logs on your behalf.
 
-4. Customer Support & Help Desk
-Customers may contact us anytime through the built-in Support & Tickets section inside the portal with Low, Normal, or High priority, or via email at support@aamiq.online.`,
+5. Customer Support & Contact Details
+Aamiq (aamiq.online) provides 24/7 customer support. Customers may contact us anytime through the built-in Support & Tickets section inside the portal with Low, Normal, or High priority, or via official support email at support@aamiq.online.`,
   privacyBody: `1. Information We Collect
 We collect your name, email address, encrypted account credentials, and subscription status when you register on ZoomCast CRM.
 
@@ -227,7 +230,15 @@ try {
   }
 
   const savedCms = localStorage.getItem('zoomcast_cms');
-  if (savedCms) appState.cms = { ...DEFAULT_CMS_CONTENT, ...JSON.parse(savedCms) };
+  if (savedCms) {
+    appState.cms = { ...DEFAULT_CMS_CONTENT, ...JSON.parse(savedCms) };
+    if (!appState.cms.termsBody || !appState.cms.termsBody.includes('Shipping & Digital Service Delivery Policy')) {
+      appState.cms.termsBody = DEFAULT_CMS_CONTENT.termsBody;
+    }
+    if (!appState.cms.supportEmail || appState.cms.supportEmail.includes('amirjupiteradvisers')) {
+      appState.cms.supportEmail = DEFAULT_CMS_CONTENT.supportEmail;
+    }
+  }
 
   const savedProfile = localStorage.getItem('zoomcast_profile');
   if (savedProfile) {
